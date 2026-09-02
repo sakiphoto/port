@@ -94,7 +94,7 @@
     .album-count-badge {
       position: absolute; bottom: 10px; right: 10px;
       background: rgba(10, 12, 16, 0.85); color: #fff; padding: 3px 10px;
-      border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border);
+      border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border); z-index: 2;
     }
     .album-info { padding: 1rem; }
     .album-tag { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; font-weight: 700; }
@@ -112,8 +112,9 @@
       box-shadow: 0 25px 50px rgba(0,0,0,0.7);
     }
     .album-media-masonry { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; margin-top: 1.25rem; }
-    .media-item-box { width: 100%; height: 200px; border-radius: 10px; overflow: hidden; background: #000; border: 1px solid var(--border); }
-    .media-item-box img, .media-item-box iframe { width: 100%; height: 100%; object-fit: cover; border: none; }
+    .media-item-box { width: 100%; height: 220px; border-radius: 10px; overflow: hidden; background: #000; border: 1px solid var(--border); }
+    .media-item-box img { width: 100%; height: 100%; object-fit: cover; }
+    .media-item-box iframe { width: 100%; height: 100%; border: none; }
     .album-link-chip {
       display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1);
       color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); padding: 5px 12px;
@@ -172,23 +173,6 @@
     .footer-admin-link { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     .footer-admin-link:hover { color: var(--accent); }
 
-    /* Custom Toast Container */
-    .toast-container {
-      position: fixed; bottom: 20px; right: 20px; z-index: 10000;
-      display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: calc(100% - 40px);
-    }
-    .toast-item {
-      background: var(--bg-card); border: 1px solid var(--border); color: #fff;
-      padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; font-weight: 500;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between;
-      animation: toastIn 0.3s ease forwards;
-    }
-    .toast-item.success { border-left: 4px solid var(--status-working); }
-    .toast-item.error { border-left: 4px solid var(--danger); }
-    .toast-item.info { border-left: 4px solid var(--accent); }
-    @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    @keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
-
     @media (max-width: 768px) {
       .nav-container { flex-direction: column; gap: 0.75rem; }
       .contact-grid { grid-template-columns: 1fr; }
@@ -203,9 +187,6 @@
   </style>
 </head>
 <body>
-
-  <!-- TOAST NOTIFICATION CONTAINER -->
-  <div class="toast-container" id="toastContainer"></div>
 
   <!-- ALBUM DETAIL MODAL -->
   <div class="modal-overlay" id="albumDetailModal">
@@ -249,7 +230,7 @@
       </div>
 
       <div class="profile-card">
-        <img src="" id="profAvatar" class="profile-avatar" alt="Avatar" onerror="handleImgError(this)">
+        <img src="" id="profAvatar" class="profile-avatar" alt="Avatar">
         <div>
           <div class="profile-name" id="profName">-</div>
           <div class="profile-bio" id="profBio">-</div>
@@ -318,52 +299,26 @@
   </footer>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyZnkAIVNbFEFZlr4wZR9tON_bspCiXSc2hqLHZcj-0Z_0dyJINpFqtQEpvOOGwEb7bXw/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
     let allData = { profile: {}, portfolio: [], schedule: [], calendar: [] };
     let currentCalDate = new Date();
 
     const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
-    function showToast(msg, type = "info") {
-      const container = document.getElementById("toastContainer");
-      if (!container) return;
-      const toast = document.createElement("div");
-      toast.className = `toast-item ${type}`;
-      toast.innerHTML = `<span>${msg}</span>`;
-      container.appendChild(toast);
-      setTimeout(() => {
-        toast.style.animation = "toastOut 0.3s ease forwards";
-        setTimeout(() => toast.remove(), 300);
-      }, 3500);
-    }
-
     function getDisplayImageUrl(url) {
-      if (!url) return "";
-      let fileId = "";
-      const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
-      const matchPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      if (matchId) fileId = matchId[1];
-      else if (matchPath) fileId = matchPath[1];
-
-      if (fileId) {
-        return `https://lh3.googleusercontent.com/d/${fileId}`;
-      }
-      return url;
-    }
-
-    function handleImgError(img) {
-      const src = img.src;
-      if (!img.dataset.triedProxy) {
-        img.dataset.triedProxy = "true";
+      if (!url) return "https://via.placeholder.com/600x400?text=No+Image";
+      if (url.includes("google.com") || url.includes("googleusercontent.com")) {
         let fileId = "";
-        const matchId = src.match(/id=([a-zA-Z0-9_-]+)/)?.[1];
-        const matchD = src.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
-        fileId = matchId || matchD;
-        
+        const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
+        const matchPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (matchId) fileId = matchId[1];
+        else if (matchPath) fileId = matchPath[1];
+
         if (fileId) {
-          img.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
+          return `https://lh3.googleusercontent.com/d/${fileId}=w1600`;
         }
       }
+      return url;
     }
 
     function formatThaiDateFull(dateStr) {
@@ -407,26 +362,17 @@
           renderCalendar();
           renderScheduleVertical();
         }
-      } catch (err) { 
-        console.error(err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     function renderProfile() {
       const p = allData.profile || {};
       document.getElementById("navBrand").innerHTML = `${p.brandName || 'PHOTOGRAPHER'}<span>.</span>`;
-      document.getElementById("heroTitle").innerText = p.heroTitle || "";
-      document.getElementById("heroSubtitle").innerText = p.heroSubtitle || "";
-      
-      if (p.avatarUrl) {
-        document.getElementById("profAvatar").src = getDisplayImageUrl(p.avatarUrl);
-        document.getElementById("profAvatar").style.display = "block";
-      } else {
-        document.getElementById("profAvatar").style.display = "none";
-      }
-
-      document.getElementById("profName").innerText = p.photographerName || "";
-      document.getElementById("profBio").innerText = p.bio || "";
+      document.getElementById("heroTitle").innerText = p.heroTitle || "Luxury Visual Experience";
+      document.getElementById("heroSubtitle").innerText = p.heroSubtitle || "-";
+      document.getElementById("profAvatar").src = getDisplayImageUrl(p.avatarUrl);
+      document.getElementById("profName").innerText = p.photographerName || "Photographer";
+      document.getElementById("profBio").innerText = p.bio || "-";
       document.getElementById("profLocation").innerText = p.location || "-";
 
       const setLink = (valId, linkId, value, hrefBuilder) => {
@@ -458,7 +404,7 @@
       const featGrid = document.getElementById("featuredGrid");
       if (p.featuredPhotos) {
         const photos = p.featuredPhotos.split(',').filter(x => x.trim());
-        featGrid.innerHTML = photos.map(u => `<div class="showcase-item"><img src="${getDisplayImageUrl(u.trim())}" loading="lazy" onerror="handleImgError(this)"></div>`).join('');
+        featGrid.innerHTML = photos.map(u => `<div class="showcase-item"><img src="${getDisplayImageUrl(u.trim())}" loading="lazy"></div>`).join('');
       } else {
         featGrid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1;">ยังไม่มีรูปภาพแนะนำ</p>';
       }
@@ -467,7 +413,7 @@
     function renderAlbumGrid(containerId, items, type) {
       const container = document.getElementById(containerId);
       if (!items || !items.length) {
-        container.innerHTML = '<p style="color:var(--text-muted)">ยังไม่มีรายการผลงานในระบบ</p>';
+        container.innerHTML = '<p style="color:var(--text-muted)">ยังไม่มีรายการผลงาน</p>';
         return;
       }
 
@@ -497,7 +443,7 @@
             <div class="album-cover">
               ${alb.mediaType === 'video' 
                 ? `<iframe src="${alb.coverUrl}" allow="autoplay"></iframe>` 
-                : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}" onerror="handleImgError(this)">`
+                : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}">`
               }
               <div class="album-count-badge">${alb.items.length} ${alb.mediaType === 'video' ? 'วิดีโอ' : 'รูปภาพ'}</div>
             </div>
@@ -542,7 +488,7 @@
         <div class="media-item-box">
           ${item.mediaType === 'video' 
             ? `<iframe src="${item.fileUrl}" allow="autoplay"></iframe>` 
-            : `<img src="${getDisplayImageUrl(item.fileUrl)}" loading="lazy" onerror="handleImgError(this)">`
+            : `<img src="${getDisplayImageUrl(item.fileUrl)}" loading="lazy">`
           }
         </div>
       `).join('');
@@ -635,7 +581,7 @@
       const container = document.getElementById("scheduleListVertical");
       if (!container) return;
       const list = allData.schedule || [];
-      if (!list.length) { container.innerHTML = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงานที่บันทึกไว้</p>'; return; }
+      if (!list.length) { container.innerHTML = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงาน</p>'; return; }
 
       const sorted = [...list].sort((a, b) => new Date(a.date) - new Date(b.date));
       container.innerHTML = sorted.map(item => {
