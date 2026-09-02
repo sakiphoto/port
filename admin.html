@@ -124,13 +124,40 @@
     .showcase-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
     .showcase-item:hover img { transform: scale(1.05); }
 
-    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
-    .gallery-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-    .media-box { width: 100%; height: 260px; background: #000; }
-    .media-box img, .media-box video { width: 100%; height: 100%; object-fit: cover; }
-    .gallery-info { padding: 1.25rem; }
-    .gallery-tag { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 600; }
-    .gallery-link-btn { display: inline-block; margin-top: 0.5rem; color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600; }
+    /* Album Group View Styles */
+    .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+    .album-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px;
+      overflow: hidden; cursor: pointer; transition: transform 0.3s, border-color 0.3s;
+    }
+    .album-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+    .album-cover { position: relative; width: 100%; height: 220px; background: #000; overflow: hidden; }
+    .album-cover img, .album-cover video { width: 100%; height: 100%; object-fit: cover; }
+    .album-count-badge {
+      position: absolute; bottom: 12px; right: 12px;
+      background: rgba(10, 12, 16, 0.85); color: #fff; padding: 4px 12px;
+      border-radius: 20px; font-size: 0.8rem; font-weight: 600; border: 1px solid var(--border);
+    }
+    .album-info { padding: 1.25rem; }
+    .album-tag { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 700; }
+    .album-title { font-size: 1.15rem; font-weight: 700; color: #fff; margin: 4px 0 6px; }
+    .album-desc-preview { font-size: 0.85rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* Full Media Viewer Modal */
+    .album-modal-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px;
+      padding: 2rem; width: 100%; max-width: 960px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+    }
+    .album-media-masonry { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .media-item-box { width: 100%; height: 240px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--border); }
+    .media-item-box img, .media-item-box video { width: 100%; height: 100%; object-fit: cover; }
+    .album-link-chip {
+      display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1);
+      color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); padding: 6px 14px;
+      border-radius: 10px; text-decoration: none; font-size: 0.85rem; font-weight: 600; margin-right: 8px; margin-top: 8px;
+    }
+    .album-link-chip:hover { background: var(--accent); color: #000; }
 
     .schedule-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
     .toggle-btn { padding: 0.6rem 1.2rem; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; }
@@ -222,7 +249,7 @@
       padding: 1rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
       border-radius: 12px; margin-bottom: 0.75rem;
     }
-    .social-input-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .dynamic-link-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
 
     .admin-cal-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-top: 1rem; }
     .admin-cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
@@ -266,6 +293,7 @@
 
   <div id="customToast">🔔 <span id="toastMsg">แจ้งเตือนจากระบบ</span></div>
 
+  <!-- CALENDAR STATUS MODAL -->
   <div class="modal-overlay" id="calModal">
     <div class="modal-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
@@ -295,6 +323,28 @@
           <button type="submit" class="btn" id="btnSaveCalModal">บันทึกข้อมูล</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ALBUM DETAIL MODAL -->
+  <div class="modal-overlay" id="albumDetailModal">
+    <div class="album-modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+        <div>
+          <div id="modalAlbumCategory" class="album-tag">CATEGORY</div>
+          <h2 id="modalAlbumTitle" style="color:#fff; font-size:1.6rem; margin-top:4px;">Album Title</h2>
+        </div>
+        <button style="background:transparent; border:none; color:var(--text-muted); font-size:2rem; cursor:pointer; line-height:1;" onclick="closeAlbumModal()">&times;</button>
+      </div>
+
+      <div id="modalAlbumDesc" style="color:var(--text-muted); font-size:0.95rem; margin-bottom:1rem; white-space:pre-line;">-</div>
+
+      <div id="modalAlbumLinks" style="margin-bottom:1.5rem;"></div>
+
+      <hr style="border:0; border-top:1px solid var(--border); margin:1.5rem 0;">
+
+      <h4 style="color:#fff; margin-bottom:1rem;">🖼️ ผลงานทั้งหมดในอัลบั้มนี้</h4>
+      <div id="modalAlbumMediaGrid" class="album-media-masonry"></div>
     </div>
   </div>
 
@@ -365,13 +415,13 @@
       </section>
 
       <section id="sec-photos" class="page-section">
-        <h2 style="margin-bottom: 2rem;">ผลงานภาพถ่าย</h2>
-        <div class="gallery" id="photoGallery"><p style="color: var(--text-muted);">กำลังโหลด...</p></div>
+        <h2 style="margin-bottom: 2rem;">ผลงานภาพถ่าย (จัดกลุ่มตามงาน)</h2>
+        <div class="album-grid" id="photoAlbumGrid"><p style="color: var(--text-muted);">กำลังโหลด...</p></div>
       </section>
 
       <section id="sec-videos" class="page-section">
-        <h2 style="margin-bottom: 2rem;">ผลงานวิดีโอ</h2>
-        <div class="gallery" id="videoGallery"><p style="color: var(--text-muted);">กำลังโหลด...</p></div>
+        <h2 style="margin-bottom: 2rem;">ผลงานวิดีโอ (จัดกลุ่มตามงาน)</h2>
+        <div class="album-grid" id="videoAlbumGrid"><p style="color: var(--text-muted);">กำลังโหลด...</p></div>
       </section>
 
       <section id="sec-schedule" class="page-section">
@@ -534,37 +584,65 @@
         <div id="featuredPhotoList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;"></div>
       </div>
 
+      <!-- TAB 5: Photo Upload with Multi-link & Details -->
       <div id="tab-photos" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;">📷 อัปโหลดผลงานภาพถ่าย</h2>
         <div class="admin-card">
           <form onsubmit="handleUploadPhotos(event)">
             <div class="form-grid-2">
-              <div class="form-group"><label>ชื่อผลงาน</label><input type="text" id="pImgTitle" required></div>
-              <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pImgCat" placeholder="Wedding / Portrait" required></div>
+              <div class="form-group"><label>ชื่องาน / อัลบั้ม</label><input type="text" id="pImgTitle" placeholder="เช่น งานแต่งงาน คุณอาร์ต & คุณมาย" required></div>
+              <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pImgCat" placeholder="Wedding / Portrait / Commercial" required></div>
             </div>
-            <div class="form-group"><label>ลิงก์เพิ่มเติม (Full Set)</label><input type="text" id="pImgLink" placeholder="drive.google.com/..."></div>
-            <div class="form-group"><label>เลือกไฟล์รูปภาพ</label><input type="file" id="pImgFiles" accept="image/*" multiple required></div>
+            <div class="form-group">
+              <label>รายละเอียดงาน / คำอธิบายภาพ</label>
+              <textarea id="pImgDetails" rows="3" placeholder="ระบุรายละเอียดงาน สถานที่ Concept หรือเรื่องราวของอัลบั้มนี้..."></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+              <label style="margin-bottom:0; color:var(--accent);">🔗 ลิงก์เพิ่มเติม (Google Drive Full Set / Facebook / Pinterest ฯลฯ)</label>
+              <button type="button" class="btn btn-outline" style="padding:0.3rem 0.8rem; font-size:0.8rem;" onclick="addDynamicLinkRow('photoLinkContainer')">+ เพิ่มลิงก์ภายนอก</button>
+            </div>
+            <div id="photoLinkContainer"></div>
+
+            <div class="form-group" style="margin-top:1rem;">
+              <label>เลือกไฟล์รูปภาพ (เลือกได้หลายรูปในงานเดียวกัน)</label>
+              <input type="file" id="pImgFiles" accept="image/*" multiple required>
+            </div>
             <button type="submit" class="btn" id="btnUpImgs">อัปโหลดภาพผลงาน</button>
           </form>
         </div>
-        <h3 style="margin: 2rem 0 1rem;">รายการผลงานภาพถ่าย</h3>
+        <h3 style="margin: 2rem 0 1rem;">รายการผลงานภาพถ่ายในระบบ</h3>
         <div id="adminPhotoList"></div>
       </div>
 
+      <!-- TAB 6: Video Upload with Multi-link & Details -->
       <div id="tab-videos" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;">🎬 อัปโหลดผลงานวิดีโอ</h2>
         <div class="admin-card">
           <form onsubmit="handleUploadVideo(event)">
             <div class="form-grid-2">
-              <div class="form-group"><label>ชื่อวิดีโอ</label><input type="text" id="pVidTitle" required></div>
-              <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pVidCat" placeholder="Cinematic / MV" required></div>
+              <div class="form-group"><label>ชื่องาน / วิดีโอ</label><input type="text" id="pVidTitle" placeholder="เช่น Cinematic Wedding Teaser" required></div>
+              <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pVidCat" placeholder="Cinematic / Event / MV" required></div>
             </div>
-            <div class="form-group"><label>ลิงก์ภายนอก (YouTube / Vimeo)</label><input type="text" id="pVidLink" placeholder="youtube.com/watch?v=..."></div>
-            <div class="form-group"><label>เลือกไฟล์วิดีโอ (ไม่เกิน 20MB)</label><input type="file" id="pVidFile" accept="video/*" required></div>
+            <div class="form-group">
+              <label>รายละเอียดงาน / คำอธิบายวิดีโอ</label>
+              <textarea id="pVidDetails" rows="3" placeholder="ระบุรายละเอียดของวิดีโอ อุปกรณ์ หรือเบื้องหลัง..."></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+              <label style="margin-bottom:0; color:var(--accent);">🔗 ลิงก์เพิ่มเติม (YouTube / Vimeo / Drive ฯลฯ)</label>
+              <button type="button" class="btn btn-outline" style="padding:0.3rem 0.8rem; font-size:0.8rem;" onclick="addDynamicLinkRow('videoLinkContainer')">+ เพิ่มลิงก์ภายนอก</button>
+            </div>
+            <div id="videoLinkContainer"></div>
+
+            <div class="form-group" style="margin-top:1rem;">
+              <label>เลือกไฟล์วิดีโอ (ไม่เกิน 20MB)</label>
+              <input type="file" id="pVidFile" accept="video/*" required>
+            </div>
             <button type="submit" class="btn" id="btnUpVid">อัปโหลดวิดีโอ</button>
           </form>
         </div>
-        <h3 style="margin: 2rem 0 1rem;">รายการผลงานวิดีโอ</h3>
+        <h3 style="margin: 2rem 0 1rem;">รายการผลงานวิดีโอในระบบ</h3>
         <div id="adminVideoList"></div>
       </div>
     </div>
@@ -591,7 +669,6 @@
       setTimeout(() => { toast.className = ""; }, 3500);
     }
 
-    // Client-side image compressor before base64 stringification
     function compressAndBase64(file, maxWidth = 1920, quality = 0.8) {
       return new Promise((resolve) => {
         if (file.type.startsWith('video/')) {
@@ -623,6 +700,32 @@
         };
         reader.readAsDataURL(file);
       });
+    }
+
+    // Add Dynamic Extra Link Row Function
+    function addDynamicLinkRow(containerId, label = "", url = "") {
+      const container = document.getElementById(containerId);
+      const div = document.createElement("div");
+      div.className = "dynamic-link-row";
+      div.innerHTML = `
+        <input type="text" placeholder="ชื่อปุ่มลิงก์ (เช่น ดูรูปความละเอียดสูง / ดูคลิปบน YouTube)" class="dyn-label" value="${label}" style="width:40%;">
+        <input type="text" placeholder="https://..." class="dyn-url" value="${url}" style="width:50%;">
+        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="width:10%; padding:0.4rem;">&times;</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function collectDynamicLinks(containerId) {
+      const rows = document.querySelectorAll(`#${containerId} .dynamic-link-row`);
+      const links = [];
+      rows.forEach(r => {
+        const l = r.querySelector(".dyn-label").value.trim();
+        const u = r.querySelector(".dyn-url").value.trim();
+        if (u) {
+          links.push({ label: l || "ดูลิงก์ภายนอก", url: formatUrl(u) });
+        }
+      });
+      return JSON.stringify(links);
     }
 
     document.addEventListener("keydown", function(e) {
@@ -729,8 +832,8 @@
           allData = data;
           if (fullRender) {
             renderProfile();
-            renderGallery('photoGallery', data.portfolio.filter(x => x.mediaType === 'image'), 'image');
-            renderGallery('videoGallery', data.portfolio.filter(x => x.mediaType === 'video'), 'video');
+            renderAlbumGrid('photoAlbumGrid', data.portfolio.filter(x => x.mediaType === 'image'), 'image');
+            renderAlbumGrid('videoAlbumGrid', data.portfolio.filter(x => x.mediaType === 'video'), 'video');
           }
           renderCalendar();
           renderScheduleVertical();
@@ -783,21 +886,97 @@
       }
     }
 
-    function renderGallery(elId, items, type) {
-      const el = document.getElementById(elId);
-      if (!items || !items.length) { el.innerHTML = '<p style="color:var(--text-muted)">ยังไม่มีผลงาน</p>'; return; }
-      el.innerHTML = items.map(i => `
-        <div class="gallery-card">
-          <div class="media-box">
-            ${type === 'video' ? `<video src="${i.fileUrl}" controls></video>` : `<img src="${i.fileUrl}" loading="lazy">`}
+    /* ALBUM GROUPING & DISPLAY ENGINE */
+    function renderAlbumGrid(containerId, items, type) {
+      const container = document.getElementById(containerId);
+      if (!items || !items.length) {
+        container.innerHTML = '<p style="color:var(--text-muted)">ยังไม่มีรายการผลงาน</p>';
+        return;
+      }
+
+      // Group items by Title (Job Name)
+      const albums = {};
+      items.forEach(item => {
+        const key = item.title;
+        if (!albums[key]) {
+          albums[key] = {
+            title: item.title,
+            category: item.category,
+            details: item.details,
+            extLink: item.extLink,
+            coverUrl: item.fileUrl,
+            mediaType: item.mediaType,
+            items: []
+          };
+        }
+        albums[key].items.push(item);
+      });
+
+      container.innerHTML = Object.keys(albums).map(key => {
+        const alb = albums[key];
+        const safeTitle = alb.title.replace(/'/g, "\\'");
+        return `
+          <div class="album-card" onclick="openAlbumModal('${safeTitle}', '${alb.mediaType}')">
+            <div class="album-cover">
+              ${alb.mediaType === 'video' 
+                ? `<video src="${alb.coverUrl}#t=0.5" preload="metadata"></video>` 
+                : `<img src="${alb.coverUrl}" loading="lazy" alt="${alb.title}">`
+              }
+              <div class="album-count-badge">${alb.items.length} ${alb.mediaType === 'video' ? 'วิดีโอ' : 'รูปภาพ'}</div>
+            </div>
+            <div class="album-info">
+              <div class="album-tag">${alb.category}</div>
+              <div class="album-title">${alb.title}</div>
+              <div class="album-desc-preview">${alb.details || 'คลิกเพื่อเข้าชมรูปภาพและรายละเอียดทั้งหมด'}</div>
+            </div>
           </div>
-          <div class="gallery-info">
-            <div class="gallery-tag">${i.category}</div>
-            <div style="font-weight:600; margin-top:4px;">${i.title}</div>
-            ${i.extLink ? `<a href="${formatUrl(i.extLink)}" target="_blank" class="gallery-link-btn">🔗 ดูข้อมูลเพิ่มเติม</a>` : ''}
-          </div>
+        `;
+      }).join('');
+    }
+
+    function openAlbumModal(title, type) {
+      const filtered = (allData.portfolio || []).filter(x => x.title === title && x.mediaType === type);
+      if (!filtered.length) return;
+
+      const first = filtered[0];
+      document.getElementById("modalAlbumTitle").innerText = first.title;
+      document.getElementById("modalAlbumCategory").innerText = first.category;
+      document.getElementById("modalAlbumDesc").innerText = first.details || "ไม่มีรายละเอียดเพิ่มเติม";
+
+      // Render External Links
+      const linksContainer = document.getElementById("modalAlbumLinks");
+      linksContainer.innerHTML = "";
+      if (first.extLink) {
+        try {
+          const links = JSON.parse(first.extLink);
+          if (Array.isArray(links)) {
+            linksContainer.innerHTML = links.map(l => `
+              <a href="${formatUrl(l.url)}" target="_blank" class="album-link-chip">🔗 ${l.label || 'ดูลิงก์ภายนอก'}</a>
+            `).join('');
+          } else {
+            linksContainer.innerHTML = `<a href="${formatUrl(first.extLink)}" target="_blank" class="album-link-chip">🔗 ดูลิงก์เพิ่มเติม</a>`;
+          }
+        } catch(e) {
+          linksContainer.innerHTML = `<a href="${formatUrl(first.extLink)}" target="_blank" class="album-link-chip">🔗 ดูลิงก์เพิ่มเติม</a>`;
+        }
+      }
+
+      // Render Media List inside Modal
+      const mediaGrid = document.getElementById("modalAlbumMediaGrid");
+      mediaGrid.innerHTML = filtered.map(item => `
+        <div class="media-item-box">
+          ${item.mediaType === 'video' 
+            ? `<video src="${item.fileUrl}" controls></video>` 
+            : `<img src="${item.fileUrl}" loading="lazy">`
+          }
         </div>
       `).join('');
+
+      document.getElementById("albumDetailModal").classList.add("active");
+    }
+
+    function closeAlbumModal() {
+      document.getElementById("albumDetailModal").classList.remove("active");
     }
 
     function changeMonth(delta) {
@@ -1054,7 +1233,7 @@
     function addSocialRow(label = "", url = "") {
       const container = document.getElementById("socialInputsContainer");
       const div = document.createElement("div");
-      div.className = "social-input-row";
+      div.className = "dynamic-link-row";
       div.innerHTML = `
         <input type="text" placeholder="ชื่อช่องทาง (เช่น IG รอง, FB Page)" class="soc-label" value="${label}" style="width:35%;">
         <input type="text" placeholder="facebook.com/yourpage" class="soc-url" value="${url}" style="width:55%;">
@@ -1071,7 +1250,7 @@
       const avatarFile = document.getElementById("profAvatarFile").files[0];
       const avatarData = avatarFile ? await compressAndBase64(avatarFile, 800) : null;
 
-      const rows = document.querySelectorAll(".social-input-row");
+      const rows = document.querySelectorAll("#socialInputsContainer .dynamic-link-row");
       const socialLinks = [];
       rows.forEach(r => {
         const l = r.querySelector(".soc-label").value;
@@ -1187,6 +1366,7 @@
       if (result.success) { showNotification("ลบรูปภาพสำเร็จ!"); reloadAdmin(); }
     }
 
+    /* Enhanced Photo Upload Handler with Multi-links & Details */
     async function handleUploadPhotos(e) {
       e.preventDefault();
       const files = document.getElementById("pImgFiles").files;
@@ -1194,9 +1374,10 @@
       const btn = document.getElementById("btnUpImgs");
       btn.innerText = "กำลังอัปโหลด..."; btn.disabled = true;
 
-      const baseTitle = document.getElementById("pImgTitle").value;
+      const title = document.getElementById("pImgTitle").value;
       const cat = document.getElementById("pImgCat").value;
-      const link = formatUrl(document.getElementById("pImgLink").value);
+      const details = document.getElementById("pImgDetails").value;
+      const extLinks = collectDynamicLinks('photoLinkContainer');
 
       try {
         const payloads = [];
@@ -1206,21 +1387,30 @@
             fileName: files[i].name, 
             fileData: compressed, 
             mediaType: "image",
-            title: files.length > 1 ? `${baseTitle} (${i+1})` : baseTitle, 
+            title: title, 
             category: cat, 
-            extLink: link
+            details: details,
+            extLink: extLinks
           });
         }
         const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "upload", password: token, files: payloads }) });
         const result = await res.json();
         btn.innerText = "อัปโหลดภาพผลงาน"; btn.disabled = false;
-        if (result.success) { showNotification("อัปโหลดสำเร็จ!"); e.target.reset(); reloadAdmin(); } else showNotification(result.message, true);
+        if (result.success) { 
+          showNotification("อัปโหลดสำเร็จ!"); 
+          e.target.reset(); 
+          document.getElementById('photoLinkContainer').innerHTML = '';
+          reloadAdmin(); 
+        } else {
+          showNotification(result.message, true);
+        }
       } catch(err) {
         btn.innerText = "อัปโหลดภาพผลงาน"; btn.disabled = false;
         showNotification("ไฟล์มีขนาดใหญ่เกินไป หรือเกิดข้อผิดพลาดในการส่งข้อมูล", true);
       }
     }
 
+    /* Enhanced Video Upload Handler with Multi-links & Details */
     async function handleUploadVideo(e) {
       e.preventDefault();
       const file = document.getElementById("pVidFile").files[0];
@@ -1234,6 +1424,11 @@
       const btn = document.getElementById("btnUpVid");
       btn.innerText = "กำลังอัปโหลด..."; btn.disabled = true;
 
+      const title = document.getElementById("pVidTitle").value;
+      const cat = document.getElementById("pVidCat").value;
+      const details = document.getElementById("pVidDetails").value;
+      const extLinks = collectDynamicLinks('videoLinkContainer');
+
       try {
         const videoData = await compressAndBase64(file);
         const payload = {
@@ -1242,15 +1437,23 @@
             fileName: file.name, 
             fileData: videoData, 
             mediaType: "video",
-            title: document.getElementById("pVidTitle").value,
-            category: document.getElementById("pVidCat").value,
-            extLink: formatUrl(document.getElementById("pVidLink").value)
+            title: title,
+            category: cat,
+            details: details,
+            extLink: extLinks
           }]
         };
         const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "upload", password: token, files: payload.files }) });
         const result = await res.json();
         btn.innerText = "อัปโหลดวิดีโอ"; btn.disabled = false;
-        if (result.success) { showNotification("อัปโหลดสำเร็จ!"); e.target.reset(); reloadAdmin(); } else showNotification(result.message, true);
+        if (result.success) { 
+          showNotification("อัปโหลดสำเร็จ!"); 
+          e.target.reset(); 
+          document.getElementById('videoLinkContainer').innerHTML = '';
+          reloadAdmin(); 
+        } else {
+          showNotification(result.message, true);
+        }
       } catch(err) {
         btn.innerText = "อัปโหลดวิดีโอ"; btn.disabled = false;
         showNotification("อัปโหลดวิดีโอไม่สำเร็จ ไฟล์อาจมีขนาดใหญ่เกินขีดจำกัดของ Apps Script", true);
@@ -1265,7 +1468,7 @@
         <div class="item-list-row">
           <div>
             <strong>${i.title}</strong> (${i.category})
-            ${i.extLink ? `<div style="font-size:0.75rem;"><a href="${formatUrl(i.extLink)}" target="_blank" style="color:var(--accent);">🔗 ${i.extLink}</a></div>` : ''}
+            ${i.details ? `<div style="font-size:0.8rem; color:var(--text-muted);">${i.details}</div>` : ''}
           </div>
           <button class="btn btn-danger" style="padding:0.4rem 0.8rem;" onclick="deleteItem('${i.id}','portfolio')">ลบ</button>
         </div>
