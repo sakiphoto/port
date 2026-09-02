@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Photographer Portfolio & Schedule</title>
+  <title>Photographer Portfolio & Live Schedule</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -47,16 +47,16 @@
     .page-section.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Home Hero & Profile */
+    /* Home & Profile */
     .hero {
-      text-align: center; padding: 3rem 1rem 2rem;
+      text-align: center; padding: 3.5rem 1rem 2.5rem;
       background: radial-gradient(circle at center, rgba(56, 189, 248, 0.08) 0%, rgba(10, 12, 16, 0) 70%);
       border-radius: 24px; margin-bottom: 2rem; border: 1px solid var(--border);
     }
     .profile-card {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px;
       padding: 3rem 2rem; display: flex; flex-direction: column; align-items: center; text-align: center;
-      gap: 1.5rem; margin-bottom: 2rem;
+      gap: 1.5rem; margin-bottom: 2.5rem;
     }
     .profile-avatar {
       width: 150px; height: 150px; border-radius: 50%; object-fit: cover;
@@ -65,14 +65,23 @@
     .profile-name { font-size: 2rem; font-weight: 700; color: #fff; }
     .profile-bio { max-width: 680px; color: var(--text-muted); font-size: 1.05rem; }
 
-    /* Contact Details Grid */
-    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; width: 100%; max-width: 900px; }
+    /* Social & Contact Grid */
+    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; width: 100%; max-width: 960px; }
     .contact-card {
       background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
-      padding: 1rem; border-radius: 12px; text-align: left;
+      padding: 1rem; border-radius: 12px; text-align: left; text-decoration: none; color: inherit; transition: 0.2s;
+      display: block;
     }
-    .contact-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    .contact-val { font-size: 0.95rem; font-weight: 600; color: #fff; margin-top: 2px; word-break: break-all; }
+    .contact-card:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.04); }
+    .contact-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+    .contact-val { font-size: 0.95rem; font-weight: 600; color: #fff; margin-top: 4px; word-break: break-all; }
+
+    /* Featured Showcase */
+    .showcase-title { font-size: 1.4rem; font-weight: 700; margin: 2.5rem 0 1.2rem; }
+    .showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .showcase-item { height: 220px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
+    .showcase-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+    .showcase-item:hover img { transform: scale(1.05); }
 
     /* Gallery */
     .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
@@ -81,49 +90,43 @@
     .media-box img, .media-box video { width: 100%; height: 100%; object-fit: cover; }
     .gallery-info { padding: 1.25rem; }
     .gallery-tag { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 600; }
-    .gallery-link-btn {
-      display: inline-block; margin-top: 0.5rem; color: var(--accent);
-      text-decoration: none; font-size: 0.85rem; font-weight: 600;
-    }
+    .gallery-link-btn { display: inline-block; margin-top: 0.5rem; color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600; }
 
-    /* Calendar Grid */
+    /* Schedule Vertical List */
     .schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-    .view-toggle { display: flex; gap: 0.5rem; background: var(--bg-card); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
-    .view-btn { padding: 0.4rem 1.2rem; border: none; background: transparent; color: var(--text-muted); border-radius: 6px; cursor: pointer; font-weight: 500; }
-    .view-btn.active { background: var(--accent); color: #000; font-weight: 600; }
-
-    .calendar-container { background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border); padding: 1.5rem; }
-    .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-    .calendar-nav button { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; padding: 0.4rem 1rem; border-radius: 8px; cursor: pointer; }
-    
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-    .calendar-day-header { color: var(--text-muted); font-size: 0.85rem; padding-bottom: 0.5rem; text-align: center; font-weight: 600; }
-    .calendar-cell {
-      min-height: 110px; background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 0.5rem;
-      display: flex; flex-direction: column; gap: 4px;
+    .schedule-list-vertical { display: flex; flex-direction: column; gap: 1rem; }
+    .job-row {
+      background: var(--bg-card); border-radius: 16px; padding: 1.5rem;
+      border: 2px solid var(--status-pending); display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 1.5rem; transition: 0.3s ease;
     }
-    .calendar-cell.other-month { opacity: 0.2; }
-    .day-num { font-size: 0.85rem; font-weight: 600; }
+    .job-row.working {
+      border-color: var(--status-working);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.2);
+      animation: livePulse 2s infinite;
+    }
+    .job-row.done { border-color: var(--status-done); opacity: 0.75; }
+    .job-row.pending { border-color: var(--status-pending); }
 
-    .cal-event { font-size: 0.72rem; padding: 3px 6px; border-radius: 4px; line-height: 1.3; }
-    .cal-event.available { background: rgba(56, 189, 248, 0.15); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); }
-    .cal-event.busy { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .cal-event.booked { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    @keyframes livePulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
 
-    /* Job Card List */
-    .schedule-card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
-    .job-card { background: var(--bg-card); border-radius: 16px; padding: 1.5rem; border: 2px solid var(--status-pending); }
-    .job-card.working { border-color: var(--status-working); box-shadow: 0 0 15px rgba(16, 185, 129, 0.15); }
-    .job-card.done { border-color: var(--status-done); opacity: 0.75; }
-    .job-card.pending { border-color: var(--status-pending); }
-
-    .job-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 9999px; margin-bottom: 0.75rem; }
+    .job-info-left { display: flex; flex-direction: column; gap: 0.4rem; }
+    .job-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 9999px; width: fit-content; }
     .badge-working { background: rgba(16, 185, 129, 0.2); color: var(--status-working); }
     .badge-done { background: rgba(239, 68, 68, 0.2); color: var(--status-done); }
     .badge-pending { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; }
+    .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--status-working); animation: blink 0.8s infinite alternate; }
+    @keyframes blink { from { opacity: 0.2; } to { opacity: 1; } }
 
-    /* Footer & Admin Link */
+    .job-action-btn {
+      padding: 0.6rem 1.2rem; background: var(--accent); color: #000;
+      text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;
+    }
+
     footer { text-align: center; padding: 2.5rem 1.5rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
     footer a { color: var(--text-muted); text-decoration: none; transition: 0.2s; }
     footer a:hover { color: var(--accent); }
@@ -138,13 +141,13 @@
         <a class="nav-link active" onclick="navigate('home')">ข้อมูลทั่วไป & ช่างภาพ</a>
         <a class="nav-link" onclick="navigate('photos')">ผลงานภาพ</a>
         <a class="nav-link" onclick="navigate('videos')">ผลงานวิดีโอ</a>
-        <a class="nav-link" onclick="navigate('schedule')">ตารางงาน & คิวว่าง</a>
+        <a class="nav-link" onclick="navigate('schedule')">ตารางงาน & คิวงาน</a>
       </nav>
     </div>
   </header>
 
   <main>
-    <!-- 1. ข้อมูลทั่วไป & ช่างภาพ -->
+    <!-- Section 1: ข้อมูลช่างภาพ -->
     <section id="sec-home" class="page-section active">
       <div class="hero">
         <h1 style="font-size: 2.5rem; margin-bottom: 0.75rem;" id="heroTitle">Luxury Visual Experience</h1>
@@ -157,54 +160,52 @@
           <div class="profile-name" id="profName">-</div>
           <div class="profile-bio" id="profBio">-</div>
         </div>
+
+        <!-- Social & Contact Grid (รวม TikTok และ Facebook) -->
         <div class="contact-grid">
           <div class="contact-card"><div class="contact-label">📍 พื้นที่รับงาน</div><div class="contact-val" id="profLocation">-</div></div>
-          <div class="contact-card"><div class="contact-label">📱 โทรศัพท์</div><div class="contact-val" id="profPhone">-</div></div>
-          <div class="contact-card"><div class="contact-label">💬 Line</div><div class="contact-val" id="profLine">-</div></div>
-          <div class="contact-card"><div class="contact-label">📷 Instagram</div><div class="contact-val" id="profIG">-</div></div>
-          <div class="contact-card"><div class="contact-label">✉️ Email</div><div class="contact-val" id="profEmail">-</div></div>
+          <a class="contact-card" id="linkPhone" href="#"><div class="contact-label">📱 โทรศัพท์</div><div class="contact-val" id="profPhone">-</div></a>
+          <a class="contact-card" id="linkLine" target="_blank"><div class="contact-label">💬 Line</div><div class="contact-val" id="profLine">-</div></a>
+          <a class="contact-card" id="linkIG" target="_blank"><div class="contact-label">📷 Instagram</div><div class="contact-val" id="profIG">-</div></a>
+          <a class="contact-card" id="linkFB" target="_blank"><div class="contact-label">📘 Facebook</div><div class="contact-val" id="profFB">-</div></a>
+          <a class="contact-card" id="linkTikTok" target="_blank"><div class="contact-label">🎵 TikTok</div><div class="contact-val" id="profTikTok">-</div></a>
+          <a class="contact-card" id="linkEmail" href="#"><div class="contact-label">✉️ Email</div><div class="contact-val" id="profEmail">-</div></a>
         </div>
       </div>
+
+      <!-- รูปภาพที่อยากโชว์หน้าแรก -->
+      <div class="showcase-title">✨ รูปภาพแนะนำหน้าแรก (Featured Gallery)</div>
+      <div class="showcase-grid" id="featuredGrid"></div>
     </section>
 
-    <!-- 2. ผลงานภาพ -->
+    <!-- Section 2: ภาพ -->
     <section id="sec-photos" class="page-section">
       <h2 style="margin-bottom: 2rem;">ผลงานภาพถ่าย</h2>
       <div class="gallery" id="photoGallery"><p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p></div>
     </section>
 
-    <!-- 3. ผลงานวิดีโอ -->
+    <!-- Section 3: วิดีโอ -->
     <section id="sec-videos" class="page-section">
       <h2 style="margin-bottom: 2rem;">ผลงานวิดีโอ</h2>
       <div class="gallery" id="videoGallery"><p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p></div>
     </section>
 
-    <!-- 4. ตารางงาน & คิวว่าง -->
+    <!-- Section 4: ตารางงาน -->
     <section id="sec-schedule" class="page-section">
       <div class="schedule-header">
-        <h2>ตารางงาน & ปฏิทินคิวงาน</h2>
-        <div class="view-toggle">
-          <button class="view-btn active" onclick="switchScheduleView('calendar')">📅 ปฏิทิน</button>
-          <button class="view-btn" onclick="switchScheduleView('cards')">📋 รายการงาน</button>
+        <div>
+          <h2>ตารางงาน & สถานะการปฏิบัติงาน</h2>
+          <small style="color: var(--accent);">⚡ อัปเดตและประมวลผลสถานะอัตโนมัติตามเวลาจริง (Real-time)</small>
         </div>
       </div>
 
-      <div id="view-calendar" class="calendar-container">
-        <div class="calendar-nav">
-          <button onclick="changeMonth(-1)">&lt; เดือนก่อนหน้า</button>
-          <h3 id="currentMonthYear"></h3>
-          <button onclick="changeMonth(1)">เดือนถัดไป &gt;</button>
-        </div>
-        <div class="calendar-grid" id="calendarGrid"></div>
-      </div>
-
-      <div id="view-cards" style="display: none;">
-        <div class="schedule-card-list" id="jobCardList">กำลังโหลดรายการงาน...</div>
+      <!-- รายการงานเรียงกันลงมา -->
+      <div class="schedule-list-vertical" id="scheduleListVertical">
+        <p style="color: var(--text-muted);">กำลังโหลดตารางงาน...</p>
       </div>
     </section>
   </main>
 
-  <!-- Footer ด้านล่างสุด พร้อมลิงก์เข้า Admin -->
   <footer>
     <p>&copy; Photographer Portfolio. All rights reserved. | <a href="admin.html">เข้าสู่ระบบ Admin</a></p>
   </footer>
@@ -212,7 +213,6 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
     let allData = { profile: {}, portfolio: [], schedule: [] };
-    let currentDate = new Date();
 
     function navigate(secId) {
       document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
@@ -221,24 +221,18 @@
       event.target.classList.add('active');
     }
 
-    function switchScheduleView(view) {
-      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById('view-calendar').style.display = view === 'calendar' ? 'block' : 'none';
-      document.getElementById('view-cards').style.display = view === 'cards' ? 'block' : 'none';
-    }
-
-    async function loadData() {
+    async function loadData(isInitial = false) {
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
         if (data.success) {
           allData = data;
-          renderProfile();
-          renderGallery('photoGallery', data.portfolio.filter(x => x.mediaType === 'image'), 'image');
-          renderGallery('videoGallery', data.portfolio.filter(x => x.mediaType === 'video'), 'video');
-          renderCalendar();
-          renderJobCards();
+          if (isInitial) {
+            renderProfile();
+            renderGallery('photoGallery', data.portfolio.filter(x => x.mediaType === 'image'), 'image');
+            renderGallery('videoGallery', data.portfolio.filter(x => x.mediaType === 'video'), 'video');
+          }
+          renderScheduleVertical(); // คำนวณเวลาและอัปเดตสถานะอัตโนมัติ
         }
       } catch (err) { console.error(err); }
     }
@@ -252,10 +246,34 @@
       document.getElementById("profName").innerText = p.photographerName || "Photographer";
       document.getElementById("profBio").innerText = p.bio || "-";
       document.getElementById("profLocation").innerText = p.location || "-";
+
+      // Contact & Links
       document.getElementById("profPhone").innerText = p.phone || "-";
+      document.getElementById("linkPhone").href = p.phone ? `tel:${p.phone}` : "#";
+
       document.getElementById("profLine").innerText = p.line || "-";
+      document.getElementById("linkLine").href = p.line ? `https://line.me/ti/p/~${p.line.replace('@','')}` : "#";
+
       document.getElementById("profIG").innerText = p.instagram || "-";
+      document.getElementById("linkIG").href = p.instagram ? (p.instagram.startsWith('http') ? p.instagram : `https://${p.instagram}`) : "#";
+
+      document.getElementById("profFB").innerText = p.facebook || "-";
+      document.getElementById("linkFB").href = p.facebook ? (p.facebook.startsWith('http') ? p.facebook : `https://${p.facebook}`) : "#";
+
+      document.getElementById("profTikTok").innerText = p.tiktok || "-";
+      document.getElementById("linkTikTok").href = p.tiktok ? (p.tiktok.startsWith('http') ? p.tiktok : `https://${p.tiktok}`) : "#";
+
       document.getElementById("profEmail").innerText = p.email || "-";
+      document.getElementById("linkEmail").href = p.email ? `mailto:${p.email}` : "#";
+
+      // Featured Showcase Photos
+      const featGrid = document.getElementById("featuredGrid");
+      if (p.featuredPhotos) {
+        const photos = p.featuredPhotos.split(',').filter(x => x.trim().length > 0);
+        featGrid.innerHTML = photos.map(url => `<div class="showcase-item"><img src="${url.trim()}" loading="lazy"></div>`).join('');
+      } else {
+        featGrid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1;">ยังไม่มีรูปภาพแนะนำ</p>';
+      }
     }
 
     function renderGallery(elId, items, type) {
@@ -275,63 +293,82 @@
       `).join('');
     }
 
-    function changeMonth(delta) {
-      currentDate.setMonth(currentDate.getMonth() + delta);
-      renderCalendar();
-    }
+    // ฟังก์ชันคำนวณสถานะอัตโนมัติอ้างอิงเวลาจริง
+    function evaluateRealtimeJobStatus(dateStr, timeRangeStr) {
+      const now = new Date();
+      const [year, month, day] = dateStr.split('-').map(Number);
+      let startH = 0, startM = 0;
+      let endH = 23, endM = 59;
 
-    function renderCalendar() {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      const monthNames = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
-      document.getElementById("currentMonthYear").innerText = `${monthNames[month]} ${year + 543}`;
+      if (timeRangeStr && timeRangeStr.includes('-')) {
+        const parts = timeRangeStr.split('-').map(s => s.trim().replace('.', ':'));
+        const parseTime = (t) => {
+          const match = t.match(/(\d{1,2}):(\d{2})/);
+          return match ? [parseInt(match[1]), parseInt(match[2])] : null;
+        };
+        const sTime = parseTime(parts[0]);
+        const eTime = parseTime(parts[1]);
+        if (sTime) { startH = sTime[0]; startM = sTime[1]; }
+        if (eTime) { endH = eTime[0]; endM = eTime[1]; }
+      }
 
-      const firstDay = new Date(year, month, 1).getDay();
-      const lastDate = new Date(year, month + 1, 0).getDate();
-      const grid = document.getElementById("calendarGrid");
-      grid.innerHTML = ['อา','จ','อ','พ','พฤ','ศ','ส'].map(d => `<div class="calendar-day-header">${d}</div>`).join('');
+      const startDateTime = new Date(year, month - 1, day, startH, startM, 0);
+      const endDateTime = new Date(year, month - 1, day, endH, endM, 59);
 
-      for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div class="calendar-cell other-month"></div>`;
-
-      for (let day = 1; day <= lastDate; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = (allData.schedule || []).filter(item => item.date === dateStr);
-
-        let eventHtml = dayEvents.map(ev => {
-          if (ev.status === 'available') return `<div class="cal-event available">🟢 ว่าง (${ev.time})</div>`;
-          if (ev.status === 'busy') return `<div class="cal-event busy">🔴 ไม่ว่าง (${ev.time})</div>`;
-          return `<div class="cal-event booked">🟠 ${ev.title} (${ev.time})</div>`;
-        }).join('');
-
-        grid.innerHTML += `<div class="calendar-cell"><span class="day-num">${day}</span><div>${eventHtml}</div></div>`;
+      if (now > endDateTime) {
+        return { statusClass: "done", statusLabel: "งานจบแล้ว (Completed)", isWorking: false };
+      } else if (now >= startDateTime && now <= endDateTime) {
+        return { statusClass: "working", statusLabel: "กำลังทำงาน (In Progress)", isWorking: true };
+      } else {
+        return { statusClass: "pending", statusLabel: "ยังไม่เริ่มงาน (Upcoming)", isWorking: false };
       }
     }
 
-    function renderJobCards() {
-      const container = document.getElementById("jobCardList");
-      const jobs = (allData.schedule || []).filter(i => i.status === 'booked');
-      if (!jobs.length) { container.innerHTML = '<p style="color: var(--text-muted); grid-column:1/-1;">ไม่มีรายการงานในระบบ</p>'; return; }
+    function renderScheduleVertical() {
+      const container = document.getElementById("scheduleListVertical");
+      const list = allData.schedule || [];
 
-      container.innerHTML = jobs.map(j => {
-        const todayStr = new Date().toISOString().split('T')[0];
-        let statusClass = "pending";
-        let statusLabel = "ยังไม่เริ่มงาน";
+      if (!list.length) {
+        container.innerHTML = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงาน</p>';
+        return;
+      }
 
-        if (j.date === todayStr) { statusClass = "working"; statusLabel = "กำลังทำงาน (วันนี้)"; }
-        else if (j.date < todayStr) { statusClass = "done"; statusLabel = "งานจบแล้ว"; }
+      // เรียงลำดับตามวันที่
+      const sorted = [...list].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      container.innerHTML = sorted.map(item => {
+        const evalStatus = evaluateRealtimeJobStatus(item.date, item.time);
+        const linkHtml = item.extLink 
+          ? `<a href="${item.extLink}" target="_blank" class="job-action-btn">🔗 เปิดลิงก์งาน</a>` 
+          : '';
 
         return `
-          <div class="job-card ${statusClass}">
-            <span class="job-badge badge-${statusClass}">${statusLabel}</span>
-            <div style="font-size:1.15rem; font-weight:600; margin-bottom:0.4rem;">${j.title}</div>
-            <div style="font-size:0.85rem; color:var(--text-muted);">📅 วันที่: <strong>${j.date}</strong> | ⏰ เวลา: ${j.time}</div>
-            <div style="font-size:0.85rem; color:var(--text-muted);">📍 สถานที่: ${j.location || '-'}</div>
+          <div class="job-row ${evalStatus.statusClass}">
+            <div class="job-info-left">
+              <span class="job-badge badge-${evalStatus.statusClass}">
+                ${evalStatus.isWorking ? '<span class="pulse-dot"></span>' : ''}
+                ${evalStatus.statusLabel}
+              </span>
+              <div style="font-size: 1.25rem; font-weight: 700; color: #fff;">${item.title}</div>
+              <div style="color: var(--text-muted); font-size: 0.9rem;">
+                📅 <strong>${item.date}</strong> | ⏰ เวลา: <strong>${item.time}</strong> | 📍 สถานที่: <strong>${item.location || '-'}</strong>
+              </div>
+              ${item.details ? `<div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 4px;">📝 ${item.details}</div>` : ''}
+            </div>
+            <div>
+              ${linkHtml}
+            </div>
           </div>
         `;
       }).join('');
     }
 
-    window.onload = loadData;
+    // โหลดครั้งแรก + วนลูป Real-time อัตโนมัติ
+    window.onload = () => {
+      loadData(true);
+      setInterval(() => loadData(false), 10000); // ดึงข้อมูลใหม่จาก Sheets ทุก 10 วินาที
+      setInterval(() => renderScheduleVertical(), 3000); // คำนวณนาฬิกาเปลี่ยนสถานะทุก 3 วินาที
+    };
   </script>
 </body>
 </html>
