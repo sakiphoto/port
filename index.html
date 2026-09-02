@@ -186,7 +186,6 @@
           <div class="profile-bio" id="profBio">-</div>
         </div>
 
-        <!-- Social & Contact Grid (รวมแบบไดนามิกหลายลิงก์) -->
         <div class="contact-grid" id="contactGrid">
           <div class="contact-card"><div class="contact-label">📍 พื้นที่รับงาน</div><div class="contact-val" id="profLocation">-</div></div>
           <a class="contact-card" id="linkPhone" href="#"><div class="contact-label">📱 โทรศัพท์</div><div class="contact-val" id="profPhone">-</div></a>
@@ -198,7 +197,6 @@
         </div>
       </div>
 
-      <!-- รูปภาพที่อยากโชว์หน้าแรก -->
       <div class="showcase-title">✨ รูปภาพแนะนำหน้าแรก (Featured Gallery)</div>
       <div class="showcase-grid" id="featuredGrid"></div>
     </section>
@@ -224,13 +222,11 @@
         </div>
       </div>
 
-      <!-- ปุ่มสลับการดูปฏิทิน และ คิวงาน -->
       <div class="schedule-toggle">
         <button class="toggle-btn active" onclick="switchScheduleView('calendar', this)">📅 มุมมองปฏิทินสถานะรับงาน</button>
         <button class="toggle-btn" onclick="switchScheduleView('list', this)">📋 รายงานคิวงานที่รับแล้ว</button>
       </div>
 
-      <!-- มุมมอง 1: ปฏิทิน -->
       <div id="viewCalendar">
         <div class="calendar-container">
           <div class="calendar-header">
@@ -246,7 +242,6 @@
         </div>
       </div>
 
-      <!-- มุมมอง 2: รายการคิวงาน -->
       <div id="viewList" style="display: none;">
         <div class="schedule-list-vertical" id="scheduleListVertical">
           <p style="color: var(--text-muted);">กำลังโหลดตารางงาน...</p>
@@ -310,7 +305,6 @@
       document.getElementById("profBio").innerText = p.bio || "-";
       document.getElementById("profLocation").innerText = p.location || "-";
 
-      // Contact & Links หลัก
       document.getElementById("profPhone").innerText = p.phone || "-";
       document.getElementById("linkPhone").href = p.phone ? `tel:${p.phone}` : "#";
 
@@ -329,7 +323,6 @@
       document.getElementById("profEmail").innerText = p.email || "-";
       document.getElementById("linkEmail").href = p.email ? `mailto:${p.email}` : "#";
 
-      // โซเชียลมีเดียเพิ่มเติมที่เพิ่มจากระบบ Admin
       const extraContainer = document.getElementById("contactGrid");
       document.querySelectorAll(".extra-social-card").forEach(e => e.remove());
       
@@ -344,7 +337,6 @@
         extraContainer.appendChild(a);
       });
 
-      // Featured Showcase Photos
       const featGrid = document.getElementById("featuredGrid");
       if (p.featuredPhotos) {
         const photos = p.featuredPhotos.split(',').filter(x => x.trim().length > 0);
