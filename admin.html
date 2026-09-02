@@ -24,6 +24,28 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif; }
     body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; }
 
+    /* Custom Toast Notification Bar System */
+    #customToast {
+      position: fixed; bottom: 30px; right: 30px; z-index: 3000;
+      background: var(--bg-card); color: #fff; border: 1px solid var(--accent);
+      padding: 1rem 1.5rem; border-radius: 12px; font-weight: 600; font-size: 0.95rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 10px;
+      opacity: 0; transform: translateY(20px); transition: all 0.3s ease; pointer-events: none;
+    }
+    #customToast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #customToast.error { border-color: var(--danger); }
+
+    /* Form UI Color fixes for Select/Dropdown */
+    select {
+      background-color: var(--bg-card) !important;
+      color: #ffffff !important;
+    }
+    option {
+      background-color: #12161f !important;
+      color: #ffffff !important;
+      padding: 10px;
+    }
+
     /* ---------- 1. LOGIN SCREEN ---------- */
     #loginSection {
       position: fixed; inset: 0; background: var(--bg-dark); z-index: 2000;
@@ -200,6 +222,9 @@
 </head>
 <body>
 
+  <!-- CUSTOM TOAST NOTIFICATION CONTAINER -->
+  <div id="customToast">🔔 <span id="toastMsg">แจ้งเตือนจากระบบ</span></div>
+
   <!-- ========== 1. LOGIN ========== -->
   <div id="loginSection">
     <div class="login-box">
@@ -356,7 +381,7 @@
               <div class="form-group"><label>ชื่องาน / ลูกค้า</label><input type="text" id="schedTitle" placeholder="เช่น ถ่ายภาพงานแต่งคุณแนน" required></div>
               <div class="form-group"><label>สถานที่</label><input type="text" id="schedLocation" placeholder="เช่น โรงแรมสยาม กทม."></div>
             </div>
-            <div class="form-group"><label>ลิงก์ภายนอก (Google Maps / Live / Drive)</label><input type="url" id="schedExtLink" placeholder="https://maps.app.goo.gl/..."></div>
+            <div class="form-group"><label>ลิงก์ภายนอก (Google Maps / Live / Drive)</label><input type="text" id="schedExtLink" placeholder="maps.app.goo.gl/..."></div>
             <div class="form-group"><label>รายละเอียดเพิ่มเติม</label><textarea id="schedDetails" rows="2" placeholder="เช่น เตรียมชุดไฟและเลนส์เทเล"></textarea></div>
             <button type="submit" class="btn" id="btnAddSched">บันทึกงานใหม่</button>
           </form>
@@ -387,7 +412,7 @@
               <div class="form-group"><label>พื้นที่รับงาน</label><input type="text" id="editProfLocation"></div>
               <div class="form-group"><label>เบอร์โทรศัพท์</label><input type="text" id="editProfPhone"></div>
               <div class="form-group"><label>Line ID</label><input type="text" id="editProfLine"></div>
-              <div class="form-group"><label>Instagram หลัก</label><input type="text" id="editProfIG"></div>
+              <div class="form-group"><label>Instagram หลัก</label><input type="text" id="editProfIG" placeholder="instagram.com/yourname"></div>
               <div class="form-group"><label>Facebook URL</label><input type="text" id="editProfFB" placeholder="facebook.com/yourpage"></div>
               <div class="form-group"><label>TikTok URL</label><input type="text" id="editProfTikTok" placeholder="tiktok.com/@yourname"></div>
             </div>
@@ -430,7 +455,7 @@
               <div class="form-group"><label>ชื่อผลงาน</label><input type="text" id="pImgTitle" required></div>
               <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pImgCat" placeholder="Wedding / Portrait" required></div>
             </div>
-            <div class="form-group"><label>ลิงก์เพิ่มเติม (Full Set)</label><input type="url" id="pImgLink" placeholder="https://..."></div>
+            <div class="form-group"><label>ลิงก์เพิ่มเติม (Full Set)</label><input type="text" id="pImgLink" placeholder="drive.google.com/..."></div>
             <div class="form-group"><label>เลือกไฟล์รูปภาพ</label><input type="file" id="pImgFiles" accept="image/*" multiple required></div>
             <button type="submit" class="btn" id="btnUpImgs">อัปโหลดภาพผลงาน</button>
           </form>
@@ -448,7 +473,7 @@
               <div class="form-group"><label>ชื่อวิดีโอ</label><input type="text" id="pVidTitle" required></div>
               <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pVidCat" placeholder="Cinematic / MV" required></div>
             </div>
-            <div class="form-group"><label>ลิงก์ภายนอก (YouTube / Vimeo)</label><input type="url" id="pVidLink" placeholder="https://..."></div>
+            <div class="form-group"><label>ลิงก์ภายนอก (YouTube / Vimeo)</label><input type="text" id="pVidLink" placeholder="youtube.com/watch?v=..."></div>
             <div class="form-group"><label>เลือกไฟล์วิดีโอ</label><input type="file" id="pVidFile" accept="video/*" required></div>
             <button type="submit" class="btn" id="btnUpVid">อัปโหลดวิดีโอ</button>
           </form>
@@ -465,6 +490,36 @@
     let allData = { profile: {}, portfolio: [], schedule: [], calendar: [] };
     let liveTimers = [];
 
+    // Helper: URL Format Transformer
+    function formatUrl(url) {
+      if (!url) return "#";
+      return url.match(/^https?:\/\//i) ? url : 'https://' + url;
+    }
+
+    // Custom Toast Notification Function
+    function showNotification(msg, isError = false) {
+      const toast = document.getElementById("customToast");
+      const msgSpan = document.getElementById("toastMsg");
+      msgSpan.innerText = msg;
+      toast.className = isError ? "show error" : "show";
+      setTimeout(() => { toast.className = ""; }, 3500);
+    }
+
+    // Auto Enter Navigation Engine
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && e.target.tagName === "INPUT" && e.target.type !== "submit") {
+        e.preventDefault();
+        const form = e.target.form;
+        if (form) {
+          const focusables = Array.from(form.querySelectorAll("input, select, textarea, button")).filter(el => !el.disabled && el.type !== "hidden");
+          const index = focusables.indexOf(e.target);
+          if (index > -1 && index < focusables.length - 1) {
+            focusables[index + 1].focus();
+          }
+        }
+      }
+    });
+
     if (token) enterPreviewMode();
 
     /* ---------- LOGIN / LOGOUT ---------- */
@@ -479,9 +534,10 @@
         if (data.success) {
           sessionStorage.setItem("adminPassword", pwd);
           token = pwd;
+          showNotification("เข้าสู่ระบบสำเร็จ!");
           enterPreviewMode();
-        } else { alert("รหัสผ่านไม่ถูกต้อง"); }
-      } catch (err) { alert("เชื่อมต่อไม่สำเร็จ"); }
+        } else { showNotification("รหัสผ่านไม่ถูกต้อง", true); }
+      } catch (err) { showNotification("เชื่อมต่อไม่สำเร็จ", true); }
       btn.innerText = "เข้าสู่ระบบ"; btn.disabled = false;
     }
 
@@ -572,13 +628,12 @@
         document.getElementById(valId).innerText = value || "-";
         document.getElementById(linkId).href = value ? hrefBuilder(value) : "#";
       };
-      const url = v => v.startsWith('http') ? v : 'https://' + v;
 
       setLink("profPhone", "linkPhone", p.phone, v => `tel:${v}`);
       setLink("profLine", "linkLine", p.line, v => `https://line.me/ti/p/~${v.replace('@','')}`);
-      setLink("profIG", "linkIG", p.instagram, url);
-      setLink("profFB", "linkFB", p.facebook, url);
-      setLink("profTikTok", "linkTikTok", p.tiktok, url);
+      setLink("profIG", "linkIG", p.instagram, formatUrl);
+      setLink("profFB", "linkFB", p.facebook, formatUrl);
+      setLink("profTikTok", "linkTikTok", p.tiktok, formatUrl);
       setLink("profEmail", "linkEmail", p.email, v => `mailto:${v}`);
 
       const extraContainer = document.getElementById("previewContactGrid");
@@ -590,8 +645,8 @@
         const a = document.createElement("a");
         a.className = "contact-card extra-social-card";
         a.target = "_blank";
-        a.href = l.url;
-        a.innerHTML = `<div class="contact-label">🔗 ${l.label || 'Social'}</div><div class="contact-val">${l.url.replace(/^https?:\/\//, '')}</div>`;
+        a.href = formatUrl(l.url);
+        a.innerHTML = `<div class="contact-label">🔗 ${l.label || 'Social'}</div><div class="contact-val">${l.url.replace(/^https?:\/\//i, '')}</div>`;
         extraContainer.appendChild(a);
       });
 
@@ -615,7 +670,7 @@
           <div class="gallery-info">
             <div class="gallery-tag">${i.category}</div>
             <div style="font-weight:600; margin-top:4px;">${i.title}</div>
-            ${i.extLink ? `<a href="${i.extLink}" target="_blank" class="gallery-link-btn">🔗 ดูข้อมูลเพิ่มเติม</a>` : ''}
+            ${i.extLink ? `<a href="${formatUrl(i.extLink)}" target="_blank" class="gallery-link-btn">🔗 ดูข้อมูลเพิ่มเติม</a>` : ''}
           </div>
         </div>
       `).join('');
@@ -662,7 +717,7 @@
               </div>
               ${item.details ? `<div style="font-size:0.85rem; color:#cbd5e1; margin-top:4px;">📝 ${item.details}</div>` : ''}
             </div>
-            <div>${item.extLink ? `<a href="${item.extLink}" target="_blank" class="job-action-btn">🔗 เปิดลิงก์งาน</a>` : ''}</div>
+            <div>${item.extLink ? `<a href="${formatUrl(item.extLink)}" target="_blank" class="job-action-btn">🔗 เปิดลิงก์งาน</a>` : ''}</div>
           </div>
         `;
       }).join('');
@@ -690,6 +745,8 @@
 
     async function handleSetCalendar(e) {
       e.preventDefault();
+      const btn = document.getElementById("btnSaveCal");
+      btn.disabled = true; btn.innerText = "กำลังบันทึก...";
       const payload = {
         action: "setCalendar", password: token,
         date: document.getElementById("calDate").value,
@@ -698,7 +755,8 @@
       };
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
       const result = await res.json();
-      if (result.success) { alert("บันทึกสถานะปฏิทินสำเร็จ!"); reloadAdmin(); } else alert(result.message);
+      btn.disabled = false; btn.innerText = "บันทึกสถานะปฏิทิน";
+      if (result.success) { showNotification("บันทึกสถานะปฏิทินสำเร็จ!"); reloadAdmin(); } else showNotification(result.message, true);
     }
 
     function populateProfileForm() {
@@ -730,7 +788,7 @@
       div.className = "social-input-row";
       div.innerHTML = `
         <input type="text" placeholder="ชื่อช่องทาง (เช่น IG รอง, FB Page)" class="soc-label" value="${label}" style="width:35%;">
-        <input type="url" placeholder="https://..." class="soc-url" value="${url}" style="width:55%;">
+        <input type="text" placeholder="facebook.com/yourpage" class="soc-url" value="${url}" style="width:55%;">
         <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="width:10%; padding:0.4rem;">&times;</button>
       `;
       container.appendChild(div);
@@ -751,7 +809,7 @@
       rows.forEach(r => {
         const l = r.querySelector(".soc-label").value;
         const u = r.querySelector(".soc-url").value;
-        if (u) socialLinks.push({ label: l || "Social", url: u });
+        if (u) socialLinks.push({ label: l || "Social", url: formatUrl(u) });
       });
 
       const payload = {
@@ -767,9 +825,9 @@
         location: document.getElementById("editProfLocation").value,
         phone: document.getElementById("editProfPhone").value,
         line: document.getElementById("editProfLine").value,
-        instagram: document.getElementById("editProfIG").value,
-        facebook: document.getElementById("editProfFB").value,
-        tiktok: document.getElementById("editProfTikTok").value,
+        instagram: formatUrl(document.getElementById("editProfIG").value),
+        facebook: formatUrl(document.getElementById("editProfFB").value),
+        tiktok: formatUrl(document.getElementById("editProfTikTok").value),
         email: document.getElementById("editProfEmail").value,
         socialLinks: JSON.stringify(socialLinks)
       };
@@ -777,7 +835,7 @@
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
       const result = await res.json();
       btn.innerText = "บันทึกข้อมูลทั้งหมด"; btn.disabled = false;
-      if (result.success) { alert("บันทึกสำเร็จ!"); reloadAdmin(); } else alert(result.message);
+      if (result.success) { showNotification("บันทึกสำเร็จ!"); reloadAdmin(); } else showNotification(result.message, true);
     }
 
     async function handleAddSchedule(e) {
@@ -791,13 +849,13 @@
         title: document.getElementById("schedTitle").value,
         location: document.getElementById("schedLocation").value,
         status: "booked",
-        extLink: document.getElementById("schedExtLink").value,
+        extLink: formatUrl(document.getElementById("schedExtLink").value),
         details: document.getElementById("schedDetails").value
       };
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
       const result = await res.json();
       btn.innerText = "บันทึกงานใหม่"; btn.disabled = false;
-      if (result.success) { alert("บันทึกสำเร็จ!"); e.target.reset(); reloadAdmin(); } else alert(result.message);
+      if (result.success) { showNotification("บันทึกคิวงานสำเร็จ!"); e.target.reset(); reloadAdmin(); } else showNotification(result.message, true);
     }
 
     function renderAdminSchedule() {
@@ -808,7 +866,7 @@
         <div class="item-list-row">
           <div>
             <strong>${i.title}</strong> (${i.date} | ${i.time})
-            <div style="font-size:0.8rem; color:var(--text-muted);">📍 ${i.location} ${i.extLink ? `| <a href="${i.extLink}" target="_blank" style="color:var(--accent);">🔗 เปิดลิงก์</a>` : ''}</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">📍 ${i.location} ${i.extLink ? `| <a href="${formatUrl(i.extLink)}" target="_blank" style="color:var(--accent);">🔗 เปิดลิงก์</a>` : ''}</div>
           </div>
           <button class="btn btn-danger" style="padding:0.4rem 0.8rem;" onclick="deleteItem('${i.id}','schedule')">ลบงาน</button>
         </div>
@@ -829,7 +887,7 @@
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
       const result = await res.json();
       btn.innerText = "อัปโหลดรูปภาพหน้าแรก"; btn.disabled = false;
-      if (result.success) { alert("อัปโหลดสำเร็จ!"); e.target.reset(); reloadAdmin(); } else alert(result.message);
+      if (result.success) { showNotification("อัปโหลดสำเร็จ!"); e.target.reset(); reloadAdmin(); } else showNotification(result.message, true);
     }
 
     function renderAdminFeatured() {
@@ -846,13 +904,12 @@
     }
 
     async function removeFeaturedPhoto(index) {
-      if (!confirm("ต้องการลบรูปภาพนี้ออกจากหน้าแรก?")) return;
       let photos = (allData.profile.featuredPhotos || "").split(',').filter(x => x.trim());
       photos.splice(index, 1);
       const payload = { action: "updateProfile", password: token, ...allData.profile, featuredPhotos: photos.join(',') };
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
       const result = await res.json();
-      if (result.success) reloadAdmin();
+      if (result.success) { showNotification("ลบรูปภาพสำเร็จ!"); reloadAdmin(); }
     }
 
     async function handleUploadPhotos(e) {
@@ -864,7 +921,7 @@
 
       const baseTitle = document.getElementById("pImgTitle").value;
       const cat = document.getElementById("pImgCat").value;
-      const link = document.getElementById("pImgLink").value;
+      const link = formatUrl(document.getElementById("pImgLink").value);
 
       const payloads = [];
       for (let i = 0; i < files.length; i++) {
@@ -876,7 +933,7 @@
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "upload", password: token, files: payloads }) });
       const result = await res.json();
       btn.innerText = "อัปโหลดภาพผลงาน"; btn.disabled = false;
-      if (result.success) { alert("อัปโหลดสำเร็จ!"); e.target.reset(); reloadAdmin(); } else alert(result.message);
+      if (result.success) { showNotification("อัปโหลดสำเร็จ!"); e.target.reset(); reloadAdmin(); } else showNotification(result.message, true);
     }
 
     async function handleUploadVideo(e) {
@@ -892,13 +949,13 @@
           fileName: file.name, fileData: await toBase64(file), mediaType: "video",
           title: document.getElementById("pVidTitle").value,
           category: document.getElementById("pVidCat").value,
-          extLink: document.getElementById("pVidLink").value
+          extLink: formatUrl(document.getElementById("pVidLink").value)
         }]
       };
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
       const result = await res.json();
       btn.innerText = "อัปโหลดวิดีโอ"; btn.disabled = false;
-      if (result.success) { alert("อัปโหลดสำเร็จ!"); e.target.reset(); reloadAdmin(); } else alert(result.message);
+      if (result.success) { showNotification("อัปโหลดสำเร็จ!"); e.target.reset(); reloadAdmin(); } else showNotification(result.message, true);
     }
 
     function renderAdminPortfolioList(elId, type) {
@@ -909,7 +966,7 @@
         <div class="item-list-row">
           <div>
             <strong>${i.title}</strong> (${i.category})
-            ${i.extLink ? `<div style="font-size:0.75rem;"><a href="${i.extLink}" target="_blank" style="color:var(--accent);">🔗 ${i.extLink}</a></div>` : ''}
+            ${i.extLink ? `<div style="font-size:0.75rem;"><a href="${formatUrl(i.extLink)}" target="_blank" style="color:var(--accent);">🔗 ${i.extLink}</a></div>` : ''}
           </div>
           <button class="btn btn-danger" style="padding:0.4rem 0.8rem;" onclick="deleteItem('${i.id}','portfolio')">ลบ</button>
         </div>
@@ -917,10 +974,9 @@
     }
 
     async function deleteItem(id, type) {
-      if (!confirm("ต้องการลบรายการนี้?")) return;
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "delete", password: token, id, type }) });
       const result = await res.json();
-      if (result.success) reloadAdmin();
+      if (result.success) { showNotification("ลบรายการสำเร็จ!"); reloadAdmin(); }
     }
   </script>
 </body>
