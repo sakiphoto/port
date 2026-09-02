@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard | Portfolio & Schedule</title>
+  <title>Admin Dashboard & Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -16,217 +18,307 @@
       --border: rgba(255, 255, 255, 0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif; }
-    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; padding: 2rem 1rem; }
-    .container { max-width: 900px; margin: 0 auto; }
-    
-    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
-    h2 { font-weight: 600; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; }
 
-    .form-group { margin-bottom: 1.25rem; }
-    label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+    /* Floating Admin Bar */
+    .admin-bar {
+      position: fixed; bottom: 20px; right: 20px; z-index: 100;
+      background: rgba(18, 22, 31, 0.95); border: 1px solid var(--accent);
+      padding: 0.75rem 1.25rem; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: flex; gap: 0.75rem; align-items: center; backdrop-filter: blur(10px);
+    }
+    .admin-bar button {
+      background: var(--accent); color: #000; border: none; padding: 0.5rem 1rem;
+      border-radius: 9999px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+    }
+
+    /* Modal Panels */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200;
+      display: none; align-items: center; justify-content: center; padding: 1rem;
+      backdrop-filter: blur(6px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+      width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; padding: 2rem;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .btn-close { background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 1.2rem; }
+    label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.85rem; }
     input, select {
-      width: 100%; padding: 0.85rem 1rem; background: rgba(255, 255, 255, 0.03);
+      width: 100%; padding: 0.8rem 1rem; background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border); border-radius: 10px; color: #fff; outline: none;
     }
     input:focus, select:focus { border-color: var(--accent); }
-
     .btn {
-      width: 100%; padding: 0.85rem; background: var(--accent); color: #000;
+      width: 100%; padding: 0.8rem; background: var(--accent); color: #000;
       border: none; border-radius: 10px; font-weight: 600; cursor: pointer;
     }
-    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; width: auto; }
-    .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-danger { background: var(--danger); color: #fff; }
 
-    .admin-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; flex-wrap: wrap; }
-    .tab-btn {
-      background: transparent; border: none; color: var(--text-muted); padding: 0.5rem 1rem;
-      border-radius: 8px; cursor: pointer; font-weight: 500;
+    /* Admin Calendar */
+    .admin-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .admin-cal-cell {
+      min-height: 80px; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px; cursor: pointer; transition: 0.2s;
     }
-    .tab-btn.active { color: #000; background: var(--accent); }
+    .admin-cal-cell:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
+    .admin-cal-cell.other-month { opacity: 0.2; pointer-events: none; }
+
+    /* Tabs inside Control Center */
+    .nav-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
+    .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; }
+    .tab-btn.active { background: var(--accent); color: #000; font-weight: 600; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    .item-card {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1rem; background: rgba(255, 255, 255, 0.02); border-radius: 12px;
-      margin-bottom: 0.75rem; border: 1px solid var(--border);
+    /* Item List Row */
+    .item-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      border-radius: 10px; margin-bottom: 0.5rem;
     }
-    .btn-delete { background: var(--danger); color: #fff; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; }
-    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <div class="container">
 
-    <div id="loginSection" class="card" style="max-width: 450px; margin: 4rem auto;">
-      <h2>🔐 เข้าสู่ระบบ Admin</h2>
-      <form onsubmit="handleLogin(event)">
-        <div class="form-group">
-          <label>Admin Password</label>
-          <input type="password" id="adminPassword" placeholder="ใส่รหัสผ่าน admin" required>
+  <!-- แสดงหน้าเว็บจริงแบบผู้ใช้ (Preview Mode) -->
+  <iframe id="userPreviewFrame" src="index.html" style="width: 100%; height: 100vh; border: none;"></iframe>
+
+  <!-- ปุ่มลอยสำหรับเปิดเมนู Admin -->
+  <div class="admin-bar">
+    <span style="font-size: 0.85rem; color: var(--accent); font-weight: 600;">👑 โหมดจัดการระบบ</span>
+    <button onclick="openControlCenter()">⚙️ เปิดแผงควบคุม</button>
+  </div>
+
+  <!-- Modal: แผงควบคุมระบบ (Control Center) -->
+  <div id="controlCenterModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>🛠️ แผงควบคุมระบบ (Admin Control Center)</h2>
+        <button class="btn-close" onclick="closeControlCenter()">&times;</button>
+      </div>
+
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-schedule')">📅 จัดการคิวงาน (คลิกปฏิทิน)</button>
+        <button class="tab-btn" onclick="switchTab('tab-photos')">📷 อัปโหลดรูปภาพ</button>
+        <button class="tab-btn" onclick="switchTab('tab-videos')">🎬 อัปโหลดวิดีโอ</button>
+      </div>
+
+      <!-- แท็บ 1: จัดการคิวงานบนปฏิทิน -->
+      <div id="tab-schedule" class="tab-content active">
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">👉 <strong>คลิกที่วันที่ในปฏิทิน</strong> เพื่อลงวันว่าง/ไม่ว่าง หรือบันทึกงานที่รับ</p>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
+          <button class="btn" style="width: auto; padding: 0.3rem 0.8rem;" onclick="adminChangeMonth(-1)">&lt;</button>
+          <strong id="adminMonthLabel"></strong>
+          <button class="btn" style="width: auto; padding: 0.3rem 0.8rem;" onclick="adminChangeMonth(1)">&gt;</button>
         </div>
-        <button type="submit" class="btn" id="loginBtn">เข้าสู่ระบบ</button>
-      </form>
-    </div>
+        <div class="admin-cal-grid" id="adminCalGrid"></div>
+      </div>
 
-    <div id="adminPanel" class="hidden">
-      <div class="card">
-        <h2>
-          <span>แดชบอร์ดจัดการระบบ</span>
-          <button class="btn btn-outline btn-sm" onclick="logout()">ออกจากระบบ</button>
-        </h2>
-
-        <div class="admin-tabs">
-          <button class="tab-btn active" onclick="switchTab('tabSchedule')">📅 จัดการตารางงาน & วันว่าง</button>
-          <button class="tab-btn" onclick="switchTab('tabUploadMedia')">📷 อัปโหลดผลงาน (ภาพ/วิดีโอ)</button>
-          <button class="tab-btn" onclick="switchTab('tabManage')">📋 จัดการข้อมูลทั้งหมด</button>
+      <!-- แท็บ 2: อัปโหลดรูปภาพ -->
+      <div id="tab-photos" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3>อัปโหลดรูปภาพใหม่</h3>
+          <button class="btn" style="width: auto; padding: 0.4rem 0.8rem; background: transparent; border: 1px solid var(--accent); color: var(--accent);" onclick="openPopupList('image')">📋 ดูรายการภาพทั้งหมด</button>
         </div>
+        <form onsubmit="handleUploadMedia(event, 'image')">
+          <div class="form-group">
+            <label>ชื่อภาพ</label>
+            <input type="text" id="imgTitle" required placeholder="เช่น Modern Luxury Villa">
+          </div>
+          <div class="form-group">
+            <label>หมวดหมู่</label>
+            <input type="text" id="imgCategory" required placeholder="เช่น Portrait, Architecture">
+          </div>
+          <div class="form-group">
+            <label>เลือกไฟล์รูปภาพ</label>
+            <input type="file" id="imgFileInput" accept="image/*" required>
+          </div>
+          <button type="submit" class="btn" id="btnUploadImg">บันทึกรูปภาพ</button>
+        </form>
+      </div>
 
-        <!-- 1. เมนูจัดการตารางงาน / กำหนดวันว่าง -->
-        <div id="tabSchedule" class="tab-content active">
-          <form onsubmit="handleAddSchedule(event)">
-            <div class="form-group">
-              <label>สถานะของวัน</label>
-              <select id="schStatus" required>
-                <option value="available">🟢 ว่างรับงาน (Available)</option>
-                <option value="booked">🟠 รับงานแล้ว / มีคิวงาน (Booked)</option>
-                <option value="busy">🔴 ไม่ว่าง / ติดภารกิจ (Busy)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>วันที่</label>
-              <input type="date" id="schDate" required>
-            </div>
-            <div class="form-group">
-              <label>ช่วงเวลา</label>
-              <input type="text" id="schTime" placeholder="เช่น 09:00 - 16:00 หรือ ทั้งวัน" required>
-            </div>
-            <div class="form-group">
-              <label>ชื่องาน / รายละเอียด (เช่น งานแต่งงานคุณเอ, ว่างคิวบ่าย)</label>
-              <input type="text" id="schTitle" placeholder="รายละเอียดงาน" required>
-            </div>
-            <div class="form-group">
-              <label>สถานที่</label>
-              <input type="text" id="schLocation" placeholder="เช่น Studio 54, โรงแรมสยาม หรือ -">
-            </div>
-            <button type="submit" class="btn" id="schBtn">บันทึกตารางงาน</button>
-          </form>
+      <!-- แท็บ 3: อัปโหลดวิดีโอ -->
+      <div id="tab-videos" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3>อัปโหลดวิดีโอใหม่</h3>
+          <button class="btn" style="width: auto; padding: 0.4rem 0.8rem; background: transparent; border: 1px solid var(--accent); color: var(--accent);" onclick="openPopupList('video')">📋 ดูรายการวิดีโอทั้งหมด</button>
         </div>
-
-        <!-- 2. เมนูอัปโหลดผลงาน -->
-        <div id="tabUploadMedia" class="tab-content">
-          <form onsubmit="handleUploadMedia(event)">
-            <div class="form-group">
-              <label>ประเภทผลงาน</label>
-              <select id="mediaType">
-                <option value="image">รูปภาพ (Image)</option>
-                <option value="video">วิดีโอ (Video)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>ชื่อผลงาน</label>
-              <input type="text" id="mediaTitle" placeholder="เช่น Luxury Portrait Shoot" required>
-            </div>
-            <div class="form-group">
-              <label>หมวดหมู่</label>
-              <input type="text" id="mediaCategory" placeholder="เช่น Portrait, Fashion, Commercial" required>
-            </div>
-            <div class="form-group">
-              <label>เลือกไฟล์</label>
-              <input type="file" id="mediaFile" accept="image/*,video/*" required>
-            </div>
-            <button type="submit" class="btn" id="uploadBtn">อัปโหลดไฟล์</button>
-          </form>
-        </div>
-
-        <!-- 3. รายการผลงานและตารางงาน -->
-        <div id="tabManage" class="tab-content">
-          <h3 style="margin-bottom: 1rem; color: var(--accent);">📅 รายการตารางงาน / คิว</h3>
-          <div id="scheduleListContainer">กำลังโหลด...</div>
-          
-          <h3 style="margin: 2rem 0 1rem; color: var(--accent);">📷 รายการผลงาน Portfolio</h3>
-          <div id="portfolioListContainer">กำลังโหลด...</div>
-        </div>
-
+        <form onsubmit="handleUploadMedia(event, 'video')">
+          <div class="form-group">
+            <label>ชื่อวิดีโอ</label>
+            <input type="text" id="vidTitle" required placeholder="เช่น Cinema Reel 2026">
+          </div>
+          <div class="form-group">
+            <label>หมวดหมู่</label>
+            <input type="text" id="vidCategory" required placeholder="เช่น Commercial, Fashion Film">
+          </div>
+          <div class="form-group">
+            <label>เลือกไฟล์วิดีโอ</label>
+            <input type="file" id="vidFileInput" accept="video/*" required>
+          </div>
+          <button type="submit" class="btn" id="btnUploadVid">บันทึกวิดีโอ</button>
+        </form>
       </div>
     </div>
+  </div>
 
+  <!-- Modal Popup: สำหรับคลิกลงคิววันที่เลือก -->
+  <div id="dateActionModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 id="selectedDateLabel">ลงข้อมูลวันที่</h3>
+        <button class="btn-close" onclick="closeDateActionModal()">&times;</button>
+      </div>
+      <form onsubmit="saveScheduleEvent(event)">
+        <input type="hidden" id="selectedDateValue">
+        <div class="form-group">
+          <label>สถานะของวัน</label>
+          <select id="popStatus" onchange="toggleJobFields(this.value)">
+            <option value="available">🟢 ว่างรับงาน (Available)</option>
+            <option value="booked">🟠 รับงานแล้ว / ลงคิวงาน (Booked)</option>
+            <option value="busy">🔴 ไม่ว่างรับงาน (Busy)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>ช่วงเวลา</label>
+          <input type="text" id="popTime" placeholder="เช่น ทั้งวัน หรือ 09:00 - 16:00" required>
+        </div>
+        <div id="jobDetailsGroup">
+          <div class="form-group">
+            <label>ชื่องาน / ชื่อผู้ว่าจ้าง</label>
+            <input type="text" id="popTitle" placeholder="เช่น งานแต่งคุณแนน & คุณเอก">
+          </div>
+          <div class="form-group">
+            <label>สถานที่</label>
+            <input type="text" id="popLocation" placeholder="เช่น โรงแรมแกรนด์ หรือ -">
+          </div>
+        </div>
+        <button type="submit" class="btn" id="btnSaveSchedule">บันทึกลงตาราง</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Popup: แสดงรายการผลงาน (ภาพ หรือ วิดีโอ) -->
+  <div id="mediaListModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 id="mediaListModalTitle">รายการผลงาน</h3>
+        <button class="btn-close" onclick="closeMediaListModal()">&times;</button>
+      </div>
+      <div id="mediaItemsContainer">กำลังโหลด...</div>
+    </div>
   </div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
-    let token = sessionStorage.getItem("adminPassword");
+    const ADMIN_PWD = "adminPassword123";
+    let adminDate = new Date();
+    let allData = { portfolio: [], schedule: [] };
 
-    if (token) showPanel();
-
-    async function handleLogin(e) {
-      e.preventDefault();
-      const pwd = document.getElementById("adminPassword").value;
-      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "login", password: pwd }) });
-      const data = await res.json();
-      if (data.success) {
-        sessionStorage.setItem("adminPassword", pwd);
-        token = pwd;
-        showPanel();
-      } else {
-        alert("รหัสผ่านไม่ถูกต้อง");
-      }
-    }
-
-    function showPanel() {
-      document.getElementById("loginSection").classList.add("hidden");
-      document.getElementById("adminPanel").classList.remove("hidden");
-      loadAllData();
-    }
-
-    function logout() {
-      sessionStorage.removeItem("adminPassword");
-      location.reload();
-    }
+    function openControlCenter() { document.getElementById("controlCenterModal").classList.add("active"); loadAdminData(); }
+    function closeControlCenter() { document.getElementById("controlCenterModal").classList.remove("active"); }
 
     function switchTab(tabId) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       event.target.classList.add('active');
     }
 
-    async function handleAddSchedule(e) {
-      e.preventDefault();
-      const payload = {
-        action: "addSchedule",
-        password: token,
-        status: document.getElementById("schStatus").value,
-        date: document.getElementById("schDate").value,
-        time: document.getElementById("schTime").value,
-        title: document.getElementById("schTitle").value,
-        location: document.getElementById("schLocation").value
-      };
-      
-      const btn = document.getElementById("schBtn");
-      btn.innerText = "กำลังบันทึก...";
-      btn.disabled = true;
+    async function loadAdminData() {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        if (data.success) {
+          allData = data;
+          renderAdminCalendar();
+        }
+      } catch(e) { console.error(e); }
+    }
 
-      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-      const result = await res.json();
-      btn.innerText = "บันทึกตารางงาน";
-      btn.disabled = false;
+    function adminChangeMonth(delta) {
+      adminDate.setMonth(adminDate.getMonth() + delta);
+      renderAdminCalendar();
+    }
 
-      if (result.success) {
-        alert("บันทึกตารางงานสำเร็จ!");
-        e.target.reset();
-        loadAllData();
-      } else {
-        alert(result.message);
+    function renderAdminCalendar() {
+      const year = adminDate.getFullYear();
+      const month = adminDate.getMonth();
+      const monthNames = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+      document.getElementById("adminMonthLabel").innerText = `${monthNames[month]} ${year + 543}`;
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+      const grid = document.getElementById("adminCalGrid");
+      grid.innerHTML = ['อา','จ','อ','พ','พฤ','ศ','ส'].map(d => `<div style="text-align:center; font-size:0.75rem; color:var(--text-muted);">${d}</div>`).join('');
+
+      for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div class="admin-cal-cell other-month"></div>`;
+
+      for (let day = 1; day <= lastDate; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = allData.schedule.filter(i => i.date === dateStr);
+        let tags = dayEvents.map(e => {
+          let color = e.status === 'available' ? 'var(--accent)' : (e.status === 'busy' ? 'var(--danger)' : '#f59e0b');
+          return `<div style="font-size:0.65rem; color:${color}; white-space:nowrap; overflow:hidden;">• ${e.title || e.status}</div>`;
+        }).join('');
+
+        grid.innerHTML += `
+          <div class="admin-cal-cell" onclick="openDateModal('${dateStr}')">
+            <div style="font-size:0.75rem; font-weight:600;">${day}</div>
+            <div>${tags}</div>
+          </div>
+        `;
       }
     }
 
-    async function handleUploadMedia(e) {
+    function openDateModal(dateStr) {
+      document.getElementById("selectedDateValue").value = dateStr;
+      document.getElementById("selectedDateLabel").innerText = `📅 จัดการวันที่: ${dateStr}`;
+      document.getElementById("dateActionModal").classList.add("active");
+    }
+    function closeDateActionModal() { document.getElementById("dateActionModal").classList.remove("active"); }
+
+    function toggleJobFields(status) {
+      document.getElementById("jobDetailsGroup").style.display = status === 'busy' ? 'none' : 'block';
+    }
+
+    async function saveScheduleEvent(e) {
       e.preventDefault();
-      const file = document.getElementById("mediaFile").files[0];
+      const payload = {
+        action: "addSchedule",
+        password: ADMIN_PWD,
+        date: document.getElementById("selectedDateValue").value,
+        status: document.getElementById("popStatus").value,
+        time: document.getElementById("popTime").value,
+        title: document.getElementById("popTitle").value || "-",
+        location: document.getElementById("popLocation").value || "-"
+      };
+
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+      const result = await res.json();
+      if (result.success) {
+        alert("บันทึกสำเร็จ!");
+        closeDateActionModal();
+        loadAdminData();
+        document.getElementById("userPreviewFrame").contentWindow.location.reload();
+      }
+    }
+
+    async function handleUploadMedia(e, type) {
+      e.preventDefault();
+      const fileInput = document.getElementById(type === 'image' ? 'imgFileInput' : 'vidFileInput');
+      const title = document.getElementById(type === 'image' ? 'imgTitle' : 'vidTitle').value;
+      const category = document.getElementById(type === 'image' ? 'imgCategory' : 'vidCategory').value;
+      const file = fileInput.files[0];
       if (!file) return;
 
-      const btn = document.getElementById("uploadBtn");
+      const btn = document.getElementById(type === 'image' ? 'btnUploadImg' : 'btnUploadVid');
       btn.innerText = "กำลังอัปโหลด...";
       btn.disabled = true;
 
@@ -234,69 +326,63 @@
       reader.onload = async function() {
         const payload = {
           action: "upload",
-          password: token,
-          mediaType: document.getElementById("mediaType").value,
-          title: document.getElementById("mediaTitle").value,
-          category: document.getElementById("mediaCategory").value,
+          password: ADMIN_PWD,
+          mediaType: type,
+          title: title,
+          category: category,
           fileName: file.name,
           fileData: reader.result
         };
 
         const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
         const result = await res.json();
-        btn.innerText = "อัปโหลดไฟล์";
+        btn.innerText = "บันทึก";
         btn.disabled = false;
 
         if (result.success) {
           alert("อัปโหลดสำเร็จ!");
           e.target.reset();
-          loadAllData();
-        } else {
-          alert(result.message);
-        }
+          loadAdminData();
+          document.getElementById("userPreviewFrame").contentWindow.location.reload();
+        } else alert(result.message);
       };
       reader.readAsDataURL(file);
     }
 
-    async function loadAllData() {
-      const res = await fetch(API_URL);
-      const result = await res.json();
-      if (!result.success) return;
+    function openPopupList(type) {
+      document.getElementById("mediaListModalTitle").innerText = type === 'image' ? "📷 รายการรูปภาพทั้งหมด" : "🎬 รายการวิดีโอทั้งหมด";
+      const container = document.getElementById("mediaItemsContainer");
+      const items = allData.portfolio.filter(x => x.mediaType === type);
 
-      // Render Schedule list
-      const sContainer = document.getElementById("scheduleListContainer");
-      sContainer.innerHTML = (result.schedule && result.schedule.length) ? result.schedule.map(item => `
-        <div class="item-card">
-          <div>
-            <strong>${item.date} (${item.time})</strong> - ${item.title}
-            <div style="font-size: 0.8rem; color: var(--text-muted);">${item.location} | สถานะ: ${item.status}</div>
+      if (!items.length) {
+        container.innerHTML = '<p style="color:var(--text-muted);">ไม่มีรายการ</p>';
+      } else {
+        container.innerHTML = items.map(i => `
+          <div class="item-row">
+            <div>
+              <strong>${i.title}</strong>
+              <div style="font-size:0.75rem; color:var(--text-muted);">${i.category}</div>
+            </div>
+            <button class="btn btn-danger" style="width:auto; padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="deleteItem('${i.id}')">ลบ</button>
           </div>
-          <button class="btn-delete" onclick="deleteItem('${item.id}', 'schedule')">ลบ</button>
-        </div>
-      `).join('') : '<p style="color: var(--text-muted);">ไม่มีรายการตารางงาน</p>';
-
-      // Render Portfolio list
-      const pContainer = document.getElementById("portfolioListContainer");
-      pContainer.innerHTML = (result.portfolio && result.portfolio.length) ? result.portfolio.map(item => `
-        <div class="item-card">
-          <div>
-            <strong>${item.title}</strong>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">${item.category} (${item.mediaType})</div>
-          </div>
-          <button class="btn-delete" onclick="deleteItem('${item.id}', 'portfolio')">ลบ</button>
-        </div>
-      `).join('') : '<p style="color: var(--text-muted);">ไม่มีผลงาน</p>';
+        `).join('');
+      }
+      document.getElementById("mediaListModal").classList.add("active");
     }
+    function closeMediaListModal() { document.getElementById("mediaListModal").classList.remove("active"); }
 
-    async function deleteItem(id, type) {
-      if (!confirm("ต้องการลบข้อมูลนี้หรือไม่?")) return;
+    async function deleteItem(id) {
+      if (!confirm("ต้องการลบรายการนี้?")) return;
       const res = await fetch(API_URL, {
         method: "POST",
-        body: JSON.stringify({ action: "delete", password: token, id: id, type: type })
+        body: JSON.stringify({ action: "delete", password: ADMIN_PWD, id: id })
       });
       const result = await res.json();
-      if (result.success) loadAllData();
-      else alert(result.message);
+      if (result.success) {
+        closeMediaListModal();
+        loadAdminData();
+        document.getElementById("userPreviewFrame").contentWindow.location.reload();
+      }
     }
   </script>
 </body>
