@@ -79,7 +79,7 @@
 
     .showcase-title { font-size: 1.25rem; font-weight: 700; margin: 2rem 0 1rem; }
     .showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
-    .showcase-item { height: 200px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
+    .showcase-item { height: 200px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); background: #000; }
     .showcase-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
     .showcase-item:hover img { transform: scale(1.05); }
 
@@ -298,14 +298,14 @@
   </footer>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyZnkAIVNbFEFZlr4wZR9tON_bspCiXSc2hqLHZcj-0Z_0dyJINpFqtQEpvOOGwEb7bXw/exec";
     let allData = { profile: {}, portfolio: [], schedule: [], calendar: [] };
     let currentCalDate = new Date();
 
     const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
     function getDisplayImageUrl(url) {
-      if (!url) return "https://via.placeholder.com/300";
+      if (!url) return "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80";
       if (url.includes("google.com") || url.includes("googleusercontent.com")) {
         let fileId = "";
         const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
@@ -328,6 +328,9 @@
         if (fileId) {
           img.src = `https://wsrv.nl/?url=https://drive.google.com/uc?id=${fileId}`;
         }
+      } else if (!img.dataset.triedFallback) {
+        img.dataset.triedFallback = "true";
+        img.src = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80";
       }
     }
 
@@ -372,18 +375,32 @@
           renderCalendar();
           renderScheduleVertical();
         }
-      } catch (err) { console.error(err); }
+      } catch (err) { 
+        console.error(err);
+        // แสดงข้อมูลสำรองถ้า API ดึงข้อมูลล้มเหลว
+        renderProfileFallback();
+      }
+    }
+
+    function renderProfileFallback() {
+      document.getElementById("navBrand").innerHTML = `PHOTOGRAPHER<span>.</span>`;
+      document.getElementById("heroTitle").innerText = "Luxury Visual Experience";
+      document.getElementById("heroSubtitle").innerText = "รับสร้างสรรค์ผลงานภาพถ่ายระดับพรีเมียม และงานผลิตวิดีโอ Cinematic ครบวงจร";
+      document.getElementById("profAvatar").src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&q=80";
+      document.getElementById("profName").innerText = "PRO PHOTOGRAPHER";
+      document.getElementById("profBio").innerText = "ช่างภาพมืออาชีพ & Filmmaker ประสบการณ์กว่า 8 ปี";
+      document.getElementById("profLocation").innerText = "กรุงเทพฯ & รับงานทั่วประเทศ";
     }
 
     function renderProfile() {
       const p = allData.profile || {};
       document.getElementById("navBrand").innerHTML = `${p.brandName || 'PHOTOGRAPHER'}<span>.</span>`;
       document.getElementById("heroTitle").innerText = p.heroTitle || "Luxury Visual Experience";
-      document.getElementById("heroSubtitle").innerText = p.heroSubtitle || "-";
-      document.getElementById("profAvatar").src = getDisplayImageUrl(p.avatarUrl);
-      document.getElementById("profName").innerText = p.photographerName || "Photographer";
-      document.getElementById("profBio").innerText = p.bio || "-";
-      document.getElementById("profLocation").innerText = p.location || "-";
+      document.getElementById("heroSubtitle").innerText = p.heroSubtitle || "รับสร้างสรรค์ผลงานภาพถ่ายระดับพรีเมียม";
+      document.getElementById("profAvatar").src = getDisplayImageUrl(p.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&q=80");
+      document.getElementById("profName").innerText = p.photographerName || "PRO PHOTOGRAPHER";
+      document.getElementById("profBio").innerText = p.bio || "ช่างภาพมืออาชีพ & Filmmaker";
+      document.getElementById("profLocation").innerText = p.location || "กรุงเทพฯ & ทั่วประเทศ";
 
       const setLink = (valId, linkId, value, hrefBuilder) => {
         document.getElementById(valId).innerText = value || "-";
@@ -416,14 +433,18 @@
         const photos = p.featuredPhotos.split(',').filter(x => x.trim());
         featGrid.innerHTML = photos.map(u => `<div class="showcase-item"><img src="${getDisplayImageUrl(u.trim())}" loading="lazy" referrerpolicy="no-referrer" onerror="handleImgError(this)"></div>`).join('');
       } else {
-        featGrid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1;">ยังไม่มีรูปภาพแนะนำ</p>';
+        featGrid.innerHTML = `
+          <div class="showcase-item"><img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80" loading="lazy"></div>
+          <div class="showcase-item"><img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&q=80" loading="lazy"></div>
+          <div class="showcase-item"><img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=800&q=80" loading="lazy"></div>
+        `;
       }
     }
 
     function renderAlbumGrid(containerId, items, type) {
       const container = document.getElementById(containerId);
       if (!items || !items.length) {
-        container.innerHTML = '<p style="color:var(--text-muted)">ยังไม่มีรายการผลงาน</p>';
+        container.innerHTML = '<p style="color:var(--text-muted)">ยังไม่มีรายการผลงานในระบบ (สามารถอัปโหลดเพิ่มผ่านแอดมินได้)</p>';
         return;
       }
 
@@ -591,7 +612,7 @@
       const container = document.getElementById("scheduleListVertical");
       if (!container) return;
       const list = allData.schedule || [];
-      if (!list.length) { container.innerHTML = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงาน</p>'; return; }
+      if (!list.length) { container.innerHTML = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงานที่บันทึกไว้</p>'; return; }
 
       const sorted = [...list].sort((a, b) => new Date(a.date) - new Date(b.date));
       container.innerHTML = sorted.map(item => {
