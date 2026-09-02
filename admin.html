@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Admin System | Photographer Portfolio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,7 @@
       --status-avail: #22c55e;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif; }
-    body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; }
+    body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; overflow-x: hidden; }
 
     #customToast {
       position: fixed; bottom: 30px; right: 30px; z-index: 3000;
@@ -54,15 +54,15 @@
     .admin-bar {
       position: sticky; top: 0; z-index: 100;
       background: linear-gradient(90deg, #0284c7, #0ea5e9);
-      color: #fff; padding: 0.7rem 1.5rem;
+      color: #fff; padding: 0.7rem 1.25rem;
       display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
     }
-    .admin-bar-left { font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .admin-bar-left { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
     .admin-bar-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .bar-btn {
       background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-      color: #fff; padding: 0.45rem 1.1rem; border-radius: 8px; cursor: pointer;
-      font-size: 0.85rem; font-weight: 600; transition: 0.2s;
+      color: #fff; padding: 0.4rem 0.9rem; border-radius: 8px; cursor: pointer;
+      font-size: 0.8rem; font-weight: 600; transition: 0.2s;
     }
     .bar-btn:hover { background: #fff; color: #0284c7; }
     .bar-btn.primary { background: #fff; color: #0284c7; }
@@ -75,117 +75,207 @@
     }
     .nav-container {
       max-width: 1200px; margin: 0 auto; display: flex;
-      justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem;
+      justify-content: space-between; align-items: center; padding: 1rem 1.25rem; gap: 1rem;
     }
     .logo { font-size: 1.25rem; font-weight: 700; color: #fff; cursor: pointer; }
     .logo span { color: var(--accent); }
-    nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    nav { display: flex; gap: 0.4rem; flex-wrap: wrap; }
     .nav-link {
-      color: var(--text-muted); text-decoration: none; padding: 0.5rem 1rem;
-      border-radius: 9999px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: 0.2s;
+      color: var(--text-muted); text-decoration: none; padding: 0.4rem 0.8rem;
+      border-radius: 9999px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: 0.2s;
     }
     .nav-link:hover, .nav-link.active { color: #fff; background: rgba(255, 255, 255, 0.05); }
     .nav-link.active { color: var(--accent); }
 
-    main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+    main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
     .page-section { display: none; animation: fadeIn 0.3s ease forwards; }
     .page-section.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
     .hero {
-      text-align: center; padding: 3.5rem 1rem 2.5rem;
+      text-align: center; padding: 2.5rem 1rem 2rem;
       background: radial-gradient(circle at center, rgba(56, 189, 248, 0.08) 0%, rgba(10, 12, 16, 0) 70%);
-      border-radius: 24px; margin-bottom: 2rem; border: 1px solid var(--border);
+      border-radius: 20px; margin-bottom: 2rem; border: 1px solid var(--border);
     }
     .profile-card {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px;
-      padding: 3rem 2rem; display: flex; flex-direction: column; align-items: center; text-align: center;
-      gap: 1.5rem; margin-bottom: 2.5rem;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 2rem 1.5rem; display: flex; flex-direction: column; align-items: center; text-align: center;
+      gap: 1.25rem; margin-bottom: 2rem;
     }
     .profile-avatar {
-      width: 150px; height: 150px; border-radius: 50%; object-fit: cover;
+      width: 130px; height: 130px; border-radius: 50%; object-fit: cover;
       border: 3px solid var(--accent); box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
     }
-    .profile-name { font-size: 2rem; font-weight: 700; color: #fff; }
-    .profile-bio { max-width: 680px; color: var(--text-muted); font-size: 1.05rem; }
+    .profile-name { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700; color: #fff; }
+    .profile-bio { max-width: 680px; color: var(--text-muted); font-size: 0.95rem; }
 
-    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; width: 100%; max-width: 960px; }
+    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem; width: 100%; max-width: 960px; }
     .contact-card {
       background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
-      padding: 1rem; border-radius: 12px; text-align: left; text-decoration: none; color: inherit;
+      padding: 0.85rem 1rem; border-radius: 12px; text-align: left; text-decoration: none; color: inherit;
       transition: 0.2s; display: block;
     }
     .contact-card:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.04); }
     .contact-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-    .contact-val { font-size: 0.95rem; font-weight: 600; color: #fff; margin-top: 4px; word-break: break-all; }
+    .contact-val { font-size: 0.9rem; font-weight: 600; color: #fff; margin-top: 2px; word-break: break-all; }
 
-    .showcase-title { font-size: 1.4rem; font-weight: 700; margin: 2.5rem 0 1.2rem; }
-    .showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-    .showcase-item { height: 220px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
+    .showcase-title { font-size: 1.25rem; font-weight: 700; margin: 2rem 0 1rem; }
+    .showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+    .showcase-item { height: 200px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
     .showcase-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
     .showcase-item:hover img { transform: scale(1.05); }
 
-    /* Album Group View Styles */
-    .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+    .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
     .album-card {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
       overflow: hidden; cursor: pointer; transition: transform 0.3s, border-color 0.3s;
     }
-    .album-card:hover { transform: translateY(-5px); border-color: var(--accent); }
-    .album-cover { position: relative; width: 100%; height: 220px; background: #000; overflow: hidden; }
+    .album-card:hover { transform: translateY(-4px); border-color: var(--accent); }
+    .album-cover { position: relative; width: 100%; height: 200px; background: #000; overflow: hidden; }
     .album-cover img, .album-cover video { width: 100%; height: 100%; object-fit: cover; }
     .album-count-badge {
-      position: absolute; bottom: 12px; right: 12px;
-      background: rgba(10, 12, 16, 0.85); color: #fff; padding: 4px 12px;
-      border-radius: 20px; font-size: 0.8rem; font-weight: 600; border: 1px solid var(--border);
+      position: absolute; bottom: 10px; right: 10px;
+      background: rgba(10, 12, 16, 0.85); color: #fff; padding: 3px 10px;
+      border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border);
     }
-    .album-info { padding: 1.25rem; }
-    .album-tag { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 700; }
-    .album-title { font-size: 1.15rem; font-weight: 700; color: #fff; margin: 4px 0 6px; }
-    .album-desc-preview { font-size: 0.85rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .album-info { padding: 1rem; }
+    .album-tag { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; font-weight: 700; }
+    .album-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin: 2px 0 4px; }
+    .album-desc-preview { font-size: 0.8rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-    /* Full Media Viewer Modal */
+    /* DASHBOARD */
+    #dashboardMode {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      width: 100vw; height: 100vh; grid-template-columns: 260px 1fr; background: var(--bg-dark);
+    }
+    .sidebar {
+      background: var(--bg-sidebar); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; justify-content: space-between; padding: 1.25rem; overflow-y: auto;
+    }
+    .sidebar-brand { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; }
+    .sidebar-brand span { color: var(--accent); }
+    .sidebar-menu { display: flex; flex-direction: column; gap: 0.4rem; }
+    .menu-btn {
+      width: 100%; text-align: left; padding: 0.7rem 0.85rem; border-radius: 8px;
+      background: transparent; border: none; color: var(--text-muted); font-size: 0.85rem;
+      cursor: pointer; font-weight: 500; transition: 0.2s;
+    }
+    .menu-btn:hover, .menu-btn.active { background: rgba(56, 189, 248, 0.1); color: var(--accent); font-weight: 600; }
+
+    .main-content { height: 100vh; overflow-y: auto; padding: 2rem; }
+    .admin-tab { display: none; }
+    .admin-tab.active { display: block; animation: fadeIn 0.2s ease; }
+
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 1rem; text-align: left; position: relative; }
+    label { display: block; margin-bottom: 0.3rem; color: var(--text-muted); font-size: 0.8rem; }
+    input, select, textarea {
+      width: 100%; padding: 0.7rem 0.85rem; background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border); border-radius: 8px; color: #fff; outline: none; font-size: 0.9rem;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    .btn { padding: 0.7rem 1.25rem; background: var(--accent); color: #000; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-warning { background: var(--warning); color: #000; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+
+    .admin-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; margin-bottom: 1.25rem; }
+    .item-list-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.85rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      border-radius: 10px; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.6rem;
+    }
+
+    /* Drag & Drop Styling */
+    .drag-item {
+      cursor: grab; transition: background 0.2s, transform 0.2s; user-select: none;
+    }
+    .drag-item:active { cursor: grabbing; opacity: 0.6; }
+    .drag-item.drag-over { border: 2px dashed var(--accent); background: rgba(56, 189, 248, 0.1); }
+    .drag-handle { font-size: 1.2rem; cursor: grab; color: var(--text-muted); margin-right: 10px; }
+
+    .dynamic-link-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+
+    .admin-cal-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 1.25rem; margin-top: 1rem; overflow-x: auto; }
+    .admin-cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; gap: 0.5rem; }
+    .admin-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(40px, 1fr)); gap: 0.35rem; text-align: center; }
+    .admin-cal-day-cell {
+      min-height: 90px; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.4rem; display: flex; flex-direction: column; align-items: flex-start;
+      text-align: left; cursor: pointer; transition: 0.2s ease;
+    }
+    .admin-cal-day-cell:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); transform: translateY(-2px); }
+    .admin-cal-num { font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; }
+    .admin-pill {
+      font-size: 0.62rem; font-weight: 600; padding: 2px 4px; border-radius: 4px; margin-top: 2px; width: 100%;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .admin-pill-avail { background: rgba(34, 197, 94, 0.2); color: var(--status-avail); }
+    .admin-pill-busy { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .admin-pill-custom { background: rgba(56, 189, 248, 0.2); color: var(--accent); }
+    .admin-pill-job { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+    .thai-date-wrapper { position: relative; width: 100%; }
+    .thai-date-display {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);
+      border-radius: 8px; color: #fff; padding: 0.7rem 0.85rem; width: 100%;
+      font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size:0.9rem;
+    }
+    .thai-date-display:hover { border-color: var(--accent); }
+    .native-date-hidden {
+      position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 5;
+    }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
+      z-index: 2500; display: none; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+    .modal-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px;
+      padding: 1.5rem; width: 100%; max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+
     .album-modal-card {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px;
-      padding: 2rem; width: 100%; max-width: 960px; max-height: 90vh; overflow-y: auto;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 1.5rem; width: 100%; max-width: 960px; max-height: 90vh; overflow-y: auto;
       box-shadow: 0 25px 50px rgba(0,0,0,0.7);
     }
-    .album-media-masonry { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
-    .media-item-box { width: 100%; height: 240px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--border); }
+    .album-media-masonry { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; margin-top: 1.25rem; }
+    .media-item-box { width: 100%; height: 200px; border-radius: 10px; overflow: hidden; background: #000; border: 1px solid var(--border); }
     .media-item-box img, .media-item-box video { width: 100%; height: 100%; object-fit: cover; }
     .album-link-chip {
       display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1);
-      color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); padding: 6px 14px;
-      border-radius: 10px; text-decoration: none; font-size: 0.85rem; font-weight: 600; margin-right: 8px; margin-top: 8px;
+      color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); padding: 5px 12px;
+      border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 600; margin-right: 6px; margin-top: 6px;
     }
-    .album-link-chip:hover { background: var(--accent); color: #000; }
 
-    .schedule-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-    .toggle-btn { padding: 0.6rem 1.2rem; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; }
+    .schedule-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .toggle-btn { padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; font-size: 0.85rem; }
     .toggle-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
-    .calendar-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem; }
-    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; }
-    .cal-day-head { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); padding: 0.5rem; }
+    .calendar-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 1.25rem; margin-bottom: 2rem; overflow-x: auto; }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; gap: 0.5rem; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(40px, 1fr)); gap: 0.35rem; text-align: center; }
+    .cal-day-head { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); padding: 0.25rem; }
     .cal-day-cell {
-      min-height: 95px; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
-      border-radius: 12px; padding: 0.5rem; display: flex; flex-direction: column; align-items: flex-start; text-align: left;
+      min-height: 80px; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.35rem; display: flex; flex-direction: column; align-items: flex-start; text-align: left;
     }
-    .cal-day-num { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
+    .cal-day-num { font-size: 0.8rem; font-weight: 700; margin-bottom: 2px; }
     .status-pill {
-      font-size: 0.68rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 2px; width: 100%;
+      font-size: 0.62rem; font-weight: 600; padding: 2px 4px; border-radius: 4px; margin-top: 2px; width: 100%;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .pill-avail { background: rgba(34, 197, 94, 0.2); color: var(--status-avail); }
     .pill-busy { background: rgba(239, 68, 68, 0.2); color: var(--status-done); }
     .pill-booking { background: rgba(56, 189, 248, 0.2); color: var(--accent); }
 
-    .schedule-list-vertical { display: flex; flex-direction: column; gap: 1rem; }
+    .schedule-list-vertical { display: flex; flex-direction: column; gap: 0.85rem; }
     .job-row {
-      background: var(--bg-card); border-radius: 16px; padding: 1.5rem;
+      background: var(--bg-card); border-radius: 14px; padding: 1.25rem;
       border: 2px solid var(--status-pending); display: flex; justify-content: space-between;
-      align-items: center; flex-wrap: wrap; gap: 1.5rem; transition: 0.3s ease;
+      align-items: center; flex-wrap: wrap; gap: 1rem; transition: 0.3s ease;
     }
     .job-row.working { border-color: var(--status-working); animation: livePulse 2s infinite; }
     .job-row.done { border-color: var(--status-done); opacity: 0.75; }
@@ -194,114 +284,30 @@
       70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
       100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
-    .job-info-left { display: flex; flex-direction: column; gap: 0.4rem; }
-    .job-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 9999px; width: fit-content; }
+    .job-info-left { display: flex; flex-direction: column; gap: 0.3rem; }
+    .job-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; width: fit-content; }
     .badge-working { background: rgba(16, 185, 129, 0.2); color: var(--status-working); }
     .badge-done { background: rgba(239, 68, 68, 0.2); color: var(--status-done); }
     .badge-pending { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; }
-    .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--status-working); animation: blink 0.8s infinite alternate; }
+    .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--status-working); animation: blink 0.8s infinite alternate; }
     @keyframes blink { from { opacity: 0.2; } to { opacity: 1; } }
     .job-action-btn {
-      padding: 0.6rem 1.2rem; background: var(--accent); color: #000;
-      text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
-      display: inline-flex; align-items: center; gap: 6px;
+      padding: 0.5rem 1rem; background: var(--accent); color: #000;
+      text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem;
+      display: inline-flex; align-items: center; gap: 4px;
     }
 
-    footer { text-align: center; padding: 2.5rem 1.5rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
+    footer { text-align: center; padding: 2rem 1.25rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; }
 
-    /* DASHBOARD */
-    #dashboardMode {
-      display: none; position: fixed; inset: 0; z-index: 500;
-      width: 100vw; height: 100vh; grid-template-columns: 280px 1fr; background: var(--bg-dark);
-    }
-    .sidebar {
-      background: var(--bg-sidebar); border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem; overflow-y: auto;
-    }
-    .sidebar-brand { font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 2rem; }
-    .sidebar-brand span { color: var(--accent); }
-    .sidebar-menu { display: flex; flex-direction: column; gap: 0.5rem; }
-    .menu-btn {
-      width: 100%; text-align: left; padding: 0.8rem 1rem; border-radius: 10px;
-      background: transparent; border: none; color: var(--text-muted); font-size: 0.95rem;
-      cursor: pointer; font-weight: 500; transition: 0.2s;
-    }
-    .menu-btn:hover, .menu-btn.active { background: rgba(56, 189, 248, 0.1); color: var(--accent); font-weight: 600; }
-
-    .main-content { height: 100vh; overflow-y: auto; padding: 2.5rem 3rem; }
-    .admin-tab { display: none; }
-    .admin-tab.active { display: block; animation: fadeIn 0.2s ease; }
-
-    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-    .form-group { margin-bottom: 1.2rem; text-align: left; position: relative; }
-    label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.85rem; }
-    input, select, textarea {
-      width: 100%; padding: 0.8rem 1rem; background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border); border-radius: 10px; color: #fff; outline: none;
-    }
-    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-    .btn { padding: 0.8rem 1.5rem; background: var(--accent); color: #000; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-warning { background: var(--warning); color: #000; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
-
-    .admin-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
-    .item-list-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 1rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
-      border-radius: 12px; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.75rem;
-    }
-    .dynamic-link-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
-
-    .admin-cal-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-top: 1rem; }
-    .admin-cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-    .admin-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; }
-    .admin-cal-day-cell {
-      min-height: 110px; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
-      border-radius: 12px; padding: 0.6rem; display: flex; flex-direction: column; align-items: flex-start;
-      text-align: left; cursor: pointer; transition: 0.2s ease;
-    }
-    .admin-cal-day-cell:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); transform: translateY(-2px); }
-    .admin-cal-num { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; }
-    .admin-pill {
-      font-size: 0.7rem; font-weight: 600; padding: 3px 6px; border-radius: 4px; margin-top: 3px; width: 100%;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .admin-pill-avail { background: rgba(34, 197, 94, 0.2); color: var(--status-avail); }
-    .admin-pill-busy { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-    .admin-pill-custom { background: rgba(56, 189, 248, 0.2); color: var(--accent); }
-    .admin-pill-job { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-
-    /* CUSTOM THAI DATE PICKER OVERLAY */
-    .thai-date-wrapper {
-      position: relative; width: 100%;
-    }
-    .thai-date-display {
-      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);
-      border-radius: 10px; color: #fff; padding: 0.8rem 1rem; width: 100%;
-      font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-    }
-    .thai-date-display:hover { border-color: var(--accent); }
-    .native-date-hidden {
-      position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 5;
-    }
-
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
-      z-index: 2500; display: none; align-items: center; justify-content: center; padding: 1rem;
-    }
-    .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
-    .modal-card {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
-      padding: 2rem; width: 100%; max-width: 540px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-    }
+    .mobile-admin-header { display: none; background: var(--bg-sidebar); padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
 
     @media (max-width: 860px) {
       #dashboardMode { grid-template-columns: 1fr; }
       .sidebar { display: none; }
-      .main-content { padding: 1.5rem; }
+      .mobile-admin-header { display: flex; flex-direction: column; gap: 0.5rem; }
+      .main-content { padding: 1.25rem; }
       .form-grid-2 { grid-template-columns: 1fr; }
-      header.site-header { top: 92px; }
+      header.site-header { top: 80px; }
     }
   </style>
 </head>
@@ -334,7 +340,7 @@
           <label>ระบุช่วงเวลาว่าง (เช่น 08:00 - 10:00, 15:00 - 18:00)</label>
           <input type="text" id="modalCalAvailableSlots" placeholder="08:00 - 10:00, 15:00 - 18:00">
         </div>
-        <div style="display:flex; gap:0.75rem; justify-content:space-between; margin-top:1.5rem;">
+        <div style="display:flex; gap:0.75rem; justify-content:space-between; margin-top:1.5rem; flex-wrap:wrap;">
           <button type="button" class="btn btn-danger" onclick="deleteCalendarStatus()">🗑️ ลบสถานะ (รีเซ็ต)</button>
           <div style="display:flex; gap:0.5rem;">
             <button type="button" class="btn btn-outline" onclick="closeCalModal()">ยกเลิก</button>
@@ -403,7 +409,7 @@
     </div>
   </div>
 
-  <!-- LOGIN -->
+  <!-- LOGIN SECTION -->
   <div id="loginSection">
     <div class="login-box">
       <h2 style="margin-bottom: 0.5rem;">🔐 เข้าสู่ระบบผู้ดูแล</h2>
@@ -524,12 +530,12 @@
       <div>
         <div class="sidebar-brand">ADMIN <span>PANEL</span></div>
         <div class="sidebar-menu">
-          <button class="menu-btn active" onclick="switchTab('tab-calendar', this)">📅 กำหนดวันว่างในปฏิทิน</button>
+          <button class="menu-btn active" onclick="switchTab('tab-photos', this)">📷 อัปโหลด & จัดเรียงรูปภาพ</button>
+          <button class="menu-btn" onclick="switchTab('tab-videos', this)">🎬 อัปโหลด & จัดเรียงวิดีโอ</button>
+          <button class="menu-btn" onclick="switchTab('tab-calendar', this)">📅 กำหนดวันว่างในปฏิทิน</button>
           <button class="menu-btn" onclick="switchTab('tab-schedule', this)">📌 เพิ่ม & จัดการคิวงาน</button>
           <button class="menu-btn" onclick="switchTab('tab-profile', this)">✏️ ข้อมูลหน้าแรก & โซเชียล</button>
           <button class="menu-btn" onclick="switchTab('tab-featured', this)">✨ รูปภาพโชว์หน้าแรก</button>
-          <button class="menu-btn" onclick="switchTab('tab-photos', this)">📷 อัปโหลดผลงานรูปภาพ</button>
-          <button class="menu-btn" onclick="switchTab('tab-videos', this)">🎬 อัปโหลดผลงานวิดีโอ</button>
         </div>
       </div>
       <div style="display: flex; flex-direction: column; gap: 0.6rem;">
@@ -539,9 +545,97 @@
     </div>
 
     <div class="main-content">
-      <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeDashboard()">← กลับหน้าพรีวิวเว็บไซต์</button>
+      <div class="mobile-admin-header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong style="color:var(--accent);">⚙️ ADMIN DASHBOARD</strong>
+          <button class="btn btn-outline" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="closeDashboard()">← ออกจากแผงควบคุม</button>
+        </div>
+        <select onchange="switchTabMobile(this.value)" style="margin-top:0.4rem; padding:0.5rem;">
+          <option value="tab-photos">📷 อัปโหลด & จัดเรียงรูปภาพ</option>
+          <option value="tab-videos">🎬 อัปโหลด & จัดเรียงวิดีโอ</option>
+          <option value="tab-calendar">📅 กำหนดวันว่างในปฏิทิน</option>
+          <option value="tab-schedule">📌 เพิ่ม & จัดการคิวงาน</option>
+          <option value="tab-profile">✏️ ข้อมูลหน้าแรก & โซเชียล</option>
+          <option value="tab-featured">✨ รูปภาพโชว์หน้าแรก</option>
+        </select>
+      </div>
 
-      <div id="tab-calendar" class="admin-tab active">
+      <!-- TAB PHOTOS -->
+      <div id="tab-photos" class="admin-tab active">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom: 1.5rem;">
+          <h2>📷 อัปโหลด & จัดการลากเรียงอัลบั้มภาพถ่าย</h2>
+          <button class="btn btn-warning" onclick="savePortfolioOrder('image')">💾 บันทึกลำดับตำแหน่งอัลบั้มภาพ</button>
+        </div>
+
+        <div class="admin-card">
+          <form onsubmit="handleUploadPhotos(event)">
+            <div class="form-grid-2">
+              <div class="form-group"><label>ชื่องาน / อัลบั้ม</label><input type="text" id="pImgTitle" placeholder="เช่น งานแต่งงาน คุณอาร์ต & คุณมาย" required></div>
+              <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pImgCat" placeholder="Wedding / Portrait / Commercial" required></div>
+            </div>
+            <div class="form-group">
+              <label>รายละเอียดงาน / คำอธิบายภาพ</label>
+              <textarea id="pImgDetails" rows="3" placeholder="ระบุรายละเอียดงาน สถานที่ Concept หรือเรื่องราวของอัลบั้มนี้..."></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+              <label style="margin-bottom:0; color:var(--accent);">🔗 ลิงก์เพิ่มเติม (Google Drive Full Set / Facebook / Pinterest ฯลฯ)</label>
+              <button type="button" class="btn btn-outline" style="padding:0.3rem 0.8rem; font-size:0.8rem;" onclick="addDynamicLinkRow('photoLinkContainer')">+ เพิ่มลิงก์ภายนอก</button>
+            </div>
+            <div id="photoLinkContainer"></div>
+
+            <div class="form-group" style="margin-top:1rem;">
+              <label>เลือกไฟล์รูปภาพ (เลือกได้หลายรูปในงานเดียวกัน)</label>
+              <input type="file" id="pImgFiles" accept="image/*" multiple required>
+            </div>
+            <button type="submit" class="btn" id="btnUpImgs">อัปโหลดภาพผลงานใหม่</button>
+          </form>
+        </div>
+
+        <h3 style="margin: 2rem 0 0.5rem;">รายการอัลบั้มภาพถ่ายในระบบ (ลากเพื่อจัดเรียงตำแหน่ง)</h3>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">💡 กดคลิกลากการ์ดขึ้น-ลง แล้วกดปุ่ม <strong>"บันทึกลำดับตำแหน่งอัลบั้มภาพ"</strong> ด้านบน</p>
+        <div id="adminPhotoList"></div>
+      </div>
+
+      <!-- TAB VIDEOS -->
+      <div id="tab-videos" class="admin-tab">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom: 1.5rem;">
+          <h2>🎬 อัปโหลด & จัดการลากเรียงอัลบั้มวิดีโอ</h2>
+          <button class="btn btn-warning" onclick="savePortfolioOrder('video')">💾 บันทึกลำดับตำแหน่งวิดีโอ</button>
+        </div>
+
+        <div class="admin-card">
+          <form onsubmit="handleUploadVideo(event)">
+            <div class="form-grid-2">
+              <div class="form-group"><label>ชื่องาน / วิดีโอ</label><input type="text" id="pVidTitle" placeholder="เช่น Cinematic Wedding Teaser" required></div>
+              <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pVidCat" placeholder="Cinematic / Event / MV" required></div>
+            </div>
+            <div class="form-group">
+              <label>รายละเอียดงาน / คำอธิบายวิดีโอ</label>
+              <textarea id="pVidDetails" rows="3" placeholder="ระบุรายละเอียดของวิดีโอ อุปกรณ์ หรือเบื้องหลัง..."></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+              <label style="margin-bottom:0; color:var(--accent);">🔗 ลิงก์เพิ่มเติม (YouTube / Vimeo / Drive ฯลฯ)</label>
+              <button type="button" class="btn btn-outline" style="padding:0.3rem 0.8rem; font-size:0.8rem;" onclick="addDynamicLinkRow('videoLinkContainer')">+ เพิ่มลิงก์ภายนอก</button>
+            </div>
+            <div id="videoLinkContainer"></div>
+
+            <div class="form-group" style="margin-top:1rem;">
+              <label>เลือกไฟล์วิดีโอ (ไม่เกิน 20MB)</label>
+              <input type="file" id="pVidFile" accept="video/*" required>
+            </div>
+            <button type="submit" class="btn" id="btnUpVid">อัปโหลดวิดีโอใหม่</button>
+          </form>
+        </div>
+
+        <h3 style="margin: 2rem 0 0.5rem;">รายการวิดีโอในระบบ (ลากเพื่อจัดเรียงตำแหน่ง)</h3>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">💡 กดคลิกลากการ์ดขึ้น-ลง แล้วกดปุ่ม <strong>"บันทึกลำดับตำแหน่งวิดีโอ"</strong> ด้านบน</p>
+        <div id="adminVideoList"></div>
+      </div>
+
+      <!-- TAB CALENDAR -->
+      <div id="tab-calendar" class="admin-tab">
         <h2>📅 กำหนดวันว่าง / สถานะการรับงานในปฏิทิน</h2>
         <p style="color:var(--text-muted); font-size:0.9rem; margin-top:4px;">💡 คลิกที่ช่องวันที่ในปฏิทินเพื่อตั้งค่าสถานะ, ระบุช่วงเวลา หรือกดลบสถานะได้ทันที</p>
         
@@ -564,6 +658,7 @@
         </div>
       </div>
 
+      <!-- TAB SCHEDULE -->
       <div id="tab-schedule" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;" id="formSchedHeader">📌 เพิ่ม / จัดการคิวงานที่รับ</h2>
         <div class="admin-card">
@@ -574,7 +669,6 @@
             <div class="form-grid-2">
               <div class="form-group">
                 <label>วันที่ปฏิบัติงาน (วัน/เดือน/ปี พ.ศ.)</label>
-                <!-- THAI DATEPICKER CONTAINER -->
                 <div class="thai-date-wrapper">
                   <div class="thai-date-display" id="schedDateDisplay">📅 คลิกเลือกวันที่... <span>▼</span></div>
                   <input type="date" id="schedNativeDate" class="native-date-hidden" onchange="onSchedNativeDateChange(this.value)">
@@ -599,6 +693,7 @@
         <div id="adminScheduleList">กำลังโหลด...</div>
       </div>
 
+      <!-- TAB PROFILE -->
       <div id="tab-profile" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;">✏️ แก้ไขข้อมูลหน้าแรก, ช่างภาพ & โซเชียลมีเดีย</h2>
         <div class="admin-card">
@@ -638,6 +733,7 @@
         </div>
       </div>
 
+      <!-- TAB FEATURED -->
       <div id="tab-featured" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;">✨ จัดการรูปภาพแนะนำหน้าแรก</h2>
         <div class="admin-card">
@@ -652,66 +748,6 @@
         <h3 style="margin: 2rem 0 1rem;">รูปภาพแนะนำปัจจุบัน</h3>
         <div id="featuredPhotoList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;"></div>
       </div>
-
-      <div id="tab-photos" class="admin-tab">
-        <h2 style="margin-bottom: 1.5rem;">📷 อัปโหลด & จัดการผลงานภาพถ่าย</h2>
-        <div class="admin-card">
-          <form onsubmit="handleUploadPhotos(event)">
-            <div class="form-grid-2">
-              <div class="form-group"><label>ชื่องาน / อัลบั้ม</label><input type="text" id="pImgTitle" placeholder="เช่น งานแต่งงาน คุณอาร์ต & คุณมาย" required></div>
-              <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pImgCat" placeholder="Wedding / Portrait / Commercial" required></div>
-            </div>
-            <div class="form-group">
-              <label>รายละเอียดงาน / คำอธิบายภาพ</label>
-              <textarea id="pImgDetails" rows="3" placeholder="ระบุรายละเอียดงาน สถานที่ Concept หรือเรื่องราวของอัลบั้มนี้..."></textarea>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
-              <label style="margin-bottom:0; color:var(--accent);">🔗 ลิงก์เพิ่มเติม (Google Drive Full Set / Facebook / Pinterest ฯลฯ)</label>
-              <button type="button" class="btn btn-outline" style="padding:0.3rem 0.8rem; font-size:0.8rem;" onclick="addDynamicLinkRow('photoLinkContainer')">+ เพิ่มลิงก์ภายนอก</button>
-            </div>
-            <div id="photoLinkContainer"></div>
-
-            <div class="form-group" style="margin-top:1rem;">
-              <label>เลือกไฟล์รูปภาพ (เลือกได้หลายรูปในงานเดียวกัน)</label>
-              <input type="file" id="pImgFiles" accept="image/*" multiple required>
-            </div>
-            <button type="submit" class="btn" id="btnUpImgs">อัปโหลดภาพผลงานใหม่</button>
-          </form>
-        </div>
-        <h3 style="margin: 2rem 0 1rem;">รายการอัลบั้มภาพถ่ายในระบบ (แก้ไข/ลบได้ทั้งอัลบั้ม)</h3>
-        <div id="adminPhotoList"></div>
-      </div>
-
-      <div id="tab-videos" class="admin-tab">
-        <h2 style="margin-bottom: 1.5rem;">🎬 อัปโหลด & จัดการผลงานวิดีโอ</h2>
-        <div class="admin-card">
-          <form onsubmit="handleUploadVideo(event)">
-            <div class="form-grid-2">
-              <div class="form-group"><label>ชื่องาน / วิดีโอ</label><input type="text" id="pVidTitle" placeholder="เช่น Cinematic Wedding Teaser" required></div>
-              <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pVidCat" placeholder="Cinematic / Event / MV" required></div>
-            </div>
-            <div class="form-group">
-              <label>รายละเอียดงาน / คำอธิบายวิดีโอ</label>
-              <textarea id="pVidDetails" rows="3" placeholder="ระบุรายละเอียดของวิดีโอ อุปกรณ์ หรือเบื้องหลัง..."></textarea>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
-              <label style="margin-bottom:0; color:var(--accent);">🔗 ลิงก์เพิ่มเติม (YouTube / Vimeo / Drive ฯลฯ)</label>
-              <button type="button" class="btn btn-outline" style="padding:0.3rem 0.8rem; font-size:0.8rem;" onclick="addDynamicLinkRow('videoLinkContainer')">+ เพิ่มลิงก์ภายนอก</button>
-            </div>
-            <div id="videoLinkContainer"></div>
-
-            <div class="form-group" style="margin-top:1rem;">
-              <label>เลือกไฟล์วิดีโอ (ไม่เกิน 20MB)</label>
-              <input type="file" id="pVidFile" accept="video/*" required>
-            </div>
-            <button type="submit" class="btn" id="btnUpVid">อัปโหลดวิดีโอใหม่</button>
-          </form>
-        </div>
-        <h3 style="margin: 2rem 0 1rem;">รายการวิดีโอในระบบ (แก้ไข/ลบได้)</h3>
-        <div id="adminVideoList"></div>
-      </div>
     </div>
   </div>
 
@@ -722,6 +758,7 @@
     let liveTimers = [];
     let adminCalDate = new Date();
     let currentCalDate = new Date();
+    let dragSrcEl = null;
 
     const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
@@ -879,6 +916,11 @@
       document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       if (el) el.classList.add('active');
+    }
+
+    function switchTabMobile(tabId) {
+      document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
     }
 
     function navigate(secId, el) {
@@ -1570,10 +1612,11 @@
       }
     }
 
+    /* DRAG & DROP FOR ALBUMS */
     function renderAdminPortfolioGroupList(elId, type) {
       const c = document.getElementById(elId);
       const items = (allData.portfolio || []).filter(x => x.mediaType === type);
-      if (!items.length) { c.innerHTML = '<p style="color:var(--text-muted);">ไม่มีข้อมูล</p>'; return; }
+      if (!items.length) { c.innerHTML = '<p style="color:var(--text-muted);">ไม่มีข้อมูลอัลบั้ม</p>'; return; }
 
       const groups = {};
       items.forEach(i => {
@@ -1581,22 +1624,98 @@
         groups[i.title].count++;
       });
 
-      c.innerHTML = Object.keys(groups).map(k => {
+      c.innerHTML = Object.keys(groups).map((k, idx) => {
         const g = groups[k];
         const safeTitle = g.title.replace(/'/g, "\\'");
         return `
-          <div class="item-list-row">
-            <div>
-              <strong>${g.title}</strong> (${g.category}) — <span style="color:var(--accent);">${g.count} รายการ</span>
-              ${g.details ? `<div style="font-size:0.8rem; color:var(--text-muted);">${g.details}</div>` : ''}
+          <div class="item-list-row drag-item" draggable="true" data-title="${g.title}" data-mediatype="${type}">
+            <div style="display:flex; align-items:center;">
+              <span class="drag-handle">☰</span>
+              <div>
+                <strong>${idx + 1}. ${g.title}</strong> (${g.category}) — <span style="color:var(--accent);">${g.count} รายการ</span>
+                ${g.details ? `<div style="font-size:0.8rem; color:var(--text-muted);">${g.details}</div>` : ''}
+              </div>
             </div>
-            <div style="display:flex; gap:0.5rem;">
-              <button class="btn btn-warning" style="padding:0.4rem 0.8rem;" onclick="openEditAlbumModal('${safeTitle}', '${type}')">✏️ แก้ไขอัลบั้ม</button>
-              <button class="btn btn-danger" style="padding:0.4rem 0.8rem;" onclick="deletePortfolioGroup('${safeTitle}', '${type}')">🗑️ ลบอัลบั้ม</button>
+            <div style="display:flex; gap:0.4rem;">
+              <button class="btn btn-warning" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="openEditAlbumModal('${safeTitle}', '${type}')">✏️ แก้ไขอัลบั้ม</button>
+              <button class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="deletePortfolioGroup('${safeTitle}', '${type}')">🗑️ ลบอัลบั้ม</button>
             </div>
           </div>
         `;
       }).join('');
+
+      addDragAndDropEvents(elId);
+    }
+
+    function addDragAndDropEvents(containerId) {
+      const container = document.getElementById(containerId);
+      const items = container.querySelectorAll('.drag-item');
+
+      items.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('dragenter', handleDragEnter);
+        item.addEventListener('dragleave', handleDragLeave);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragend', handleDragEnd);
+      });
+    }
+
+    function handleDragStart(e) {
+      dragSrcEl = this;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', this.innerHTML);
+      this.style.opacity = '0.4';
+    }
+
+    function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); return false; }
+    function handleDragEnter(e) { this.classList.add('drag-over'); }
+    function handleDragLeave(e) { this.classList.remove('drag-over'); }
+
+    function handleDrop(e) {
+      if (e.stopPropagation) e.stopPropagation();
+      if (dragSrcEl !== this) {
+        const container = this.parentNode;
+        const allItems = Array.from(container.children);
+        const srcIndex = allItems.indexOf(dragSrcEl);
+        const targetIndex = allItems.indexOf(this);
+
+        if (srcIndex < targetIndex) {
+          container.insertBefore(dragSrcEl, this.nextSibling);
+        } else {
+          container.insertBefore(dragSrcEl, this);
+        }
+      }
+      return false;
+    }
+
+    function handleDragEnd(e) {
+      this.style.opacity = '1';
+      document.querySelectorAll('.drag-item').forEach(item => item.classList.remove('drag-over'));
+    }
+
+    async function savePortfolioOrder(type) {
+      const containerId = type === 'image' ? 'adminPhotoList' : 'adminVideoList';
+      const items = document.querySelectorAll(`#${containerId} .drag-item`);
+      const orderMap = {};
+
+      items.forEach((item, idx) => {
+        const title = item.getAttribute('data-title');
+        const mediaType = item.getAttribute('data-mediatype');
+        orderMap[`${mediaType}_${title}`] = idx + 1;
+      });
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "reorderPortfolio", password: token, orderMap: orderMap })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification("บันทึกลำดับอัลบั้มสำเร็จ!");
+        loadData(true);
+      } else {
+        showNotification("เกิดข้อผิดพลาดในการบันทึก", true);
+      }
     }
 
     function openEditAlbumModal(title, type) {
