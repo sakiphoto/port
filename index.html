@@ -175,7 +175,6 @@
     .footer-admin-link { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     .footer-admin-link:hover { color: var(--accent); }
 
-    /* Responsive Adjustments */
     @media (max-width: 768px) {
       .nav-container { flex-direction: column; gap: 0.75rem; }
       .contact-grid { grid-template-columns: 1fr; }
@@ -191,6 +190,7 @@
 </head>
 <body>
 
+  <!-- ALBUM DETAIL MODAL -->
   <div class="modal-overlay" id="albumDetailModal">
     <div class="album-modal-card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
@@ -225,6 +225,7 @@
   </header>
 
   <main>
+    <!-- HOME SECTION -->
     <section id="sec-home" class="page-section active">
       <div class="hero">
         <h1 id="heroTitle">Luxury Visual Experience</h1>
@@ -252,16 +253,19 @@
       <div class="showcase-grid" id="featuredGrid"></div>
     </section>
 
+    <!-- PHOTOS SECTION -->
     <section id="sec-photos" class="page-section">
       <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">ผลงานภาพถ่าย (จัดกลุ่มตามอัลบั้มงาน)</h2>
       <div class="album-grid" id="photoAlbumGrid"><p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p></div>
     </section>
 
+    <!-- VIDEOS SECTION -->
     <section id="sec-videos" class="page-section">
       <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">ผลงานวิดีโอ (จัดกลุ่มตามอัลบั้มงาน)</h2>
       <div class="album-grid" id="videoAlbumGrid"><p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p></div>
     </section>
 
+    <!-- SCHEDULE SECTION -->
     <section id="sec-schedule" class="page-section">
       <div style="margin-bottom: 1.5rem;">
         <h2 style="font-size: 1.5rem;">ตารางงาน & สถานะการปฏิบัติงาน</h2>
@@ -403,7 +407,6 @@
         return;
       }
 
-      // Group By Title maintaining display order
       const albums = {};
       items.forEach(item => {
         const key = item.title;
