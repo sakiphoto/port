@@ -568,7 +568,7 @@
         </div>
 
         <div class="admin-card">
-          <form onsubmit="handleUploadPhotos(event)">
+          <form id="uploadPhotoForm" onsubmit="handleUploadPhotos(event)">
             <div class="form-grid-2">
               <div class="form-group"><label>ชื่องาน / อัลบั้ม</label><input type="text" id="pImgTitle" placeholder="เช่น งานแต่งงาน คุณอาร์ต & คุณมาย" required></div>
               <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pImgCat" placeholder="Wedding / Portrait / Commercial" required></div>
@@ -605,7 +605,7 @@
         </div>
 
         <div class="admin-card">
-          <form onsubmit="handleUploadVideo(event)">
+          <form id="uploadVideoForm" onsubmit="handleUploadVideo(event)">
             <div class="form-grid-2">
               <div class="form-group"><label>ชื่องาน / วิดีโอ</label><input type="text" id="pVidTitle" placeholder="เช่น Cinematic Wedding Teaser" required></div>
               <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pVidCat" placeholder="Cinematic / Event / MV" required></div>
@@ -662,7 +662,7 @@
       <div id="tab-schedule" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;" id="formSchedHeader">📌 เพิ่ม / จัดการคิวงานที่รับ</h2>
         <div class="admin-card">
-          <form onsubmit="handleAddSchedule(event)">
+          <form id="addScheduleForm" onsubmit="handleAddSchedule(event)">
             <input type="hidden" id="schedId">
             <input type="hidden" id="schedDate" required>
 
@@ -1397,7 +1397,10 @@
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
       const result = await res.json();
       btn.innerText = "บันทึกข้อมูลทั้งหมด"; btn.disabled = false;
-      if (result.success) { showNotification("บันทึกสำเร็จ!"); reloadAdmin(); } else showNotification(result.message, true);
+      if (result.success) { 
+        showNotification("บันทึกสำเร็จ!"); 
+        setTimeout(() => window.location.reload(), 1000);
+      } else showNotification(result.message, true);
     }
 
     async function handleAddSchedule(e) {
@@ -1429,7 +1432,7 @@
       if (result.success) { 
         showNotification(payload.id ? "อัปเดตคิวงานสำเร็จ!" : "เพิ่มคิวงานสำเร็จ!"); 
         resetSchedForm(); 
-        reloadAdmin(); 
+        setTimeout(() => window.location.reload(), 1000); 
       } else showNotification(result.message, true);
     }
 
@@ -1452,15 +1455,10 @@
     }
 
     function resetSchedForm() {
+      document.getElementById("addScheduleForm").reset();
       document.getElementById("schedId").value = "";
       document.getElementById("schedNativeDate").value = "";
       onSchedNativeDateChange("");
-      document.getElementById("schedTime").value = "";
-      document.getElementById("schedTitle").value = "";
-      document.getElementById("schedLocation").value = "";
-      document.getElementById("schedExtLink").value = "";
-      document.getElementById("schedDetails").value = "";
-
       document.getElementById("formSchedHeader").innerText = "📌 เพิ่ม / จัดการคิวงานที่รับ";
       document.getElementById("btnAddSched").innerText = "บันทึกคิวงาน";
       document.getElementById("btnCancelEditSched").style.display = "none";
@@ -1502,7 +1500,11 @@
         const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
         const result = await res.json();
         btn.innerText = "อัปโหลดรูปภาพหน้าแรก"; btn.disabled = false;
-        if (result.success) { showNotification("อัปโหลดสำเร็จ!"); e.target.reset(); reloadAdmin(); } else showNotification(result.message, true);
+        if (result.success) { 
+          showNotification("อัปโหลดสำเร็จ!"); 
+          e.target.reset(); 
+          setTimeout(() => window.location.reload(), 1000); 
+        } else showNotification(result.message, true);
       } catch(err) {
         btn.innerText = "อัปโหลดรูปภาพหน้าแรก"; btn.disabled = false;
         showNotification("เกิดข้อผิดพลาดในการอัปโหลด", true);
@@ -1531,12 +1533,13 @@
       if (result.success) { showNotification("ลบรูปภาพสำเร็จ!"); reloadAdmin(); }
     }
 
+    /* อัปโหลดรูปภาพหลายรูป และรีเฟรชหน้าเว็บอัตโนมัติ */
     async function handleUploadPhotos(e) {
       e.preventDefault();
       const files = document.getElementById("pImgFiles").files;
       if (!files.length) return;
       const btn = document.getElementById("btnUpImgs");
-      btn.innerText = "กำลังอัปโหลด..."; btn.disabled = true;
+      btn.disabled = true;
 
       const title = document.getElementById("pImgTitle").value;
       const cat = document.getElementById("pImgCat").value;
@@ -1546,6 +1549,7 @@
       try {
         const payloads = [];
         for (let i = 0; i < files.length; i++) {
+          btn.innerText = `กำลังประมวลผลรูปที่ ${i + 1}/${files.length}...`;
           const compressed = await compressAndBase64(files[i], 1920);
           payloads.push({
             fileName: files[i].name, 
@@ -1557,24 +1561,32 @@
             extLink: extLinks
           });
         }
+
+        btn.innerText = "กำลังส่งข้อมูลไปยัง Google Drive...";
         const res = await fetch(API_URL, { 
           method: "POST", 
           body: JSON.stringify({ action: "upload", password: token, files: payloads }) 
         });
         const result = await res.json();
-        btn.innerText = "อัปโหลดภาพผลงานใหม่"; btn.disabled = false;
+        
         if (result.success) { 
-          showNotification("อัปโหลดรูปภาพสำเร็จ!"); 
-          e.target.reset(); 
+          showNotification(`อัปโหลดรูปภาพ ${files.length} รูปสำเร็จ! กำลังรีเฟรชหน้าเว็บ...`); 
+          // ล้างฟอร์มทั้งหมด
+          document.getElementById('uploadPhotoForm').reset();
           document.getElementById('photoLinkContainer').innerHTML = '';
-          reloadAdmin(); 
-        } else showNotification(result.message || "อัปโหลดล้มเหลว", true);
+          // รีเฟรชหน้าเว็บอัตโนมัติ
+          setTimeout(() => window.location.reload(), 1200);
+        } else {
+          btn.innerText = "อัปโหลดภาพผลงานใหม่"; btn.disabled = false;
+          showNotification(result.message || "อัปโหลดล้มเหลว", true);
+        }
       } catch(err) {
         btn.innerText = "อัปโหลดภาพผลงานใหม่"; btn.disabled = false;
         showNotification("เกิดข้อผิดพลาดในการประมวลผลรูปภาพ", true);
       }
     }
 
+    /* อัปโหลดวิดีโอ และรีเฟรชหน้าเว็บอัตโนมัติ */
     async function handleUploadVideo(e) {
       e.preventDefault();
       const file = document.getElementById("pVidFile").files[0];
@@ -1609,13 +1621,18 @@
         };
         const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
         const result = await res.json();
-        btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
+        
         if (result.success) { 
-          showNotification("อัปโหลดวิดีโอสำเร็จ!"); 
-          e.target.reset(); 
+          showNotification("อัปโหลดวิดีโอสำเร็จ! กำลังรีเฟรชหน้าเว็บ..."); 
+          // ล้างฟอร์มทั้งหมด
+          document.getElementById('uploadVideoForm').reset();
           document.getElementById('videoLinkContainer').innerHTML = '';
-          reloadAdmin(); 
-        } else showNotification(result.message || "อัปโหลดวิดีโอล้มเหลว", true);
+          // รีเฟรชหน้าเว็บอัตโนมัติ
+          setTimeout(() => window.location.reload(), 1200);
+        } else {
+          btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
+          showNotification(result.message || "อัปโหลดวิดีโอล้มเหลว", true);
+        }
       } catch(err) {
         btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
         showNotification("เกิดข้อผิดพลาดในการอ่านไฟล์วิดีโอ", true);
@@ -1721,8 +1738,8 @@
       });
       const data = await res.json();
       if (data.success) {
-        showNotification("บันทึกลำดับอัลบั้มสำเร็จ!");
-        loadData(true);
+        showNotification("บันทึกลำดับอัลบั้มสำเร็จ! กำลังรีเฟรชหน้าเว็บ...");
+        setTimeout(() => window.location.reload(), 1000);
       } else {
         showNotification("เกิดข้อผิดพลาดในการบันทึก", true);
       }
@@ -1777,21 +1794,30 @@
       const result = await res.json();
       btn.innerText = "บันทึกการแก้ไข"; btn.disabled = false;
       closeEditAlbumModal();
-      if (result.success) { showNotification("แก้ไขอัลบั้มเรียบร้อย!"); reloadAdmin(); } else showNotification(result.message, true);
+      if (result.success) { 
+        showNotification("แก้ไขอัลบั้มเรียบร้อย!"); 
+        setTimeout(() => window.location.reload(), 1000);
+      } else showNotification(result.message, true);
     }
 
     async function deletePortfolioGroup(title, type) {
       if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบอัลบั้ม "${title}" ทั้งหมด? (ไฟล์ใน Drive จะถูกลบด้วย)`)) return;
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "delete", password: token, title: title, mediaType: type, type: "portfolioGroup" }) });
       const result = await res.json();
-      if (result.success) { showNotification("ลบอัลบั้มสำเร็จ!"); reloadAdmin(); }
+      if (result.success) { 
+        showNotification("ลบอัลบั้มสำเร็จ!"); 
+        setTimeout(() => window.location.reload(), 1000);
+      }
     }
 
     async function deleteItem(id, type) {
       if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?")) return;
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "delete", password: token, id, type }) });
       const result = await res.json();
-      if (result.success) { showNotification("ลบรายการสำเร็จ!"); reloadAdmin(); }
+      if (result.success) { 
+        showNotification("ลบรายการสำเร็จ!"); 
+        setTimeout(() => window.location.reload(), 1000);
+      }
     }
   </script>
 </body>
