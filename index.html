@@ -172,6 +172,23 @@
     .footer-admin-link { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
     .footer-admin-link:hover { color: var(--accent); }
 
+    /* Custom Toast Container */
+    .toast-container {
+      position: fixed; bottom: 20px; right: 20px; z-index: 10000;
+      display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: calc(100% - 40px);
+    }
+    .toast-item {
+      background: var(--bg-card); border: 1px solid var(--border); color: #fff;
+      padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between;
+      animation: toastIn 0.3s ease forwards;
+    }
+    .toast-item.success { border-left: 4px solid var(--status-working); }
+    .toast-item.error { border-left: 4px solid var(--danger); }
+    .toast-item.info { border-left: 4px solid var(--accent); }
+    @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
     @media (max-width: 768px) {
       .nav-container { flex-direction: column; gap: 0.75rem; }
       .contact-grid { grid-template-columns: 1fr; }
@@ -186,6 +203,9 @@
   </style>
 </head>
 <body>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
 
   <!-- ALBUM DETAIL MODAL -->
   <div class="modal-overlay" id="albumDetailModal">
@@ -229,7 +249,7 @@
       </div>
 
       <div class="profile-card">
-        <img src="" id="profAvatar" class="profile-avatar" alt="Avatar" referrerpolicy="no-referrer" onerror="handleImgError(this)">
+        <img src="" id="profAvatar" class="profile-avatar" alt="Avatar" onerror="handleImgError(this)">
         <div>
           <div class="profile-name" id="profName">-</div>
           <div class="profile-bio" id="profBio">-</div>
@@ -304,29 +324,44 @@
 
     const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
+    function showToast(msg, type = "info") {
+      const container = document.getElementById("toastContainer");
+      if (!container) return;
+      const toast = document.createElement("div");
+      toast.className = `toast-item ${type}`;
+      toast.innerHTML = `<span>${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.animation = "toastOut 0.3s ease forwards";
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
     function getDisplayImageUrl(url) {
       if (!url) return "";
-      if (url.includes("google.com") || url.includes("googleusercontent.com")) {
-        let fileId = "";
-        const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
-        const matchPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-        if (matchId) fileId = matchId[1];
-        else if (matchPath) fileId = matchPath[1];
+      let fileId = "";
+      const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
+      const matchPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (matchId) fileId = matchId[1];
+      else if (matchPath) fileId = matchPath[1];
 
-        if (fileId) {
-          return `https://drive.google.com/uc?export=download&id=${fileId}`;
-        }
+      if (fileId) {
+        return `https://lh3.googleusercontent.com/d/${fileId}`;
       }
       return url;
     }
 
     function handleImgError(img) {
       const src = img.src;
-      if (src && src.includes('drive.google.com') && !img.dataset.triedProxy) {
+      if (!img.dataset.triedProxy) {
         img.dataset.triedProxy = "true";
-        const fileId = src.match(/id=([a-zA-Z0-9_-]+)/)?.[1];
+        let fileId = "";
+        const matchId = src.match(/id=([a-zA-Z0-9_-]+)/)?.[1];
+        const matchD = src.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
+        fileId = matchId || matchD;
+        
         if (fileId) {
-          img.src = `https://wsrv.nl/?url=https://drive.google.com/uc?id=${fileId}`;
+          img.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
         }
       }
     }
@@ -423,7 +458,7 @@
       const featGrid = document.getElementById("featuredGrid");
       if (p.featuredPhotos) {
         const photos = p.featuredPhotos.split(',').filter(x => x.trim());
-        featGrid.innerHTML = photos.map(u => `<div class="showcase-item"><img src="${getDisplayImageUrl(u.trim())}" loading="lazy" referrerpolicy="no-referrer" onerror="handleImgError(this)"></div>`).join('');
+        featGrid.innerHTML = photos.map(u => `<div class="showcase-item"><img src="${getDisplayImageUrl(u.trim())}" loading="lazy" onerror="handleImgError(this)"></div>`).join('');
       } else {
         featGrid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1;">ยังไม่มีรูปภาพแนะนำ</p>';
       }
@@ -461,8 +496,8 @@
           <div class="album-card" onclick="openAlbumModal('${safeTitle}', '${alb.mediaType}')">
             <div class="album-cover">
               ${alb.mediaType === 'video' 
-                ? `<iframe src="${alb.coverUrl}" allow="autoplay" referrerpolicy="no-referrer"></iframe>` 
-                : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}" referrerpolicy="no-referrer" onerror="handleImgError(this)">`
+                ? `<iframe src="${alb.coverUrl}" allow="autoplay"></iframe>` 
+                : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}" onerror="handleImgError(this)">`
               }
               <div class="album-count-badge">${alb.items.length} ${alb.mediaType === 'video' ? 'วิดีโอ' : 'รูปภาพ'}</div>
             </div>
@@ -506,8 +541,8 @@
       mediaGrid.innerHTML = filtered.map(item => `
         <div class="media-item-box">
           ${item.mediaType === 'video' 
-            ? `<iframe src="${item.fileUrl}" allow="autoplay" referrerpolicy="no-referrer"></iframe>` 
-            : `<img src="${getDisplayImageUrl(item.fileUrl)}" loading="lazy" referrerpolicy="no-referrer" onerror="handleImgError(this)">`
+            ? `<iframe src="${item.fileUrl}" allow="autoplay"></iframe>` 
+            : `<img src="${getDisplayImageUrl(item.fileUrl)}" loading="lazy" onerror="handleImgError(this)">`
           }
         </div>
       `).join('');
