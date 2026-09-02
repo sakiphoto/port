@@ -15,9 +15,9 @@
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --border: rgba(255, 255, 255, 0.08);
-      --status-done: #ef4444;       /* กรอบแดง - จบแล้ว */
-      --status-working: #10b981;    /* กรอบเขียว - กำลังทำ */
-      --status-pending: #64748b;    /* กรอบเทา - ยังไม่เริ่ม */
+      --status-done: #ef4444;
+      --status-working: #10b981;
+      --status-pending: #64748b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif; }
     body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; }
@@ -47,32 +47,37 @@
     .page-section.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Photographer Profile / Hero */
+    /* Home Hero & Profile */
+    .hero {
+      text-align: center; padding: 3rem 1rem 2rem;
+      background: radial-gradient(circle at center, rgba(56, 189, 248, 0.08) 0%, rgba(10, 12, 16, 0) 70%);
+      border-radius: 24px; margin-bottom: 2rem; border: 1px solid var(--border);
+    }
     .profile-card {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px;
       padding: 3rem 2rem; display: flex; flex-direction: column; align-items: center; text-align: center;
       gap: 1.5rem; margin-bottom: 2rem;
     }
     .profile-avatar {
-      width: 140px; height: 140px; border-radius: 50%; object-fit: cover;
-      border: 3px solid var(--accent); box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+      width: 150px; height: 150px; border-radius: 50%; object-fit: cover;
+      border: 3px solid var(--accent); box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
     }
     .profile-name { font-size: 2rem; font-weight: 700; color: #fff; }
-    .profile-bio { max-width: 650px; color: var(--text-muted); font-size: 1.05rem; }
+    .profile-bio { max-width: 680px; color: var(--text-muted); font-size: 1.05rem; }
 
     /* Contact Details Grid */
-    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; width: 100%; max-width: 850px; }
+    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; width: 100%; max-width: 900px; }
     .contact-card {
       background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
       padding: 1rem; border-radius: 12px; text-align: left;
     }
     .contact-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    .contact-val { font-size: 0.95rem; font-weight: 600; color: #fff; margin-top: 2px; }
+    .contact-val { font-size: 0.95rem; font-weight: 600; color: #fff; margin-top: 2px; word-break: break-all; }
 
     /* Gallery */
     .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
     .gallery-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-    .media-box { width: 100%; height: 260px; background: #000; position: relative; }
+    .media-box { width: 100%; height: 260px; background: #000; }
     .media-box img, .media-box video { width: 100%; height: 100%; object-fit: cover; }
     .gallery-info { padding: 1.25rem; }
     .gallery-tag { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 600; }
@@ -91,12 +96,8 @@
     .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .calendar-nav button { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; padding: 0.4rem 1rem; border-radius: 8px; cursor: pointer; }
     
-    .calendar-grid {
-      display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
-    }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
     .calendar-day-header { color: var(--text-muted); font-size: 0.85rem; padding-bottom: 0.5rem; text-align: center; font-weight: 600; }
-    
-    /* กล่องช่องปฏิทินที่ชัดเจน */
     .calendar-cell {
       min-height: 110px; background: rgba(255, 255, 255, 0.02);
       border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 0.5rem;
@@ -110,7 +111,7 @@
     .cal-event.busy { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
     .cal-event.booked { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
 
-    /* Schedule Card List View */
+    /* Job Card List */
     .schedule-card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
     .job-card { background: var(--bg-card); border-radius: 16px; padding: 1.5rem; border: 2px solid var(--status-pending); }
     .job-card.working { border-color: var(--status-working); box-shadow: 0 0 15px rgba(16, 185, 129, 0.15); }
@@ -122,16 +123,19 @@
     .badge-done { background: rgba(239, 68, 68, 0.2); color: var(--status-done); }
     .badge-pending { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; }
 
-    footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
+    /* Footer & Admin Link */
+    footer { text-align: center; padding: 2.5rem 1.5rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
+    footer a { color: var(--text-muted); text-decoration: none; transition: 0.2s; }
+    footer a:hover { color: var(--accent); }
   </style>
 </head>
 <body>
 
   <header>
     <div class="nav-container">
-      <div class="logo" onclick="navigate('home')">PHOTOGRAPHER<span>.</span></div>
+      <div class="logo" onclick="navigate('home')" id="navBrand">PHOTOGRAPHER<span>.</span></div>
       <nav>
-        <a class="nav-link active" onclick="navigate('home')">ข้อมูลช่างภาพ</a>
+        <a class="nav-link active" onclick="navigate('home')">ข้อมูลทั่วไป & ช่างภาพ</a>
         <a class="nav-link" onclick="navigate('photos')">ผลงานภาพ</a>
         <a class="nav-link" onclick="navigate('videos')">ผลงานวิดีโอ</a>
         <a class="nav-link" onclick="navigate('schedule')">ตารางงาน & คิวว่าง</a>
@@ -140,8 +144,13 @@
   </header>
 
   <main>
-    <!-- 1. ข้อมูลช่างภาพ & ติดต่อ -->
+    <!-- 1. ข้อมูลทั่วไป & ช่างภาพ -->
     <section id="sec-home" class="page-section active">
+      <div class="hero">
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.75rem;" id="heroTitle">Luxury Visual Experience</h1>
+        <p style="color: var(--text-muted); max-width: 700px; margin: 0 auto;" id="heroSubtitle">รับสร้างสรรค์ผลงานภาพถ่ายระดับพรีเมียม และงานผลิตวิดีโอ Cinematic ครบวงจร</p>
+      </div>
+
       <div class="profile-card">
         <img src="" id="profAvatar" class="profile-avatar" alt="Avatar">
         <div>
@@ -153,6 +162,7 @@
           <div class="contact-card"><div class="contact-label">📱 โทรศัพท์</div><div class="contact-val" id="profPhone">-</div></div>
           <div class="contact-card"><div class="contact-label">💬 Line</div><div class="contact-val" id="profLine">-</div></div>
           <div class="contact-card"><div class="contact-label">📷 Instagram</div><div class="contact-val" id="profIG">-</div></div>
+          <div class="contact-card"><div class="contact-label">✉️ Email</div><div class="contact-val" id="profEmail">-</div></div>
         </div>
       </div>
     </section>
@@ -194,8 +204,9 @@
     </section>
   </main>
 
+  <!-- Footer ด้านล่างสุด พร้อมลิงก์เข้า Admin -->
   <footer>
-    <p>&copy; Photographer Portfolio. All rights reserved.</p>
+    <p>&copy; Photographer Portfolio. All rights reserved. | <a href="admin.html">เข้าสู่ระบบ Admin</a></p>
   </footer>
 
   <script>
@@ -234,13 +245,17 @@
 
     function renderProfile() {
       const p = allData.profile || {};
+      document.getElementById("navBrand").innerHTML = `${p.brandName || 'PHOTOGRAPHER'}<span>.</span>`;
+      document.getElementById("heroTitle").innerText = p.heroTitle || "Luxury Visual Experience";
+      document.getElementById("heroSubtitle").innerText = p.heroSubtitle || "-";
       document.getElementById("profAvatar").src = p.avatarUrl || "https://via.placeholder.com/150";
-      document.getElementById("profName").innerText = p.name || "Photographer";
+      document.getElementById("profName").innerText = p.photographerName || "Photographer";
       document.getElementById("profBio").innerText = p.bio || "-";
       document.getElementById("profLocation").innerText = p.location || "-";
       document.getElementById("profPhone").innerText = p.phone || "-";
       document.getElementById("profLine").innerText = p.line || "-";
       document.getElementById("profIG").innerText = p.instagram || "-";
+      document.getElementById("profEmail").innerText = p.email || "-";
     }
 
     function renderGallery(elId, items, type) {
@@ -254,7 +269,7 @@
           <div class="gallery-info">
             <div class="gallery-tag">${i.category}</div>
             <div style="font-weight:600; margin-top:4px;">${i.title}</div>
-            ${i.extLink ? `<a href="${i.extLink}" target="_blank" class="gallery-link-btn">🔗 ดูเพิ่มเติม / ลิงก์ภายนอก</a>` : ''}
+            ${i.extLink ? `<a href="${i.extLink}" target="_blank" class="gallery-link-btn">🔗 ดูข้อมูลเพิ่มเติม</a>` : ''}
           </div>
         </div>
       `).join('');
