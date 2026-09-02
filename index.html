@@ -25,7 +25,8 @@
 
     header {
       position: sticky; top: 0; z-index: 50;
-      background: rgba(10, 12, 16, 0.9); backdrop-filter: blur(16px);
+      background: rgba(10, 12, 16, 0.9);
+      backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
     }
     .nav-container {
@@ -47,6 +48,7 @@
     .page-section.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* Home & Profile */
     .hero {
       text-align: center; padding: 3.5rem 1rem 2.5rem;
       background: radial-gradient(circle at center, rgba(56, 189, 248, 0.08) 0%, rgba(10, 12, 16, 0) 70%);
@@ -64,6 +66,7 @@
     .profile-name { font-size: 2rem; font-weight: 700; color: #fff; }
     .profile-bio { max-width: 680px; color: var(--text-muted); font-size: 1.05rem; }
 
+    /* Social & Contact Grid */
     .contact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; width: 100%; max-width: 960px; }
     .contact-card {
       background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
@@ -74,19 +77,27 @@
     .contact-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
     .contact-val { font-size: 0.95rem; font-weight: 600; color: #fff; margin-top: 4px; word-break: break-all; }
 
+    /* Featured Showcase */
     .showcase-title { font-size: 1.4rem; font-weight: 700; margin: 2.5rem 0 1.2rem; }
     .showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
     .showcase-item { height: 220px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
     .showcase-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+    .showcase-item:hover img { transform: scale(1.05); }
 
+    /* Gallery */
     .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
     .gallery-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
     .media-box { width: 100%; height: 260px; background: #000; }
     .media-box img, .media-box video { width: 100%; height: 100%; object-fit: cover; }
     .gallery-info { padding: 1.25rem; }
     .gallery-tag { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 600; }
+    .gallery-link-btn { display: inline-block; margin-top: 0.5rem; color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600; }
 
-    /* Calendar Styling */
+    /* Schedule & Calendar Toggle UI */
+    .schedule-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .toggle-btn { padding: 0.6rem 1.2rem; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; }
+    .toggle-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
     .calendar-container {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem;
     }
@@ -106,18 +117,44 @@
     .pill-busy { background: rgba(239, 68, 68, 0.2); color: var(--status-done); }
     .pill-booking { background: rgba(56, 189, 248, 0.2); color: var(--accent); }
 
-    .schedule-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-    .toggle-btn { padding: 0.6rem 1.2rem; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; }
-    .toggle-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
-
+    /* Schedule Vertical List */
+    .schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .schedule-list-vertical { display: flex; flex-direction: column; gap: 1rem; }
     .job-row {
       background: var(--bg-card); border-radius: 16px; padding: 1.5rem;
-      border: 1px solid var(--border); display: flex; justify-content: space-between;
-      align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1rem;
+      border: 2px solid var(--status-pending); display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 1.5rem; transition: 0.3s ease;
+    }
+    .job-row.working {
+      border-color: var(--status-working);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.2);
+      animation: livePulse 2s infinite;
+    }
+    .job-row.done { border-color: var(--status-done); opacity: 0.75; }
+    .job-row.pending { border-color: var(--status-pending); }
+
+    @keyframes livePulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .job-info-left { display: flex; flex-direction: column; gap: 0.4rem; }
+    .job-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 9999px; width: fit-content; }
+    .badge-working { background: rgba(16, 185, 129, 0.2); color: var(--status-working); }
+    .badge-done { background: rgba(239, 68, 68, 0.2); color: var(--status-done); }
+    .badge-pending { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; }
+    .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--status-working); animation: blink 0.8s infinite alternate; }
+    @keyframes blink { from { opacity: 0.2; } to { opacity: 1; } }
+
+    .job-action-btn {
+      padding: 0.6rem 1.2rem; background: var(--accent); color: #000;
+      text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;
     }
 
     footer { text-align: center; padding: 2.5rem 1.5rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
-    footer a { color: var(--text-muted); text-decoration: none; }
+    footer a { color: var(--text-muted); text-decoration: none; transition: 0.2s; }
+    footer a:hover { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -129,16 +166,17 @@
         <a class="nav-link active" onclick="navigate('home')">ข้อมูลทั่วไป & ช่างภาพ</a>
         <a class="nav-link" onclick="navigate('photos')">ผลงานภาพ</a>
         <a class="nav-link" onclick="navigate('videos')">ผลงานวิดีโอ</a>
-        <a class="nav-link" onclick="navigate('schedule')">ตารางงาน & ปฏิทิน</a>
+        <a class="nav-link" onclick="navigate('schedule')">ตารางงาน & คิวงาน</a>
       </nav>
     </div>
   </header>
 
   <main>
+    <!-- Section 1: ข้อมูลช่างภาพ -->
     <section id="sec-home" class="page-section active">
       <div class="hero">
         <h1 style="font-size: 2.5rem; margin-bottom: 0.75rem;" id="heroTitle">Luxury Visual Experience</h1>
-        <p style="color: var(--text-muted); max-width: 700px; margin: 0 auto;" id="heroSubtitle">-</p>
+        <p style="color: var(--text-muted); max-width: 700px; margin: 0 auto;" id="heroSubtitle">รับสร้างสรรค์ผลงานภาพถ่ายระดับพรีเมียม และงานผลิตวิดีโอ Cinematic ครบวงจร</p>
       </div>
 
       <div class="profile-card">
@@ -148,29 +186,51 @@
           <div class="profile-bio" id="profBio">-</div>
         </div>
 
-        <div class="contact-grid" id="socialGrid"></div>
+        <!-- Social & Contact Grid (รวมแบบไดนามิกหลายลิงก์) -->
+        <div class="contact-grid" id="contactGrid">
+          <div class="contact-card"><div class="contact-label">📍 พื้นที่รับงาน</div><div class="contact-val" id="profLocation">-</div></div>
+          <a class="contact-card" id="linkPhone" href="#"><div class="contact-label">📱 โทรศัพท์</div><div class="contact-val" id="profPhone">-</div></a>
+          <a class="contact-card" id="linkLine" target="_blank"><div class="contact-label">💬 Line</div><div class="contact-val" id="profLine">-</div></a>
+          <a class="contact-card" id="linkIG" target="_blank"><div class="contact-label">📷 Instagram</div><div class="contact-val" id="profIG">-</div></a>
+          <a class="contact-card" id="linkFB" target="_blank"><div class="contact-label">📘 Facebook</div><div class="contact-val" id="profFB">-</div></a>
+          <a class="contact-card" id="linkTikTok" target="_blank"><div class="contact-label">🎵 TikTok</div><div class="contact-val" id="profTikTok">-</div></a>
+          <a class="contact-card" id="linkEmail" href="#"><div class="contact-label">✉️ Email</div><div class="contact-val" id="profEmail">-</div></a>
+        </div>
       </div>
 
-      <div class="showcase-title">✨ รูปภาพแนะนำหน้าแรก</div>
+      <!-- รูปภาพที่อยากโชว์หน้าแรก -->
+      <div class="showcase-title">✨ รูปภาพแนะนำหน้าแรก (Featured Gallery)</div>
       <div class="showcase-grid" id="featuredGrid"></div>
     </section>
 
+    <!-- Section 2: ภาพ -->
     <section id="sec-photos" class="page-section">
       <h2 style="margin-bottom: 2rem;">ผลงานภาพถ่าย</h2>
-      <div class="gallery" id="photoGallery"></div>
+      <div class="gallery" id="photoGallery"><p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p></div>
     </section>
 
+    <!-- Section 3: วิดีโอ -->
     <section id="sec-videos" class="page-section">
       <h2 style="margin-bottom: 2rem;">ผลงานวิดีโอ</h2>
-      <div class="gallery" id="videoGallery"></div>
+      <div class="gallery" id="videoGallery"><p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p></div>
     </section>
 
+    <!-- Section 4: ตารางงาน & ปฏิทิน -->
     <section id="sec-schedule" class="page-section">
+      <div class="schedule-header">
+        <div>
+          <h2>ตารางงาน & สถานะการปฏิบัติงาน</h2>
+          <small style="color: var(--accent);">⚡ อัปเดตและประมวลผลสถานะอัตโนมัติตามเวลาจริง (Real-time)</small>
+        </div>
+      </div>
+
+      <!-- ปุ่มสลับการดูปฏิทิน และ คิวงาน -->
       <div class="schedule-toggle">
         <button class="toggle-btn active" onclick="switchScheduleView('calendar', this)">📅 มุมมองปฏิทินสถานะรับงาน</button>
         <button class="toggle-btn" onclick="switchScheduleView('list', this)">📋 รายงานคิวงานที่รับแล้ว</button>
       </div>
 
+      <!-- มุมมอง 1: ปฏิทิน -->
       <div id="viewCalendar">
         <div class="calendar-container">
           <div class="calendar-header">
@@ -186,8 +246,11 @@
         </div>
       </div>
 
+      <!-- มุมมอง 2: รายการคิวงาน -->
       <div id="viewList" style="display: none;">
-        <div id="scheduleListVertical"></div>
+        <div class="schedule-list-vertical" id="scheduleListVertical">
+          <p style="color: var(--text-muted);">กำลังโหลดตารางงาน...</p>
+        </div>
       </div>
     </section>
   </main>
@@ -209,21 +272,23 @@
     }
 
     function switchScheduleView(view, el) {
-      document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.schedule-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
       el.classList.add('active');
       document.getElementById('viewCalendar').style.display = view === 'calendar' ? 'block' : 'none';
       document.getElementById('viewList').style.display = view === 'list' ? 'block' : 'none';
     }
 
-    async function loadData() {
+    async function loadData(isInitial = false) {
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
         if (data.success) {
           allData = data;
-          renderProfile();
-          renderGallery('photoGallery', data.portfolio.filter(x => x.mediaType === 'image'), 'image');
-          renderGallery('videoGallery', data.portfolio.filter(x => x.mediaType === 'video'), 'video');
+          if (isInitial) {
+            renderProfile();
+            renderGallery('photoGallery', data.portfolio.filter(x => x.mediaType === 'image'), 'image');
+            renderGallery('videoGallery', data.portfolio.filter(x => x.mediaType === 'video'), 'video');
+          }
           renderCalendar();
           renderScheduleVertical();
         }
@@ -238,31 +303,50 @@
       document.getElementById("profAvatar").src = p.avatarUrl || "https://via.placeholder.com/150";
       document.getElementById("profName").innerText = p.photographerName || "Photographer";
       document.getElementById("profBio").innerText = p.bio || "-";
+      document.getElementById("profLocation").innerText = p.location || "-";
 
-      const grid = document.getElementById("socialGrid");
-      let html = `
-        <div class="contact-card"><div class="contact-label">📍 พื้นที่รับงาน</div><div class="contact-val">${p.location || '-'}</div></div>
-        <a class="contact-card" href="${p.phone ? 'tel:'+p.phone : '#'}"><div class="contact-label">📱 โทรศัพท์</div><div class="contact-val">${p.phone || '-'}</div></a>
-        <a class="contact-card" href="${p.email ? 'mailto:'+p.email : '#'}"><div class="contact-label">✉️ Email</div><div class="contact-val">${p.email || '-'}</div></a>
-      `;
+      // Contact & Links หลัก
+      document.getElementById("profPhone").innerText = p.phone || "-";
+      document.getElementById("linkPhone").href = p.phone ? `tel:${p.phone}` : "#";
 
-      let links = [];
-      try { links = JSON.parse(p.socialLinks || "[]"); } catch(e){}
-      links.forEach(l => {
-        html += `
-          <a class="contact-card" href="${l.url}" target="_blank">
-            <div class="contact-label">🔗 ${l.label || 'Social'}</div>
-            <div class="contact-val">${l.url.replace(/^https?:\/\//, '')}</div>
-          </a>
-        `;
+      document.getElementById("profLine").innerText = p.line || "-";
+      document.getElementById("linkLine").href = p.line ? `https://line.me/ti/p/~${p.line.replace('@','')}` : "#";
+
+      document.getElementById("profIG").innerText = p.instagram || "-";
+      document.getElementById("linkIG").href = p.instagram ? (p.instagram.startsWith('http') ? p.instagram : `https://${p.instagram}`) : "#";
+
+      document.getElementById("profFB").innerText = p.facebook || "-";
+      document.getElementById("linkFB").href = p.facebook ? (p.facebook.startsWith('http') ? p.facebook : `https://${p.facebook}`) : "#";
+
+      document.getElementById("profTikTok").innerText = p.tiktok || "-";
+      document.getElementById("linkTikTok").href = p.tiktok ? (p.tiktok.startsWith('http') ? p.tiktok : `https://${p.tiktok}`) : "#";
+
+      document.getElementById("profEmail").innerText = p.email || "-";
+      document.getElementById("linkEmail").href = p.email ? `mailto:${p.email}` : "#";
+
+      // โซเชียลมีเดียเพิ่มเติมที่เพิ่มจากระบบ Admin
+      const extraContainer = document.getElementById("contactGrid");
+      document.querySelectorAll(".extra-social-card").forEach(e => e.remove());
+      
+      let extraLinks = [];
+      try { extraLinks = JSON.parse(p.socialLinks || "[]"); } catch(e){}
+      extraLinks.forEach(l => {
+        const a = document.createElement("a");
+        a.className = "contact-card extra-social-card";
+        a.target = "_blank";
+        a.href = l.url;
+        a.innerHTML = `<div class="contact-label">🔗 ${l.label || 'Social'}</div><div class="contact-val">${l.url.replace(/^https?:\/\//, '')}</div>`;
+        extraContainer.appendChild(a);
       });
-      grid.innerHTML = html;
 
+      // Featured Showcase Photos
       const featGrid = document.getElementById("featuredGrid");
       if (p.featuredPhotos) {
-        const photos = p.featuredPhotos.split(',').filter(x => x.trim());
-        featGrid.innerHTML = photos.map(u => `<div class="showcase-item"><img src="${u.trim()}" loading="lazy"></div>`).join('');
-      } else { featGrid.innerHTML = '<p style="color:var(--text-muted)">ไม่มีรูปภาพแนะนำ</p>'; }
+        const photos = p.featuredPhotos.split(',').filter(x => x.trim().length > 0);
+        featGrid.innerHTML = photos.map(url => `<div class="showcase-item"><img src="${url.trim()}" loading="lazy"></div>`).join('');
+      } else {
+        featGrid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1;">ยังไม่มีรูปภาพแนะนำ</p>';
+      }
     }
 
     function renderGallery(elId, items, type) {
@@ -276,6 +360,7 @@
           <div class="gallery-info">
             <div class="gallery-tag">${i.category}</div>
             <div style="font-weight:600; margin-top:4px;">${i.title}</div>
+            ${i.extLink ? `<a href="${i.extLink}" target="_blank" class="gallery-link-btn">🔗 ดูข้อมูลเพิ่มเติม</a>` : ''}
           </div>
         </div>
       `).join('');
@@ -336,27 +421,79 @@
       }
     }
 
+    function evaluateRealtimeJobStatus(dateStr, timeRangeStr) {
+      const now = new Date();
+      const [year, month, day] = dateStr.split('-').map(Number);
+      let startH = 0, startM = 0;
+      let endH = 23, endM = 59;
+
+      if (timeRangeStr && timeRangeStr.includes('-')) {
+        const parts = timeRangeStr.split('-').map(s => s.trim().replace('.', ':'));
+        const parseTime = (t) => {
+          const match = t.match(/(\d{1,2}):(\d{2})/);
+          return match ? [parseInt(match[1]), parseInt(match[2])] : null;
+        };
+        const sTime = parseTime(parts[0]);
+        const eTime = parseTime(parts[1]);
+        if (sTime) { startH = sTime[0]; startM = sTime[1]; }
+        if (eTime) { endH = eTime[0]; endM = eTime[1]; }
+      }
+
+      const startDateTime = new Date(year, month - 1, day, startH, startM, 0);
+      const endDateTime = new Date(year, month - 1, day, endH, endM, 59);
+
+      if (now > endDateTime) {
+        return { statusClass: "done", statusLabel: "งานจบแล้ว (Completed)", isWorking: false };
+      } else if (now >= startDateTime && now <= endDateTime) {
+        return { statusClass: "working", statusLabel: "กำลังทำงาน (In Progress)", isWorking: true };
+      } else {
+        return { statusClass: "pending", statusLabel: "ยังไม่เริ่มงาน (Upcoming)", isWorking: false };
+      }
+    }
+
     function renderScheduleVertical() {
       const container = document.getElementById("scheduleListVertical");
       const list = allData.schedule || [];
-      if (!list.length) { container.innerHTML = '<p style="color:var(--text-muted);">ยังไม่มีรายการงานที่รับ</p>'; return; }
+
+      if (!list.length) {
+        container.innerHTML = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงาน</p>';
+        return;
+      }
 
       const sorted = [...list].sort((a, b) => new Date(a.date) - new Date(b.date));
-      container.innerHTML = sorted.map(item => `
-        <div class="job-row">
-          <div>
-            <div style="font-size: 1.2rem; font-weight: 700; color: #fff;">${item.title}</div>
-            <div style="color: var(--text-muted); font-size: 0.9rem;">
-              📅 <strong>${item.date}</strong> | ⏰ <strong>${item.time}</strong> | 📍 <strong>${item.location || '-'}</strong>
+
+      container.innerHTML = sorted.map(item => {
+        const evalStatus = evaluateRealtimeJobStatus(item.date, item.time);
+        const linkHtml = item.extLink 
+          ? `<a href="${item.extLink}" target="_blank" class="job-action-btn">🔗 เปิดลิงก์งาน</a>` 
+          : '';
+
+        return `
+          <div class="job-row ${evalStatus.statusClass}">
+            <div class="job-info-left">
+              <span class="job-badge badge-${evalStatus.statusClass}">
+                ${evalStatus.isWorking ? '<span class="pulse-dot"></span>' : ''}
+                ${evalStatus.statusLabel}
+              </span>
+              <div style="font-size: 1.25rem; font-weight: 700; color: #fff;">${item.title}</div>
+              <div style="color: var(--text-muted); font-size: 0.9rem;">
+                📅 <strong>${item.date}</strong> | ⏰ เวลา: <strong>${item.time}</strong> | 📍 สถานที่: <strong>${item.location || '-'}</strong>
+              </div>
+              ${item.details ? `<div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 4px;">📝 ${item.details}</div>` : ''}
             </div>
-            ${item.details ? `<div style="font-size:0.85rem; color:#cbd5e1; margin-top:4px;">📝 ${item.details}</div>` : ''}
+            <div>
+              ${linkHtml}
+            </div>
           </div>
-          ${item.extLink ? `<a href="${item.extLink}" target="_blank" style="padding:0.5rem 1rem; background:var(--accent); color:#000; font-weight:600; border-radius:8px; text-decoration:none;">🔗 เปิดลิงก์งาน</a>` : ''}
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
-    window.onload = loadData;
+    window.onload = () => {
+      loadData(true);
+      setInterval(() => loadData(false), 10000);
+      setInterval(() => renderScheduleVertical(), 3000);
+    };
   </script>
 </body>
 </html>
