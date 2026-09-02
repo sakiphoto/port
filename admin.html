@@ -191,6 +191,29 @@
       border-radius: 10px; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.6rem;
     }
 
+    /* UPLOAD PREVIEW STYLING */
+    .file-preview-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 0.75rem; margin-top: 0.85rem; margin-bottom: 1rem;
+    }
+    .preview-thumb-box {
+      position: relative; width: 100%; height: 100px; border-radius: 10px;
+      overflow: hidden; border: 1px solid var(--border); background: #000;
+    }
+    .preview-thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+    .btn-remove-thumb {
+      position: absolute; top: 4px; right: 4px; background: rgba(239, 68, 68, 0.9);
+      color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px;
+      font-size: 14px; font-weight: bold; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; transition: transform 0.2s; z-index: 10;
+    }
+    .btn-remove-thumb:hover { transform: scale(1.15); background: var(--danger); }
+    .video-preview-card {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);
+      padding: 0.75rem 1rem; border-radius: 10px; margin-top: 0.75rem; margin-bottom: 1rem;
+    }
+
     .drag-item {
       cursor: grab; transition: background 0.2s, transform 0.2s; user-select: none;
     }
@@ -467,7 +490,6 @@
 
     <header class="site-header">
       <div class="nav-container">
-        <!-- แสดงรูปภาพโลโก้แบรนด์ -->
         <img src="https://i.postimg.cc/brgBLSmt/S-(2).png" class="logo-img" alt="Logo" onclick="navigate('home', this)">
         <nav>
           <a class="nav-link active" onclick="navigate('home', this)">ข้อมูลทั่วไป & ช่างภาพ</a>
@@ -601,7 +623,17 @@
           <form id="uploadPhotoForm" onsubmit="handleUploadPhotos(event)">
             <div class="form-grid-2">
               <div class="form-group"><label>ชื่องาน / อัลบั้ม</label><input type="text" id="pImgTitle" placeholder="เช่น งานแต่งงาน คุณอาร์ต & คุณมาย" required></div>
-              <div class="form-group"><label>หมวดหมู่</label><input type="text" id="pImgCat" placeholder="Wedding / Portrait / Commercial" required></div>
+              <div class="form-group">
+                <label>ประเภทหมวดหมู่</label>
+                <select id="pImgCatType" onchange="toggleOfficeCategoryFilter(this.value, 'pImgCatGroup')" required>
+                  <option value="general">งานเอกสารทั่วไป / ผลงาน</option>
+                  <option value="office">ห้องสำนักงาน</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" id="pImgCatGroup">
+              <label>หมวดหมู่ / ชื่อแผนกสำนักงาน</label>
+              <input type="text" id="pImgCat" placeholder="Wedding / Portrait / สำนักงานฝ่ายบริหาร" required>
             </div>
             <div class="form-group">
               <label>รายละเอียดงาน / คำอธิบายภาพ</label>
@@ -616,8 +648,12 @@
 
             <div class="form-group" style="margin-top:1rem;">
               <label>เลือกไฟล์รูปภาพ (เลือกได้หลายรูปในงานเดียวกัน)</label>
-              <input type="file" id="pImgFiles" accept="image/*" multiple required>
+              <input type="file" id="pImgFiles" accept="image/*" multiple onchange="previewPhotoUploadFiles(this.files)">
             </div>
+            
+            <!-- PHOTO PREVIEW CONTAINER -->
+            <div id="pImgPreviewContainer" class="file-preview-grid"></div>
+
             <button type="submit" class="btn" id="btnUpImgs">อัปโหลดภาพผลงานใหม่</button>
           </form>
         </div>
@@ -653,8 +689,12 @@
 
             <div class="form-group" style="margin-top:1rem;">
               <label>เลือกไฟล์วิดีโอ (ไม่เกิน 25MB)</label>
-              <input type="file" id="pVidFile" accept="video/*" required>
+              <input type="file" id="pVidFile" accept="video/*" onchange="previewVideoUploadFile(this.files[0])">
             </div>
+
+            <!-- VIDEO PREVIEW CONTAINER -->
+            <div id="pVidPreviewContainer"></div>
+
             <button type="submit" class="btn" id="btnUpVid">อัปโหลดวิดีโอใหม่</button>
           </form>
         </div>
@@ -770,8 +810,12 @@
           <form onsubmit="handleAddFeaturedPhotos(event)">
             <div class="form-group">
               <label>เลือกรูปภาพใหม่ (เลือกได้หลายรูป)</label>
-              <input type="file" id="featuredFilesInput" accept="image/*" multiple required>
+              <input type="file" id="featuredFilesInput" accept="image/*" multiple onchange="previewFeaturedUploadFiles(this.files)">
             </div>
+
+            <!-- FEATURED PREVIEW CONTAINER -->
+            <div id="featuredPreviewContainer" class="file-preview-grid"></div>
+
             <button type="submit" class="btn" id="btnAddFeatured">อัปโหลดรูปภาพหน้าแรก</button>
           </form>
         </div>
@@ -790,7 +834,113 @@
     let currentCalDate = new Date();
     let dragSrcEl = null;
 
+    /* DYNAMIC UPLOAD FILES HOLDER */
+    let selectedPhotoFiles = [];
+    let selectedVideoFile = null;
+    let selectedFeaturedFiles = [];
+
     const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    function escapeQuotes(str) {
+      if (!str) return '';
+      return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function toggleOfficeCategoryFilter(val, containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const label = container.querySelector('label');
+      if (val === 'office') {
+        if (label) label.innerText = "ชื่อห้องสำนักงาน / แผนก";
+      } else {
+        if (label) label.innerText = "หมวดหมู่ผลงาน / เอกสาร";
+      }
+    }
+
+    /* PREVIEW & FILE MANAGERS */
+    function previewPhotoUploadFiles(files) {
+      if (!files || !files.length) return;
+      selectedPhotoFiles = Array.from(files);
+      renderPhotoPreviewGrid();
+    }
+
+    function renderPhotoPreviewGrid() {
+      const container = document.getElementById("pImgPreviewContainer");
+      container.innerHTML = "";
+      selectedPhotoFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const div = document.createElement("div");
+          div.className = "preview-thumb-box";
+          div.innerHTML = `
+            <img src="${e.target.result}" alt="Preview">
+            <button type="button" class="btn-remove-thumb" onclick="removeSelectedPhotoFile(${index})">&times;</button>
+          `;
+          container.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removeSelectedPhotoFile(index) {
+      selectedPhotoFiles.splice(index, 1);
+      renderPhotoPreviewGrid();
+    }
+
+    function previewVideoUploadFile(file) {
+      const container = document.getElementById("pVidPreviewContainer");
+      if (!file) {
+        selectedVideoFile = null;
+        container.innerHTML = "";
+        return;
+      }
+      selectedVideoFile = file;
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      container.innerHTML = `
+        <div class="video-preview-card">
+          <div>
+            <strong style="color:#fff; font-size:0.9rem;">📹 ${escapeQuotes(file.name)}</strong>
+            <div style="font-size:0.8rem; color:var(--text-muted);">ขนาดไฟล์: ${fileSizeMB} MB</div>
+          </div>
+          <button type="button" class="btn btn-danger" style="padding:0.3rem 0.7rem; font-size:0.8rem;" onclick="removeSelectedVideoFile()">🗑️ ลบไฟล์นี้</button>
+        </div>
+      `;
+    }
+
+    function removeSelectedVideoFile() {
+      selectedVideoFile = null;
+      document.getElementById("pVidFile").value = "";
+      document.getElementById("pVidPreviewContainer").innerHTML = "";
+    }
+
+    function previewFeaturedUploadFiles(files) {
+      if (!files || !files.length) return;
+      selectedFeaturedFiles = Array.from(files);
+      renderFeaturedPreviewGrid();
+    }
+
+    function renderFeaturedPreviewGrid() {
+      const container = document.getElementById("featuredPreviewContainer");
+      container.innerHTML = "";
+      selectedFeaturedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const div = document.createElement("div");
+          div.className = "preview-thumb-box";
+          div.innerHTML = `
+            <img src="${e.target.result}" alt="Preview">
+            <button type="button" class="btn-remove-thumb" onclick="removeSelectedFeaturedFile(${index})">&times;</button>
+          `;
+          container.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removeSelectedFeaturedFile(index) {
+      selectedFeaturedFiles.splice(index, 1);
+      renderFeaturedPreviewGrid();
+    }
 
     function getDisplayImageUrl(url) {
       if (!url) return "https://via.placeholder.com/300?text=No+Media";
@@ -896,8 +1046,8 @@
       const div = document.createElement("div");
       div.className = "dynamic-link-row";
       div.innerHTML = `
-        <input type="text" placeholder="ชื่อปุ่มลิงก์ (เช่น ดูรูปความละเอียดสูง)" class="dyn-label" value="${label}" style="width:40%;">
-        <input type="text" placeholder="https://..." class="dyn-url" value="${url}" style="width:50%;">
+        <input type="text" placeholder="ชื่อปุ่มลิงก์ (เช่น ดูรูปความละเอียดสูง)" class="dyn-label" value="${escapeQuotes(label)}" style="width:40%;">
+        <input type="text" placeholder="https://..." class="dyn-url" value="${escapeQuotes(url)}" style="width:50%;">
         <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="width:10%; padding:0.4rem;">&times;</button>
       `;
       container.appendChild(div);
@@ -1051,7 +1201,7 @@
         a.className = "contact-card extra-social-card";
         a.target = "_blank";
         a.href = formatUrl(l.url);
-        a.innerHTML = `<div class="contact-label">🔗 ${l.label || 'Social'}</div><div class="contact-val">${l.url.replace(/^https?:\/\//i, '')}</div>`;
+        a.innerHTML = `<div class="contact-label">🔗 ${escapeQuotes(l.label) || 'Social'}</div><div class="contact-val">${l.url.replace(/^https?:\/\//i, '')}</div>`;
         extraContainer.appendChild(a);
       });
 
@@ -1091,7 +1241,7 @@
 
       container.innerHTML = Object.keys(albums).map(key => {
         const alb = albums[key];
-        const safeTitle = alb.title.replace(/'/g, "\\'");
+        const safeTitle = escapeQuotes(alb.title);
         const imgUrl = getDisplayImageUrl(alb.coverUrl);
         const videoEmbedUrl = alb.fileId ? `https://drive.google.com/file/d/${alb.fileId}/preview` : alb.coverUrl;
 
@@ -1100,7 +1250,7 @@
             <div class="album-cover">
               ${alb.mediaType === 'video' 
                 ? `<iframe src="${videoEmbedUrl}" allow="autoplay" style="pointer-events: none;"></iframe>` 
-                : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
+                : `<img src="${imgUrl}" loading="lazy" alt="${safeTitle}" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
               }
               <div class="album-count-badge">${alb.items.length} ${alb.mediaType === 'video' ? 'วิดีโอ' : 'รูปภาพ'}</div>
             </div>
@@ -1130,7 +1280,7 @@
           const links = JSON.parse(first.extLink);
           if (Array.isArray(links)) {
             linksContainer.innerHTML = links.map(l => `
-              <a href="${formatUrl(l.url)}" target="_blank" class="album-link-chip">🔗 ${l.label || 'ดูลิงก์ภายนอก'}</a>
+              <a href="${formatUrl(l.url)}" target="_blank" class="album-link-chip">🔗 ${escapeQuotes(l.label) || 'ดูลิงก์ภายนอก'}</a>
             `).join('');
           } else {
             linksContainer.innerHTML = `<a href="${formatUrl(first.extLink)}" target="_blank" class="album-link-chip">🔗 ดูลิงก์เพิ่มเติม</a>`;
@@ -1359,7 +1509,6 @@
       document.getElementById("modalSlotsGroup").style.display = type === "custom" ? "block" : "none";
     }
 
-    /* แก้ไขฟังก์ชันบันทึกสถานะปฏิทินให้ส่งข้อมูลครบถ้วน */
     async function handleSetCalendarModal(e) {
       e.preventDefault();
       const btn = document.getElementById("btnSaveCalModal");
@@ -1435,8 +1584,8 @@
       const div = document.createElement("div");
       div.className = "dynamic-link-row";
       div.innerHTML = `
-        <input type="text" placeholder="ชื่อช่องทาง (เช่น IG รอง, FB Page)" class="soc-label" value="${label}" style="width:35%;">
-        <input type="text" placeholder="facebook.com/yourpage" class="soc-url" value="${url}" style="width:55%;">
+        <input type="text" placeholder="ชื่อช่องทาง (เช่น IG รอง, FB Page)" class="soc-label" value="${escapeQuotes(label)}" style="width:35%;">
+        <input type="text" placeholder="facebook.com/yourpage" class="soc-url" value="${escapeQuotes(url)}" style="width:55%;">
         <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="width:10%; padding:0.4rem;">&times;</button>
       `;
       container.appendChild(div);
@@ -1578,14 +1727,16 @@
 
     async function handleAddFeaturedPhotos(e) {
       e.preventDefault();
-      const files = document.getElementById("featuredFilesInput").files;
-      if (!files.length) return;
+      if (!selectedFeaturedFiles.length) {
+        showNotification("กรุณาเลือกไฟล์รูปภาพหน้าแรกอย่างน้อย 1 รูป", true);
+        return;
+      }
       const btn = document.getElementById("btnAddFeatured");
       btn.innerText = "กำลังอัปโหลด..."; btn.disabled = true;
 
       try {
         const filePayloads = [];
-        for (let f of files) {
+        for (let f of selectedFeaturedFiles) {
           const compressed = await compressAndBase64(f, 2400, 0.90);
           filePayloads.push({ name: f.name, data: compressed });
         }
@@ -1596,7 +1747,9 @@
         btn.innerText = "อัปโหลดรูปภาพหน้าแรก"; btn.disabled = false;
         if (result.success) { 
           showNotification("อัปโหลดสำเร็จ!"); 
-          e.target.reset(); 
+          selectedFeaturedFiles = [];
+          document.getElementById("featuredFilesInput").value = "";
+          document.getElementById("featuredPreviewContainer").innerHTML = "";
           await reloadAdmin(); 
         } else showNotification(result.message, true);
       } catch(err) {
@@ -1631,8 +1784,10 @@
 
     async function handleUploadPhotos(e) {
       e.preventDefault();
-      const files = document.getElementById("pImgFiles").files;
-      if (!files.length) return;
+      if (!selectedPhotoFiles.length) {
+        showNotification("กรุณาเลือกไฟล์รูปภาพอย่างน้อย 1 รูป", true);
+        return;
+      }
       const btn = document.getElementById("btnUpImgs");
       btn.disabled = true;
 
@@ -1644,15 +1799,15 @@
       let successCount = 0;
 
       try {
-        for (let i = 0; i < files.length; i++) {
-          btn.innerText = `กำลังอัปโหลดรูปที่ ${i + 1}/${files.length}...`;
-          const compressed = await compressAndBase64(files[i], 2400, 0.90);
+        for (let i = 0; i < selectedPhotoFiles.length; i++) {
+          btn.innerText = `กำลังอัปโหลดรูปที่ ${i + 1}/${selectedPhotoFiles.length}...`;
+          const compressed = await compressAndBase64(selectedPhotoFiles[i], 2400, 0.90);
           
           const payload = {
             action: "upload", 
             password: token, 
             files: [{
-              fileName: files[i].name, 
+              fileName: selectedPhotoFiles[i].name, 
               fileData: compressed, 
               mediaType: "image",
               title: title, 
@@ -1675,6 +1830,8 @@
           showNotification(`อัปโหลดรูปภาพสำเร็จ ${successCount} รูป!`); 
           document.getElementById('uploadPhotoForm').reset();
           document.getElementById('photoLinkContainer').innerHTML = '';
+          selectedPhotoFiles = [];
+          document.getElementById("pImgPreviewContainer").innerHTML = "";
           await reloadAdmin();
         } else {
           showNotification("อัปโหลดล้มเหลว กรุณาลองใหม่อีกครั้ง", true);
@@ -1687,10 +1844,12 @@
 
     async function handleUploadVideo(e) {
       e.preventDefault();
-      const file = document.getElementById("pVidFile").files[0];
-      if (!file) return;
+      if (!selectedVideoFile) {
+        showNotification("กรุณาเลือกไฟล์วิดีโออย่างน้อย 1 ไฟล์", true);
+        return;
+      }
 
-      if (file.size > 25 * 1024 * 1024) {
+      if (selectedVideoFile.size > 25 * 1024 * 1024) {
         showNotification("ไฟล์วิดีโอต้องมีขนาดไม่เกิน 25MB", true);
         return;
       }
@@ -1704,11 +1863,11 @@
       const extLinks = collectDynamicLinks('videoLinkContainer');
 
       try {
-        const videoData = await readFileAsBase64(file);
+        const videoData = await readFileAsBase64(selectedVideoFile);
         const payload = {
           action: "upload", password: token,
           files: [{
-            fileName: file.name, 
+            fileName: selectedVideoFile.name, 
             fileData: videoData, 
             mediaType: "video",
             title: title,
@@ -1725,6 +1884,7 @@
           showNotification("อัปโหลดวิดีโอสำเร็จ!"); 
           document.getElementById('uploadVideoForm').reset();
           document.getElementById('videoLinkContainer').innerHTML = '';
+          removeSelectedVideoFile();
           await reloadAdmin();
         } else {
           showNotification(result.message || "อัปโหลดวิดีโอล้มเหลว", true);
@@ -1748,9 +1908,9 @@
 
       c.innerHTML = Object.keys(groups).map((k, idx) => {
         const g = groups[k];
-        const safeTitle = g.title.replace(/'/g, "\\'");
+        const safeTitle = escapeQuotes(g.title);
         return `
-          <div class="item-list-row drag-item" draggable="true" data-title="${g.title}" data-mediatype="${type}">
+          <div class="item-list-row drag-item" draggable="true" data-title="${safeTitle}" data-mediatype="${type}">
             <div style="display:flex; align-items:center;">
               <span class="drag-handle">☰</span>
               <div>
