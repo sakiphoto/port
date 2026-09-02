@@ -264,6 +264,11 @@
     let allData = { profile: {}, portfolio: [], schedule: [], calendar: [] };
     let currentCalDate = new Date();
 
+    function formatUrl(url) {
+      if (!url) return "#";
+      return url.match(/^https?:\/\//i) ? url : 'https://' + url;
+    }
+
     function navigate(secId) {
       document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
@@ -313,13 +318,13 @@
       document.getElementById("linkLine").href = p.line ? `https://line.me/ti/p/~${p.line.replace('@','')}` : "#";
 
       document.getElementById("profIG").innerText = p.instagram || "-";
-      document.getElementById("linkIG").href = p.instagram ? (p.instagram.startsWith('http') ? p.instagram : `https://${p.instagram}`) : "#";
+      document.getElementById("linkIG").href = formatUrl(p.instagram);
 
       document.getElementById("profFB").innerText = p.facebook || "-";
-      document.getElementById("linkFB").href = p.facebook ? (p.facebook.startsWith('http') ? p.facebook : `https://${p.facebook}`) : "#";
+      document.getElementById("linkFB").href = formatUrl(p.facebook);
 
       document.getElementById("profTikTok").innerText = p.tiktok || "-";
-      document.getElementById("linkTikTok").href = p.tiktok ? (p.tiktok.startsWith('http') ? p.tiktok : `https://${p.tiktok}`) : "#";
+      document.getElementById("linkTikTok").href = formatUrl(p.tiktok);
 
       document.getElementById("profEmail").innerText = p.email || "-";
       document.getElementById("linkEmail").href = p.email ? `mailto:${p.email}` : "#";
@@ -334,8 +339,8 @@
         const a = document.createElement("a");
         a.className = "contact-card extra-social-card";
         a.target = "_blank";
-        a.href = l.url;
-        a.innerHTML = `<div class="contact-label">🔗 ${l.label || 'Social'}</div><div class="contact-val">${l.url.replace(/^https?:\/\//, '')}</div>`;
+        a.href = formatUrl(l.url);
+        a.innerHTML = `<div class="contact-label">🔗 ${l.label || 'Social'}</div><div class="contact-val">${l.url.replace(/^https?:\/\//i, '')}</div>`;
         extraContainer.appendChild(a);
       });
 
@@ -360,7 +365,7 @@
           <div class="gallery-info">
             <div class="gallery-tag">${i.category}</div>
             <div style="font-weight:600; margin-top:4px;">${i.title}</div>
-            ${i.extLink ? `<a href="${i.extLink}" target="_blank" class="gallery-link-btn">🔗 ดูข้อมูลเพิ่มเติม</a>` : ''}
+            ${i.extLink ? `<a href="${formatUrl(i.extLink)}" target="_blank" class="gallery-link-btn">🔗 ดูข้อมูลเพิ่มเติม</a>` : ''}
           </div>
         </div>
       `).join('');
@@ -465,7 +470,7 @@
       container.innerHTML = sorted.map(item => {
         const evalStatus = evaluateRealtimeJobStatus(item.date, item.time);
         const linkHtml = item.extLink 
-          ? `<a href="${item.extLink}" target="_blank" class="job-action-btn">🔗 เปิดลิงก์งาน</a>` 
+          ? `<a href="${formatUrl(item.extLink)}" target="_blank" class="job-action-btn">🔗 เปิดลิงก์งาน</a>` 
           : '';
 
         return `
