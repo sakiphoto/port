@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard & Preview</title>
+  <title>Admin Dashboard & Live Preview</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
@@ -18,25 +18,35 @@
       --border: rgba(255, 255, 255, 0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif; }
-    body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; }
+    body { background-color: var(--bg-dark); color: var(--text-main); }
+
+    /* Login Overlay */
+    #loginSection {
+      position: fixed; inset: 0; background: var(--bg-dark); z-index: 1000;
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .login-box {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 2.5rem; width: 100%; max-width: 420px; text-align: center;
+    }
 
     /* Floating Admin Bar */
     .admin-bar {
-      position: fixed; bottom: 20px; right: 20px; z-index: 100;
+      position: fixed; bottom: 25px; right: 25px; z-index: 100;
       background: rgba(18, 22, 31, 0.95); border: 1px solid var(--accent);
-      padding: 0.75rem 1.25rem; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      padding: 0.8rem 1.4rem; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
       display: flex; gap: 0.75rem; align-items: center; backdrop-filter: blur(10px);
     }
     .admin-bar button {
       background: var(--accent); color: #000; border: none; padding: 0.5rem 1rem;
-      border-radius: 9999px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+      border-radius: 9999px; font-weight: 700; cursor: pointer;
     }
 
-    /* Modal Panels */
+    /* Modal / Popups */
     .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200;
       display: none; align-items: center; justify-content: center; padding: 1rem;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
     }
     .modal-overlay.active { display: flex; }
     .modal-box {
@@ -46,14 +56,14 @@
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .btn-close { background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
 
-    /* Form Elements */
-    .form-group { margin-bottom: 1.2rem; }
+    /* Form Controls */
+    .form-group { margin-bottom: 1.2rem; text-align: left; }
     label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.85rem; }
-    input, select {
+    input, select, textarea {
       width: 100%; padding: 0.8rem 1rem; background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border); border-radius: 10px; color: #fff; outline: none;
     }
-    input:focus, select:focus { border-color: var(--accent); }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     .btn {
       width: 100%; padding: 0.8rem; background: var(--accent); color: #000;
       border: none; border-radius: 10px; font-weight: 600; cursor: pointer;
@@ -63,20 +73,18 @@
     /* Admin Calendar */
     .admin-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
     .admin-cal-cell {
-      min-height: 80px; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      min-height: 75px; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
       border-radius: 8px; padding: 6px; cursor: pointer; transition: 0.2s;
     }
     .admin-cal-cell:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
     .admin-cal-cell.other-month { opacity: 0.2; pointer-events: none; }
 
-    /* Tabs inside Control Center */
-    .nav-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
+    .nav-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; flex-wrap: wrap; }
     .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; }
     .tab-btn.active { background: var(--accent); color: #000; font-weight: 600; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Item List Row */
     .item-row {
       display: flex; justify-content: space-between; align-items: center;
       padding: 0.75rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
@@ -86,32 +94,48 @@
 </head>
 <body>
 
-  <!-- แสดงหน้าเว็บจริงแบบผู้ใช้ (Preview Mode) -->
-  <iframe id="userPreviewFrame" src="index.html" style="width: 100%; height: 100vh; border: none;"></iframe>
+  <!-- Login Section -->
+  <div id="loginSection">
+    <div class="login-box">
+      <h2 style="margin-bottom: 1.5rem;">🔐 เข้าสู่ระบบ Admin</h2>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>รหัสผ่าน</label>
+          <input type="password" id="adminPassword" placeholder="ใส่รหัสผ่านแอดมิน" required>
+        </div>
+        <button type="submit" class="btn">เข้าสู่ระบบ</button>
+      </form>
+    </div>
+  </div>
 
-  <!-- ปุ่มลอยสำหรับเปิดเมนู Admin -->
+  <!-- หน้าเว็บจริงแบบ Live Preview -->
+  <iframe id="liveFrame" src="index.html" style="width: 100%; height: 100vh; border: none;"></iframe>
+
+  <!-- ปุ่มเปิดแผงควบคุมระบบ Admin -->
   <div class="admin-bar">
-    <span style="font-size: 0.85rem; color: var(--accent); font-weight: 600;">👑 โหมดจัดการระบบ</span>
-    <button onclick="openControlCenter()">⚙️ เปิดแผงควบคุม</button>
+    <span style="font-size: 0.85rem; color: var(--accent); font-weight: 600;">👑 โหมดแอดมิน</span>
+    <button onclick="openControlCenter()">⚙️ แผงควบคุม (Admin Control)</button>
+    <button style="background:transparent; border:1px solid var(--border); color:#fff;" onclick="logout()">ออก</button>
   </div>
 
   <!-- Modal: แผงควบคุมระบบ (Control Center) -->
   <div id="controlCenterModal" class="modal-overlay">
     <div class="modal-box">
       <div class="modal-header">
-        <h2>🛠️ แผงควบคุมระบบ (Admin Control Center)</h2>
+        <h2>🛠️ แผงควบคุมระบบ Admin</h2>
         <button class="btn-close" onclick="closeControlCenter()">&times;</button>
       </div>
 
       <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('tab-schedule')">📅 จัดการคิวงาน (คลิกปฏิทิน)</button>
-        <button class="tab-btn" onclick="switchTab('tab-photos')">📷 อัปโหลดรูปภาพ</button>
-        <button class="tab-btn" onclick="switchTab('tab-videos')">🎬 อัปโหลดวิดีโอ</button>
+        <button class="tab-btn active" onclick="switchTab('tab-schedule')">📅 ลงคิวงาน (คลิกปฏิทิน)</button>
+        <button class="tab-btn" onclick="switchTab('tab-profile')">👤 แก้ไขข้อมูลช่างภาพ</button>
+        <button class="tab-btn" onclick="switchTab('tab-photos')">📷 อัปโหลดรูปภาพ (หลายรูป)</button>
+        <button class="tab-btn" onclick="switchTab('tab-videos')">🎬 อัปโหลดวิดีโอ & ลิงก์</button>
       </div>
 
-      <!-- แท็บ 1: จัดการคิวงานบนปฏิทิน -->
+      <!-- 1. คิวปฏิทิน -->
       <div id="tab-schedule" class="tab-content active">
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">👉 <strong>คลิกที่วันที่ในปฏิทิน</strong> เพื่อลงวันว่าง/ไม่ว่าง หรือบันทึกงานที่รับ</p>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">👉 <strong>คลิกวันที่ในปฏิทิน</strong> เพื่อลงวันว่าง หรือกรอกชื่องาน/ผู้ว่าจ้าง</p>
         <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
           <button class="btn" style="width: auto; padding: 0.3rem 0.8rem;" onclick="adminChangeMonth(-1)">&lt;</button>
           <strong id="adminMonthLabel"></strong>
@@ -120,91 +144,81 @@
         <div class="admin-cal-grid" id="adminCalGrid"></div>
       </div>
 
-      <!-- แท็บ 2: อัปโหลดรูปภาพ -->
-      <div id="tab-photos" class="tab-content">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3>อัปโหลดรูปภาพใหม่</h3>
-          <button class="btn" style="width: auto; padding: 0.4rem 0.8rem; background: transparent; border: 1px solid var(--accent); color: var(--accent);" onclick="openPopupList('image')">📋 ดูรายการภาพทั้งหมด</button>
-        </div>
-        <form onsubmit="handleUploadMedia(event, 'image')">
+      <!-- 2. แก้ไขโปรไฟล์ช่างภาพ -->
+      <div id="tab-profile" class="tab-content">
+        <form onsubmit="handleSaveProfile(event)">
           <div class="form-group">
-            <label>ชื่อภาพ</label>
-            <input type="text" id="imgTitle" required placeholder="เช่น Modern Luxury Villa">
+            <label>เปลี่ยนรูปโปรไฟล์ช่างภาพ (เลือกรูปใหม่)</label>
+            <input type="file" id="profAvatarFile" accept="image/*">
           </div>
-          <div class="form-group">
-            <label>หมวดหมู่</label>
-            <input type="text" id="imgCategory" required placeholder="เช่น Portrait, Architecture">
-          </div>
-          <div class="form-group">
-            <label>เลือกไฟล์รูปภาพ</label>
-            <input type="file" id="imgFileInput" accept="image/*" required>
-          </div>
-          <button type="submit" class="btn" id="btnUploadImg">บันทึกรูปภาพ</button>
+          <div class="form-group"><label>ชื่อช่างภาพ / สตูดิโอ</label><input type="text" id="editProfName" required></div>
+          <div class="form-group"><label>คำอธิบายสั้นๆ / Bio</label><textarea id="editProfBio" rows="3"></textarea></div>
+          <div class="form-group"><label>พื้นที่รับงาน</label><input type="text" id="editProfLocation"></div>
+          <div class="form-group"><label>เบอร์โทรศัพท์</label><input type="text" id="editProfPhone"></div>
+          <div class="form-group"><label>Line ID</label><input type="text" id="editProfLine"></div>
+          <div class="form-group"><label>Instagram</label><input type="text" id="editProfIG"></div>
+          <button type="submit" class="btn" id="btnSaveProfile">บันทึกข้อมูลช่างภาพ</button>
         </form>
       </div>
 
-      <!-- แท็บ 3: อัปโหลดวิดีโอ -->
+      <!-- 3. อัปโหลดภาพ (Multiple) -->
+      <div id="tab-photos" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3>อัปโหลดรูปภาพใหม่ (เลือกได้หลายรูป)</h3>
+          <button class="btn" style="width: auto; padding: 0.4rem 0.8rem; background: transparent; border: 1px solid var(--accent); color: var(--accent);" onclick="openPopupList('image')">📋 ดูรายการภาพทั้งหมด</button>
+        </div>
+        <form onsubmit="handleUploadMultiplePhotos(event)">
+          <div class="form-group"><label>ชื่อผลงาน (ค่าเริ่มต้น)</label><input type="text" id="imgTitle" placeholder="เช่น Luxury Portrait Shoot" required></div>
+          <div class="form-group"><label>หมวดหมู่</label><input type="text" id="imgCategory" placeholder="เช่น Portrait, Wedding" required></div>
+          <div class="form-group"><label>ลิงก์ข้อมูลเพิ่มเติม / Drive Link (ถ้ามี)</label><input type="url" id="imgExtLink" placeholder="https://..."></div>
+          <div class="form-group"><label>เลือกไฟล์รูปภาพ (กดเลือกหลายรูปได้)</label><input type="file" id="imgFilesInput" accept="image/*" multiple required></div>
+          <button type="submit" class="btn" id="btnUploadImgs">อัปโหลดรูปภาพ</button>
+        </form>
+      </div>
+
+      <!-- 4. อัปโหลดวิดีโอ -->
       <div id="tab-videos" class="tab-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <h3>อัปโหลดวิดีโอใหม่</h3>
           <button class="btn" style="width: auto; padding: 0.4rem 0.8rem; background: transparent; border: 1px solid var(--accent); color: var(--accent);" onclick="openPopupList('video')">📋 ดูรายการวิดีโอทั้งหมด</button>
         </div>
-        <form onsubmit="handleUploadMedia(event, 'video')">
-          <div class="form-group">
-            <label>ชื่อวิดีโอ</label>
-            <input type="text" id="vidTitle" required placeholder="เช่น Cinema Reel 2026">
-          </div>
-          <div class="form-group">
-            <label>หมวดหมู่</label>
-            <input type="text" id="vidCategory" required placeholder="เช่น Commercial, Fashion Film">
-          </div>
-          <div class="form-group">
-            <label>เลือกไฟล์วิดีโอ</label>
-            <input type="file" id="vidFileInput" accept="video/*" required>
-          </div>
-          <button type="submit" class="btn" id="btnUploadVid">บันทึกวิดีโอ</button>
+        <form onsubmit="handleUploadVideo(event)">
+          <div class="form-group"><label>ชื่อผลงานวิดีโอ</label><input type="text" id="vidTitle" required></div>
+          <div class="form-group"><label>หมวดหมู่</label><input type="text" id="vidCategory" required></div>
+          <div class="form-group"><label>ลิงก์ข้อมูลเพิ่มเติม / YouTube Link (ถ้ามี)</label><input type="url" id="vidExtLink" placeholder="https://..."></div>
+          <div class="form-group"><label>เลือกไฟล์วิดีโอ</label><input type="file" id="vidFileInput" accept="video/*" required></div>
+          <button type="submit" class="btn" id="btnUploadVid">อัปโหลดวิดีโอ</button>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Modal Popup: สำหรับคลิกลงคิววันที่เลือก -->
+  <!-- Modal: จัดการวันที่เลือก -->
   <div id="dateActionModal" class="modal-overlay">
     <div class="modal-box" style="max-width: 480px;">
       <div class="modal-header">
-        <h3 id="selectedDateLabel">ลงข้อมูลวันที่</h3>
+        <h3 id="selectedDateLabel">จัดการวันที่</h3>
         <button class="btn-close" onclick="closeDateActionModal()">&times;</button>
       </div>
       <form onsubmit="saveScheduleEvent(event)">
         <input type="hidden" id="selectedDateValue">
         <div class="form-group">
           <label>สถานะของวัน</label>
-          <select id="popStatus" onchange="toggleJobFields(this.value)">
+          <select id="popStatus">
             <option value="available">🟢 ว่างรับงาน (Available)</option>
-            <option value="booked">🟠 รับงานแล้ว / ลงคิวงาน (Booked)</option>
+            <option value="booked">🟠 รับงานแล้ว / มีคิวงาน (Booked)</option>
             <option value="busy">🔴 ไม่ว่างรับงาน (Busy)</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>ช่วงเวลา</label>
-          <input type="text" id="popTime" placeholder="เช่น ทั้งวัน หรือ 09:00 - 16:00" required>
-        </div>
-        <div id="jobDetailsGroup">
-          <div class="form-group">
-            <label>ชื่องาน / ชื่อผู้ว่าจ้าง</label>
-            <input type="text" id="popTitle" placeholder="เช่น งานแต่งคุณแนน & คุณเอก">
-          </div>
-          <div class="form-group">
-            <label>สถานที่</label>
-            <input type="text" id="popLocation" placeholder="เช่น โรงแรมแกรนด์ หรือ -">
-          </div>
-        </div>
+        <div class="form-group"><label>ช่วงเวลา</label><input type="text" id="popTime" placeholder="เช่น ทั้งวัน หรือ 09:00 - 16:00" required></div>
+        <div class="form-group"><label>ชื่องาน / ชื่อผู้ว่าจ้าง</label><input type="text" id="popTitle" placeholder="เช่น งานแต่งคุณแนน & คุณบอย"></div>
+        <div class="form-group"><label>สถานที่</label><input type="text" id="popLocation" placeholder="เช่น โรงแรมสยาม"></div>
         <button type="submit" class="btn" id="btnSaveSchedule">บันทึกลงตาราง</button>
       </form>
     </div>
   </div>
 
-  <!-- Modal Popup: แสดงรายการผลงาน (ภาพ หรือ วิดีโอ) -->
+  <!-- Modal: ดูรายการผลงาน Popup -->
   <div id="mediaListModal" class="modal-overlay">
     <div class="modal-box" style="max-width: 600px;">
       <div class="modal-header">
@@ -217,11 +231,32 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
-    const ADMIN_PWD = "adminPassword123";
+    let token = sessionStorage.getItem("adminPassword");
+    let allData = { profile: {}, portfolio: [], schedule: [] };
     let adminDate = new Date();
-    let allData = { portfolio: [], schedule: [] };
 
-    function openControlCenter() { document.getElementById("controlCenterModal").classList.add("active"); loadAdminData(); }
+    if (token) checkLoginSuccess();
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const pwd = document.getElementById("adminPassword").value;
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "login", password: pwd }) });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem("adminPassword", pwd);
+        token = pwd;
+        checkLoginSuccess();
+      } else alert("รหัสผ่านไม่ถูกต้อง");
+    }
+
+    function checkLoginSuccess() {
+      document.getElementById("loginSection").style.display = "none";
+      loadAdminData();
+    }
+
+    function logout() { sessionStorage.removeItem("adminPassword"); location.reload(); }
+
+    function openControlCenter() { document.getElementById("controlCenterModal").classList.add("active"); populateProfileForm(); renderAdminCalendar(); }
     function closeControlCenter() { document.getElementById("controlCenterModal").classList.remove("active"); }
 
     function switchTab(tabId) {
@@ -232,14 +267,62 @@
     }
 
     async function loadAdminData() {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        if (data.success) {
-          allData = data;
-          renderAdminCalendar();
-        }
-      } catch(e) { console.error(e); }
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      if (data.success) {
+        allData = data;
+        renderAdminCalendar();
+      }
+    }
+
+    function populateProfileForm() {
+      const p = allData.profile || {};
+      document.getElementById("editProfName").value = p.name || "";
+      document.getElementById("editProfBio").value = p.bio || "";
+      document.getElementById("editProfLocation").value = p.location || "";
+      document.getElementById("editProfPhone").value = p.phone || "";
+      document.getElementById("editProfLine").value = p.line || "";
+      document.getElementById("editProfIG").value = p.instagram || "";
+    }
+
+    async function handleSaveProfile(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSaveProfile");
+      btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
+
+      const avatarFile = document.getElementById("profAvatarFile").files[0];
+      let avatarData = null;
+
+      if (avatarFile) {
+        avatarData = await new Promise(resolve => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.readAsDataURL(avatarFile);
+        });
+      }
+
+      const payload = {
+        action: "updateProfile",
+        password: token,
+        avatarUrl: allData.profile ? allData.profile.avatarUrl : "",
+        avatarData: avatarData,
+        name: document.getElementById("editProfName").value,
+        bio: document.getElementById("editProfBio").value,
+        location: document.getElementById("editProfLocation").value,
+        phone: document.getElementById("editProfPhone").value,
+        line: document.getElementById("editProfLine").value,
+        instagram: document.getElementById("editProfIG").value
+      };
+
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+      const result = await res.json();
+      btn.innerText = "บันทึกข้อมูลช่างภาพ"; btn.disabled = false;
+
+      if (result.success) {
+        alert("บันทึกข้อมูลช่างภาพสำเร็จ!");
+        loadAdminData();
+        refreshFrame();
+      } else alert(result.message);
     }
 
     function adminChangeMonth(delta) {
@@ -262,7 +345,7 @@
 
       for (let day = 1; day <= lastDate; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = allData.schedule.filter(i => i.date === dateStr);
+        const dayEvents = (allData.schedule || []).filter(i => i.date === dateStr);
         let tags = dayEvents.map(e => {
           let color = e.status === 'available' ? 'var(--accent)' : (e.status === 'busy' ? 'var(--danger)' : '#f59e0b');
           return `<div style="font-size:0.65rem; color:${color}; white-space:nowrap; overflow:hidden;">• ${e.title || e.status}</div>`;
@@ -279,20 +362,19 @@
 
     function openDateModal(dateStr) {
       document.getElementById("selectedDateValue").value = dateStr;
-      document.getElementById("selectedDateLabel").innerText = `📅 จัดการวันที่: ${dateStr}`;
+      document.getElementById("selectedDateLabel").innerText = `📅 วันที่: ${dateStr}`;
       document.getElementById("dateActionModal").classList.add("active");
     }
     function closeDateActionModal() { document.getElementById("dateActionModal").classList.remove("active"); }
 
-    function toggleJobFields(status) {
-      document.getElementById("jobDetailsGroup").style.display = status === 'busy' ? 'none' : 'block';
-    }
-
     async function saveScheduleEvent(e) {
       e.preventDefault();
+      const btn = document.getElementById("btnSaveSchedule");
+      btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
+
       const payload = {
         action: "addSchedule",
-        password: ADMIN_PWD,
+        password: token,
         date: document.getElementById("selectedDateValue").value,
         status: document.getElementById("popStatus").value,
         time: document.getElementById("popTime").value,
@@ -302,48 +384,93 @@
 
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
       const result = await res.json();
+      btn.innerText = "บันทึกลงตาราง"; btn.disabled = false;
+
       if (result.success) {
         alert("บันทึกสำเร็จ!");
         closeDateActionModal();
         loadAdminData();
-        document.getElementById("userPreviewFrame").contentWindow.location.reload();
-      }
+        refreshFrame();
+      } else alert(result.message);
     }
 
-    async function handleUploadMedia(e, type) {
+    async function handleUploadMultiplePhotos(e) {
       e.preventDefault();
-      const fileInput = document.getElementById(type === 'image' ? 'imgFileInput' : 'vidFileInput');
-      const title = document.getElementById(type === 'image' ? 'imgTitle' : 'vidTitle').value;
-      const category = document.getElementById(type === 'image' ? 'imgCategory' : 'vidCategory').value;
-      const file = fileInput.files[0];
+      const files = document.getElementById("imgFilesInput").files;
+      if (!files.length) return;
+
+      const btn = document.getElementById("btnUploadImgs");
+      btn.innerText = `กำลังอัปโหลด (0/${files.length})...`; btn.disabled = true;
+
+      const baseTitle = document.getElementById("imgTitle").value;
+      const category = document.getElementById("imgCategory").value;
+      const extLink = document.getElementById("imgExtLink").value;
+
+      const filePayloads = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const dataUrl = await new Promise(res => {
+          const r = new FileReader();
+          r.onload = () => res(r.result);
+          r.readAsDataURL(file);
+        });
+        filePayloads.push({
+          fileName: file.name,
+          fileData: dataUrl,
+          mediaType: "image",
+          title: files.length > 1 ? `${baseTitle} (${i+1})` : baseTitle,
+          category: category,
+          extLink: extLink
+        });
+      }
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "upload", password: token, files: filePayloads })
+      });
+      const result = await res.json();
+      btn.innerText = "อัปโหลดรูปภาพ"; btn.disabled = false;
+
+      if (result.success) {
+        alert("อัปโหลดสำเร็จ!");
+        e.target.reset();
+        loadAdminData();
+        refreshFrame();
+      } else alert(result.message);
+    }
+
+    async function handleUploadVideo(e) {
+      e.preventDefault();
+      const file = document.getElementById("vidFileInput").files[0];
       if (!file) return;
 
-      const btn = document.getElementById(type === 'image' ? 'btnUploadImg' : 'btnUploadVid');
-      btn.innerText = "กำลังอัปโหลด...";
-      btn.disabled = true;
+      const btn = document.getElementById("btnUploadVid");
+      btn.innerText = "กำลังอัปโหลด..."; btn.disabled = true;
 
       const reader = new FileReader();
-      reader.onload = async function() {
+      reader.onload = async () => {
         const payload = {
           action: "upload",
-          password: ADMIN_PWD,
-          mediaType: type,
-          title: title,
-          category: category,
-          fileName: file.name,
-          fileData: reader.result
+          password: token,
+          files: [{
+            fileName: file.name,
+            fileData: reader.result,
+            mediaType: "video",
+            title: document.getElementById("vidTitle").value,
+            category: document.getElementById("vidCategory").value,
+            extLink: document.getElementById("vidExtLink").value
+          }]
         };
 
         const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
         const result = await res.json();
-        btn.innerText = "บันทึก";
-        btn.disabled = false;
+        btn.innerText = "อัปโหลดวิดีโอ"; btn.disabled = false;
 
         if (result.success) {
           alert("อัปโหลดสำเร็จ!");
           e.target.reset();
           loadAdminData();
-          document.getElementById("userPreviewFrame").contentWindow.location.reload();
+          refreshFrame();
         } else alert(result.message);
       };
       reader.readAsDataURL(file);
@@ -352,7 +479,7 @@
     function openPopupList(type) {
       document.getElementById("mediaListModalTitle").innerText = type === 'image' ? "📷 รายการรูปภาพทั้งหมด" : "🎬 รายการวิดีโอทั้งหมด";
       const container = document.getElementById("mediaItemsContainer");
-      const items = allData.portfolio.filter(x => x.mediaType === type);
+      const items = (allData.portfolio || []).filter(x => x.mediaType === type);
 
       if (!items.length) {
         container.innerHTML = '<p style="color:var(--text-muted);">ไม่มีรายการ</p>';
@@ -361,7 +488,7 @@
           <div class="item-row">
             <div>
               <strong>${i.title}</strong>
-              <div style="font-size:0.75rem; color:var(--text-muted);">${i.category}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">${i.category} ${i.extLink ? `| 🔗 <a href="${i.extLink}" target="_blank" style="color:var(--accent);">ลิงก์</a>` : ''}</div>
             </div>
             <button class="btn btn-danger" style="width:auto; padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="deleteItem('${i.id}')">ลบ</button>
           </div>
@@ -373,16 +500,17 @@
 
     async function deleteItem(id) {
       if (!confirm("ต้องการลบรายการนี้?")) return;
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "delete", password: ADMIN_PWD, id: id })
-      });
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "delete", password: token, id: id }) });
       const result = await res.json();
       if (result.success) {
         closeMediaListModal();
         loadAdminData();
-        document.getElementById("userPreviewFrame").contentWindow.location.reload();
+        refreshFrame();
       }
+    }
+
+    function refreshFrame() {
+      document.getElementById("liveFrame").contentWindow.location.reload();
     }
   </script>
 </body>
