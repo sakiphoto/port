@@ -426,7 +426,6 @@
       }
     }
 
-    // แก้ไขเฉพาะจุดนี้เพื่อให้รูปพรีวิวโหลดได้จริงจาก Google Drive
     function getDisplayImageUrl(url) {
       if (!url) return "https://via.placeholder.com/150";
       if (url.includes("google.com") || url.includes("googleusercontent.com")) {
@@ -437,7 +436,7 @@
         else if (matchPath) fileId = matchPath[1];
 
         if (fileId) {
-          return `https://lh3.googleusercontent.com/d/${fileId}=w1600`;
+          return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
         }
       }
       return url;
