@@ -353,7 +353,7 @@
   </main>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyZnkAIVNbFEFZlr4wZR9tON_bspCiXSc2hqLHZcj-0Z_0dyJINpFqtQEpvOOGwEb7bXw/exec";
     let adminPassword = "";
     let allData = { profile: {}, portfolio: [], schedule: [], calendar: [] };
     let avatarBase64 = "";
@@ -427,7 +427,7 @@
     }
 
     function getDisplayImageUrl(url) {
-      if (!url) return "https://via.placeholder.com/150";
+      if (!url) return "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80";
       if (url.includes("google.com") || url.includes("googleusercontent.com")) {
         let fileId = "";
         const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
@@ -450,6 +450,9 @@
         if (fileId) {
           img.src = `https://wsrv.nl/?url=https://drive.google.com/uc?id=${fileId}`;
         }
+      } else if (!img.dataset.triedFallback) {
+        img.dataset.triedFallback = "true";
+        img.src = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80";
       }
     }
 
