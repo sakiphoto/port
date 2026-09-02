@@ -31,11 +31,11 @@
     }
     .nav-container {
       max-width: 1200px; margin: 0 auto; display: flex;
-      justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem;
+      justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem; gap: 1rem;
     }
-    .logo { font-size: 1.25rem; font-weight: 700; color: #fff; cursor: pointer; }
+    .logo { font-size: 1.25rem; font-weight: 700; color: #fff; cursor: pointer; white-space: nowrap; }
     .logo span { color: var(--accent); }
-    nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    nav { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
     .nav-link {
       color: var(--text-muted); text-decoration: none; padding: 0.5rem 1rem;
       border-radius: 9999px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: 0.2s;
@@ -169,11 +169,27 @@
       display: inline-flex; align-items: center; gap: 6px;
     }
 
-    footer { text-align: center; padding: 2.5rem 1.5rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
+    footer {
+      text-align: center; padding: 2.5rem 1.5rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem;
+    }
+
+    /* HIDDEN ADMIN LINK IN FOOTER */
+    .hidden-admin-btn {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+      margin-right: 6px;
+      cursor: default;
+    }
+    .hidden-admin-btn:hover {
+      color: var(--text-muted); /* คงความเนียน ไม่เปลี่ยนสีเด่นชัด */
+    }
 
     @media (max-width: 860px) {
       .contact-grid { grid-template-columns: 1fr; }
       .album-grid { grid-template-columns: 1fr; }
+      .nav-container { flex-direction: column; gap: 0.8rem; }
     }
   </style>
 </head>
@@ -290,7 +306,7 @@
   </main>
 
   <footer>
-    <p>&copy; Photographer Portfolio. All rights reserved.</p>
+    <p><a href="admin.html" class="hidden-admin-btn">©</a> Photographer Portfolio. All rights reserved.</p>
   </footer>
 
   <script>
