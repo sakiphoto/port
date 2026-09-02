@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photography Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0284c7;
+      --secondary: #0f172a;
+      --accent: #38bdf8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #0369a1 50%, #38bdf8 100%);
+      color: white;
+      text-align: center;
+      padding: 4rem 1rem 3rem;
+    }
+    header h1 { font-size: 2.5rem; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 0.5rem; }
+    header p { font-weight: 300; opacity: 0.9; font-size: 1.1rem; }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1.5rem 1rem;
+      background: white;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      border: none;
+      background: #f1f5f9;
+      color: #64748b;
+      padding: 0.5rem 1.25rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: white;
+    }
+
+    main { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; width: 100%; flex: 1; }
+    
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+      transition: transform 0.3s, box-shadow 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 20px rgba(2, 132, 199, 0.12);
+    }
+    .media-container {
+      width: 100%;
+      height: 240px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+    .media-container img, .media-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .info { padding: 1rem 1.25rem; }
+    .tag {
+      font-size: 0.75rem;
+      background: #e0f2fe;
+      color: var(--primary);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-weight: 500;
+      display: inline-block;
+      margin-bottom: 0.4rem;
+    }
+    .title { font-size: 1.05rem; font-weight: 500; color: var(--secondary); }
+
+    .loading, .empty { text-align: center; grid-column: 1 / -1; padding: 3rem; color: #94a3b8; }
+    footer { text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.875rem; }
+    footer a { color: var(--primary); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>PHOTOGRAPHY PORTFOLIO</h1>
+    <p>บันทึกทุกเรื่องราวและช่วงเวลาผ่านเลนส์</p>
+  </header>
+
+  <nav id="filterBar">
+    <button class="filter-btn active" onclick="filterGallery('all')">ทั้งหมด</button>
+  </nav>
+
+  <main>
+    <div class="gallery" id="galleryContainer">
+      <div class="loading">กำลังโหลดผลงาน...</div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; Portfolio Gallery | <a href="admin.html">เข้าสู่ระบบจัดการ</a></p>
+  </footer>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
+    let portfolioData = [];
+
+    async function loadPortfolio() {
+      try {
+        const res = await fetch(API_URL);
+        const result = await res.json();
+        
+        if (result.success) {
+          portfolioData = result.data;
+          setupFilters();
+          renderGallery(portfolioData);
+        } else {
+          document.getElementById('galleryContainer').innerHTML = '<div class="empty">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
+        }
+      } catch (err) {
+        document.getElementById('galleryContainer').innerHTML = '<div class="empty">ไม่สามารถเชื่อมต่อระบบได้</div>';
+      }
+    }
+
+    function setupFilters() {
+      const categories = ['all', ...new Set(portfolioData.map(item => item.category).filter(Boolean))];
+      const filterBar = document.getElementById('filterBar');
+      filterBar.innerHTML = categories.map(cat => `
+        <button class="filter-btn ${cat === 'all' ? 'active' : ''}" onclick="filterGallery('${cat}')">
+          ${cat === 'all' ? 'ทั้งหมด' : cat}
+        </button>
+      `).join('');
+    }
+
+    function filterGallery(category) {
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const filtered = category === 'all' 
+        ? portfolioData 
+        : portfolioData.filter(item => item.category === category);
+      
+      renderGallery(filtered);
+    }
+
+    function renderGallery(items) {
+      const container = document.getElementById('galleryContainer');
+      if (!items || items.length === 0) {
+        container.innerHTML = '<div class="empty">ยังไม่มีข้อมูลผลงาน</div>';
+        return;
+      }
+
+      container.innerHTML = items.map(item => `
+        <div class="card">
+          <div class="media-container">
+            ${item.mediaType === 'video' 
+              ? `<video src="${item.fileUrl}" controls playsinline></video>` 
+              : `<img src="${item.fileUrl}" alt="${item.title}" loading="lazy">`
+            }
+          </div>
+          <div class="info">
+            <span class="tag">${item.category || 'General'}</span>
+            <div class="title">${item.title}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.onload = loadPortfolio;
+  </script>
+</body>
+</html>
