@@ -801,7 +801,7 @@
       });
     }
 
-    function compressAndBase64(file, maxWidth = 1600, quality = 0.75) {
+    function compressAndBase64(file, maxWidth = 1200, quality = 0.65) {
       return new Promise((resolve) => {
         if (file.type.startsWith('video/')) {
           readFileAsBase64(file).then(resolve);
@@ -1399,7 +1399,7 @@
       btn.innerText = "บันทึกข้อมูลทั้งหมด"; btn.disabled = false;
       if (result.success) { 
         showNotification("บันทึกสำเร็จ!"); 
-        setTimeout(() => window.location.reload(), 1000);
+        await reloadAdmin();
       } else showNotification(result.message, true);
     }
 
@@ -1432,7 +1432,7 @@
       if (result.success) { 
         showNotification(payload.id ? "อัปเดตคิวงานสำเร็จ!" : "เพิ่มคิวงานสำเร็จ!"); 
         resetSchedForm(); 
-        setTimeout(() => window.location.reload(), 1000); 
+        await reloadAdmin(); 
       } else showNotification(result.message, true);
     }
 
@@ -1492,7 +1492,7 @@
       try {
         const filePayloads = [];
         for (let f of files) {
-          const compressed = await compressAndBase64(f, 1600);
+          const compressed = await compressAndBase64(f, 1200);
           filePayloads.push({ name: f.name, data: compressed });
         }
 
@@ -1503,7 +1503,7 @@
         if (result.success) { 
           showNotification("อัปโหลดสำเร็จ!"); 
           e.target.reset(); 
-          setTimeout(() => window.location.reload(), 1000); 
+          await reloadAdmin(); 
         } else showNotification(result.message, true);
       } catch(err) {
         btn.innerText = "อัปโหลดรูปภาพหน้าแรก"; btn.disabled = false;
@@ -1533,7 +1533,7 @@
       if (result.success) { showNotification("ลบรูปภาพสำเร็จ!"); reloadAdmin(); }
     }
 
-    /* อัปโหลดรูปภาพแบบ Sequential Batching บันทึกสำเร็จ 100% ไม่ค้าง */
+    /* อัปโหลดรูปภาพทีละภาพเพื่อความเสถียร 100% ไม่ค้าง */
     async function handleUploadPhotos(e) {
       e.preventDefault();
       const files = document.getElementById("pImgFiles").files;
@@ -1551,7 +1551,7 @@
       try {
         for (let i = 0; i < files.length; i++) {
           btn.innerText = `กำลังอัปโหลดรูปที่ ${i + 1}/${files.length}...`;
-          const compressed = await compressAndBase64(files[i], 1600, 0.75);
+          const compressed = await compressAndBase64(files[i], 1200, 0.65);
           
           const payload = {
             action: "upload", 
@@ -1576,10 +1576,11 @@
         }
 
         if (successCount > 0) { 
-          showNotification(`อัปโหลดรูปภาพสำเร็จ ${successCount} รูป! กำลังรีเฟรช...`); 
+          showNotification(`อัปโหลดรูปภาพสำเร็จ ${successCount} รูป!`); 
           document.getElementById('uploadPhotoForm').reset();
           document.getElementById('photoLinkContainer').innerHTML = '';
-          setTimeout(() => window.location.reload(), 1200);
+          btn.innerText = "อัปโหลดภาพผลงานใหม่"; btn.disabled = false;
+          await reloadAdmin();
         } else {
           btn.innerText = "อัปโหลดภาพผลงานใหม่"; btn.disabled = false;
           showNotification("อัปโหลดล้มเหลว กรุณาลองใหม่อีกครั้ง", true);
@@ -1590,14 +1591,14 @@
       }
     }
 
-    /* อัปโหลดวิดีโอแบบปลอดภัยและรีเฟรชหน้าเว็บอัตโนมัติ */
+    /* อัปโหลดวิดีโอ */
     async function handleUploadVideo(e) {
       e.preventDefault();
       const file = document.getElementById("pVidFile").files[0];
       if (!file) return;
 
-      if (file.size > 30 * 1024 * 1024) {
-        showNotification("ไฟล์วิดีโอต้องมีขนาดไม่เกิน 30MB", true);
+      if (file.size > 25 * 1024 * 1024) {
+        showNotification("ไฟล์วิดีโอต้องมีขนาดไม่เกิน 25MB", true);
         return;
       }
 
@@ -1625,14 +1626,14 @@
         };
         const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
         const result = await res.json();
+        btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
         
         if (result.success) { 
-          showNotification("อัปโหลดวิดีโอสำเร็จ! กำลังรีเฟรช..."); 
+          showNotification("อัปโหลดวิดีโอสำเร็จ!"); 
           document.getElementById('uploadVideoForm').reset();
           document.getElementById('videoLinkContainer').innerHTML = '';
-          setTimeout(() => window.location.reload(), 1200);
+          await reloadAdmin();
         } else {
-          btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
           showNotification(result.message || "อัปโหลดวิดีโอล้มเหลว", true);
         }
       } catch(err) {
@@ -1740,8 +1741,8 @@
       });
       const data = await res.json();
       if (data.success) {
-        showNotification("บันทึกลำดับอัลบั้มสำเร็จ! กำลังรีเฟรช...");
-        setTimeout(() => window.location.reload(), 1000);
+        showNotification("บันทึกลำดับอัลบั้มสำเร็จ!");
+        await reloadAdmin();
       } else {
         showNotification("เกิดข้อผิดพลาดในการบันทึก", true);
       }
@@ -1798,7 +1799,7 @@
       closeEditAlbumModal();
       if (result.success) { 
         showNotification("แก้ไขอัลบั้มเรียบร้อย!"); 
-        setTimeout(() => window.location.reload(), 1000);
+        await reloadAdmin();
       } else showNotification(result.message, true);
     }
 
@@ -1808,7 +1809,7 @@
       const result = await res.json();
       if (result.success) { 
         showNotification("ลบอัลบั้มสำเร็จ!"); 
-        setTimeout(() => window.location.reload(), 1000);
+        await reloadAdmin();
       }
     }
 
@@ -1818,7 +1819,7 @@
       const result = await res.json();
       if (result.success) { 
         showNotification("ลบรายการสำเร็จ!"); 
-        setTimeout(() => window.location.reload(), 1000);
+        await reloadAdmin();
       }
     }
   </script>
