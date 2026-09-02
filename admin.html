@@ -3,71 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบจัดการพอร์ตโฟลิโอ (Admin)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <title>Admin Dashboard | Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #0284c7;
-      --secondary: #0f172a;
-      --danger: #ef4444;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #334155;
+      --bg-dark: #0a0c10;
+      --bg-card: #12161f;
+      --accent: #38bdf8;
+      --danger: #f43f5e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.08);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 1.5rem; min-height: 100vh; }
-    .container { max-width: 800px; margin: 0 auto; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; padding: 2rem 1rem; }
+    .container { max-width: 900px; margin: 0 auto; }
     
-    .card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 2rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-      margin-bottom: 2rem;
-    }
-    h2 { color: var(--secondary); margin-bottom: 1.5rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
-    
-    .form-group { margin-bottom: 1.25rem; }
-    label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; color: #475569; }
-    input[type="text"], input[type="password"], select, input[type="file"] {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      outline: none;
-      font-size: 0.95rem;
-      transition: border 0.2s;
-    }
-    input:focus, select:focus { border-color: var(--primary); }
-    
-    .btn {
-      width: 100%;
-      padding: 0.75rem;
-      background: linear-gradient(135deg, #0284c7, #0369a1);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-    .btn:hover { opacity: 0.95; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #64748b; font-size: 0.85rem; padding: 0.4rem 0.8rem; width: auto; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem; }
+    h2 { font-weight: 600; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
 
-    /* List view */
-    .item-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #f1f5f9;
+    .form-group { margin-bottom: 1.25rem; }
+    label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+    input[type="text"], input[type="password"], input[type="file"] {
+      width: 100%; padding: 0.85rem 1rem; background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border); border-radius: 10px; color: #fff; outline: none; transition: 0.3s;
     }
-    .item-row:last-child { border-bottom: none; }
-    .item-meta { display: flex; align-items: center; gap: 1rem; }
-    .item-thumb { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #e2e8f0; }
-    .btn-delete { background: var(--danger); color: white; border: none; padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    input:focus { border-color: var(--accent); }
+
+    .btn {
+      width: 100%; padding: 0.85rem; background: var(--accent); color: #000;
+      border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; width: auto; }
+    .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+
+    /* Admin Tabs */
+    .admin-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
+    .tab-btn {
+      background: transparent; border: none; color: var(--text-muted); padding: 0.5rem 1rem;
+      border-radius: 8px; cursor: pointer; font-weight: 500; transition: 0.2s;
+    }
+    .tab-btn.active { color: #000; background: var(--accent); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* List items */
+    .item-card {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem; background: rgba(255, 255, 255, 0.02); border-radius: 12px;
+      margin-bottom: 0.75rem; border: 1px solid var(--border);
+    }
+    .item-left { display: flex; align-items: center; gap: 1rem; }
+    .item-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #000; }
+    .btn-delete { background: var(--danger); color: #fff; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
     
     .hidden { display: none; }
   </style>
@@ -75,52 +68,76 @@
 <body>
   <div class="container">
 
-    <!-- ส่วน Login -->
-    <div id="loginSection" class="card">
-      <h2>🔐 เข้าสู่ระบบ Admin</h2>
-      <form id="loginForm" onsubmit="handleLogin(event)">
+    <!-- Section Login -->
+    <div id="loginSection" class="card" style="max-width: 450px; margin: 4rem auto;">
+      <h2 style="font-size: 1.3rem;">🔐 เข้าสู่ระบบหลังบ้าน</h2>
+      <form onsubmit="handleLogin(event)">
         <div class="form-group">
-          <label>รหัสผ่าน</label>
-          <input type="password" id="adminPassword" required placeholder="ใส่รหัสผ่าน admin">
+          <label>Admin Password</label>
+          <input type="password" id="adminPassword" placeholder="ใส่รหัสผ่านเพื่อเข้าถึง" required>
         </div>
         <button type="submit" class="btn" id="loginBtn">เข้าสู่ระบบ</button>
       </form>
     </div>
 
-    <!-- ส่วน Admin Panel -->
+    <!-- Section Dashboard -->
     <div id="adminPanel" class="hidden">
       <div class="card">
         <h2>
-          <span>📤 อัปโหลดผลงานใหม่</span>
-          <button class="btn btn-outline" onclick="logout()">ออกจากระบบ</button>
+          <span>ระบบจัดการพอร์ตโฟลิโอ</span>
+          <button class="btn btn-outline btn-sm" onclick="logout()">ออกจากระบบ</button>
         </h2>
-        <form id="uploadForm" onsubmit="handleUpload(event)">
-          <div class="form-group">
-            <label>ชื่อภาพ / ผลงาน</label>
-            <input type="text" id="title" required placeholder="เช่น Sunset at the beach">
-          </div>
-          <div class="form-group">
-            <label>หมวดหมู่</label>
-            <input type="text" id="category" required placeholder="เช่น Portrait, Wedding, Landscape">
-          </div>
-          <div class="form-group">
-            <label>ประเภทไฟล์</label>
-            <select id="mediaType">
-              <option value="image">รูปภาพ (Image)</option>
-              <option value="video">วิดีโอ (Video)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>เลือกไฟล์</label>
-            <input type="file" id="fileInput" accept="image/*,video/*" required>
-          </div>
-          <button type="submit" class="btn" id="uploadBtn">อัปโหลดผลงาน</button>
-        </form>
-      </div>
 
-      <div class="card">
-        <h2>📋 รายการผลงานทั้งหมด</h2>
-        <div id="itemsList">กำลังโหลด...</div>
+        <!-- แยกเมนูแท็บ -->
+        <div class="admin-tabs">
+          <button class="tab-btn active" onclick="switchTab('uploadImage')">📷 อัปโหลดภาพ</button>
+          <button class="tab-btn" onclick="switchTab('uploadVideo')">🎬 อัปโหลดวิดีโอ</button>
+          <button class="tab-btn" onclick="switchTab('manageList')">📋 ผลงานทั้งหมด</button>
+        </div>
+
+        <!-- แท็บ 1: อัปโหลดภาพ -->
+        <div id="tab-uploadImage" class="tab-content active">
+          <form onsubmit="handleUpload(event, 'image')">
+            <div class="form-group">
+              <label>ชื่อภาพ / ผลงาน</label>
+              <input type="text" id="imgTitle" placeholder="เช่น Luxury Architecture" required>
+            </div>
+            <div class="form-group">
+              <label>หมวดหมู่ภาพ</label>
+              <input type="text" id="imgCategory" placeholder="เช่น Architecture, Fashion, Portrait" required>
+            </div>
+            <div class="form-group">
+              <label>เลือกไฟล์รูปภาพ</label>
+              <input type="file" id="imgFile" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn" id="uploadImgBtn">บันทึกรูปภาพ</button>
+          </form>
+        </div>
+
+        <!-- แท็บ 2: อัปโหลดวิดีโอ -->
+        <div id="tab-uploadVideo" class="tab-content">
+          <form onsubmit="handleUpload(event, 'video')">
+            <div class="form-group">
+              <label>ชื่อวิดีโอ / ผลงาน</label>
+              <input type="text" id="vidTitle" placeholder="เช่น Cinematic Reel 2026" required>
+            </div>
+            <div class="form-group">
+              <label>หมวดหมู่วิดีโอ</label>
+              <input type="text" id="vidCategory" placeholder="เช่น Commercial, Short Film" required>
+            </div>
+            <div class="form-group">
+              <label>เลือกไฟล์วิดีโอ</label>
+              <input type="file" id="vidFile" accept="video/*" required>
+            </div>
+            <button type="submit" class="btn" id="uploadVidBtn">บันทึกวิดีโอ</button>
+          </form>
+        </div>
+
+        <!-- แท็บ 3: รายการจัดการ -->
+        <div id="tab-manageList" class="tab-content">
+          <div id="itemsContainer">กำลังโหลดข้อมูล...</div>
+        </div>
+
       </div>
     </div>
 
@@ -130,9 +147,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
     let token = sessionStorage.getItem("adminPassword");
 
-    if (token) {
-      showPanel();
-    }
+    if (token) showPanel();
 
     async function handleLogin(e) {
       e.preventDefault();
@@ -147,13 +162,12 @@
           body: JSON.stringify({ action: "login", password: pwd })
         });
         const data = await res.json();
-        
         if (data.success) {
           sessionStorage.setItem("adminPassword", pwd);
           token = pwd;
           showPanel();
         } else {
-          alert(data.message || "รหัสผ่านไม่ถูกต้อง");
+          alert("รหัสผ่านไม่ถูกต้อง");
         }
       } catch (err) {
         alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
@@ -166,7 +180,7 @@
     function showPanel() {
       document.getElementById("loginSection").classList.add("hidden");
       document.getElementById("adminPanel").classList.remove("hidden");
-      loadItems();
+      loadAllItems();
     }
 
     function logout() {
@@ -174,14 +188,23 @@
       location.reload();
     }
 
-    async function handleUpload(e) {
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    async function handleUpload(e, type) {
       e.preventDefault();
-      const fileInput = document.getElementById("fileInput");
+      const fileInput = document.getElementById(type === 'image' ? 'imgFile' : 'vidFile');
+      const title = document.getElementById(type === 'image' ? 'imgTitle' : 'vidTitle').value;
+      const category = document.getElementById(type === 'image' ? 'imgCategory' : 'vidCategory').value;
+      const btn = document.getElementById(type === 'image' ? 'uploadImgBtn' : 'uploadVidBtn');
       const file = fileInput.files[0];
       if (!file) return;
 
-      const btn = document.getElementById("uploadBtn");
-      btn.innerText = "กำลังอัปโหลด (อาจใช้เวลาสักครู่)...";
+      btn.innerText = "กำลังอัปโหลด...";
       btn.disabled = true;
 
       const reader = new FileReader();
@@ -189,56 +212,53 @@
         const payload = {
           action: "upload",
           password: token,
-          title: document.getElementById("title").value,
-          category: document.getElementById("category").value,
-          mediaType: document.getElementById("mediaType").value,
+          title: title,
+          category: category,
+          mediaType: type,
           fileName: file.name,
           fileData: reader.result
         };
 
         try {
-          const res = await fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify(payload)
-          });
+          const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
           const result = await res.json();
           if (result.success) {
-            alert("อัปโหลดสำเร็จ!");
-            document.getElementById("uploadForm").reset();
-            loadItems();
+            alert("อัปโหลดข้อมูลสำเร็จ!");
+            e.target.reset();
+            loadAllItems();
           } else {
-            alert("ผิดพลาด: " + result.message);
+            alert(result.message);
           }
         } catch(err) {
-          alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
+          alert("เกิดข้อผิดพลาดในการอัปโหลด");
         } finally {
-          btn.innerText = "อัปโหลดผลงาน";
+          btn.innerText = type === 'image' ? "บันทึกรูปภาพ" : "บันทึกวิดีโอ";
           btn.disabled = false;
         }
       };
       reader.readAsDataURL(file);
     }
 
-    async function loadItems() {
-      const container = document.getElementById("itemsList");
-      container.innerHTML = "กำลังโหลด...";
+    async function loadAllItems() {
+      const container = document.getElementById("itemsContainer");
+      container.innerHTML = "กำลังโหลดข้อมูล...";
       try {
         const res = await fetch(API_URL);
         const result = await res.json();
         if (result.success) {
           if (result.data.length === 0) {
-            container.innerHTML = "<p style='color: #94a3b8;'>ยังไม่มีผลงาน</p>";
+            container.innerHTML = "<p style='color: var(--text-muted);'>ยังไม่มีข้อมูลผลงาน</p>";
             return;
           }
           container.innerHTML = result.data.map(item => `
-            <div class="item-row">
-              <div class="item-meta">
+            <div class="item-card">
+              <div class="item-left">
                 ${item.mediaType === 'image' 
                   ? `<img src="${item.fileUrl}" class="item-thumb">` 
-                  : `<span style="font-size: 1.8rem;">🎬</span>`}
+                  : `<span style="font-size: 1.5rem; margin-right: 0.5rem;">🎬</span>`}
                 <div>
-                  <strong>${item.title}</strong>
-                  <div style="font-size: 0.8rem; color: #64748b;">${item.category}</div>
+                  <div style="font-weight: 600;">${item.title}</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">${item.category} (${item.mediaType})</div>
                 </div>
               </div>
               <button class="btn-delete" onclick="deleteItem('${item.id}')">ลบ</button>
@@ -252,7 +272,6 @@
 
     async function deleteItem(id) {
       if (!confirm("คุณแน่ใจว่าต้องการลบรายการนี้?")) return;
-
       try {
         const res = await fetch(API_URL, {
           method: "POST",
@@ -260,7 +279,7 @@
         });
         const result = await res.json();
         if (result.success) {
-          loadItems();
+          loadAllItems();
         } else {
           alert(result.message);
         }
