@@ -34,7 +34,7 @@
       padding: 2.5rem; width: 100%; max-width: 420px; text-align: center;
     }
 
-    /* ---------- 2. PREVIEW MODE (หน้าเหมือนผู้ใช้) ---------- */
+    /* ---------- 2. PREVIEW MODE ---------- */
     #previewMode { display: none; }
     .admin-bar {
       position: sticky; top: 0; z-index: 100;
@@ -187,6 +187,7 @@
       padding: 1rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
       border-radius: 12px; margin-bottom: 0.75rem;
     }
+    .social-input-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
 
     @media (max-width: 860px) {
       #dashboardMode { grid-template-columns: 1fr; }
@@ -214,7 +215,7 @@
     </div>
   </div>
 
-  <!-- ========== 2. PREVIEW MODE (หน้าเหมือนผู้ใช้) ========== -->
+  <!-- ========== 2. PREVIEW MODE ========== -->
   <div id="previewMode">
     <div class="admin-bar">
       <div class="admin-bar-left">✅ เข้าสู่ระบบแล้ว — กำลังดูหน้าเว็บในมุมมองผู้ใช้ทั่วไป</div>
@@ -250,7 +251,7 @@
             <div class="profile-name" id="profName">-</div>
             <div class="profile-bio" id="profBio">-</div>
           </div>
-          <div class="contact-grid">
+          <div class="contact-grid" id="previewContactGrid">
             <div class="contact-card"><div class="contact-label">📍 พื้นที่รับงาน</div><div class="contact-val" id="profLocation">-</div></div>
             <a class="contact-card" id="linkPhone" href="#"><div class="contact-label">📱 โทรศัพท์</div><div class="contact-val" id="profPhone">-</div></a>
             <a class="contact-card" id="linkLine" target="_blank"><div class="contact-label">💬 Line</div><div class="contact-val" id="profLine">-</div></a>
@@ -297,7 +298,8 @@
       <div>
         <div class="sidebar-brand">ADMIN <span>PANEL</span></div>
         <div class="sidebar-menu">
-          <button class="menu-btn active" onclick="switchTab('tab-schedule', this)">📅 เพิ่ม & จัดการคิวงาน</button>
+          <button class="menu-btn active" onclick="switchTab('tab-calendar', this)">📅 กำหนดวันว่างในปฏิทิน</button>
+          <button class="menu-btn" onclick="switchTab('tab-schedule', this)">📌 เพิ่ม & จัดการคิวงาน</button>
           <button class="menu-btn" onclick="switchTab('tab-profile', this)">✏️ ข้อมูลหน้าแรก & โซเชียล</button>
           <button class="menu-btn" onclick="switchTab('tab-featured', this)">✨ รูปภาพโชว์หน้าแรก</button>
           <button class="menu-btn" onclick="switchTab('tab-photos', this)">📷 อัปโหลดผลงานรูปภาพ</button>
@@ -311,12 +313,39 @@
     </div>
 
     <div class="main-content">
-      <!-- ปุ่มกลับสำหรับจอเล็ก -->
       <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeDashboard()">← กลับหน้าพรีวิวเว็บไซต์</button>
 
-      <!-- TAB 1: ตารางงาน -->
-      <div id="tab-schedule" class="admin-tab active">
-        <h2 style="margin-bottom: 1.5rem;">📅 เพิ่มคิวงานใหม่ (สถานะอัปเดตอัตโนมัติตามเวลาจริง)</h2>
+      <!-- TAB 1: ปฏิทินความพร้อม -->
+      <div id="tab-calendar" class="admin-tab active">
+        <h2 style="margin-bottom: 1.5rem;">📅 กำหนดวันว่าง / สถานะการรับงานในปฏิทิน</h2>
+        <div class="admin-card">
+          <form onsubmit="handleSetCalendar(event)">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label>เลือกวันที่</label>
+                <input type="date" id="calDate" required>
+              </div>
+              <div class="form-group">
+                <label>สถานะรับงาน</label>
+                <select id="calStatusType" onchange="toggleSlotsInput()">
+                  <option value="full_available">ว่างทั้งวัน</option>
+                  <option value="custom">ว่างเฉพาะช่วงเวลา</option>
+                  <option value="busy">ไม่รับงาน / ไม่ว่าง</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" id="slotsGroup" style="display:none;">
+              <label>ระบุช่วงเวลาว่าง (เช่น 08:00 - 10:00, 15:00 - 18:00)</label>
+              <input type="text" id="calAvailableSlots" placeholder="08:00 - 10:00, 15:00 - 18:00">
+            </div>
+            <button type="submit" class="btn" id="btnSaveCal">บันทึกสถานะปฏิทิน</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB 2: ตารางงาน -->
+      <div id="tab-schedule" class="admin-tab">
+        <h2 style="margin-bottom: 1.5rem;">📌 กรอกข้อมูลคิวงานที่รับ</h2>
         <div class="admin-card">
           <form onsubmit="handleAddSchedule(event)">
             <div class="form-grid-2">
@@ -336,7 +365,7 @@
         <div id="adminScheduleList">กำลังโหลด...</div>
       </div>
 
-      <!-- TAB 2: โปรไฟล์ -->
+      <!-- TAB 3: โปรไฟล์ -->
       <div id="tab-profile" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;">✏️ แก้ไขข้อมูลหน้าแรก, ช่างภาพ & โซเชียลมีเดีย</h2>
         <div class="admin-card">
@@ -353,22 +382,30 @@
             </div>
             <div class="form-group"><label>ประวัติย่อ / Bio</label><textarea id="editProfBio" rows="3"></textarea></div>
             <hr style="border:0; border-top:1px solid var(--border); margin:1.5rem 0;">
-            <h4 style="margin-bottom: 1rem; color: var(--accent);">ช่องทางติดต่อ & โซเชียลมีเดีย</h4>
+            <h4 style="margin-bottom: 1rem; color: var(--accent);">ช่องทางติดต่อ & โซเชียลมีเดียหลัก</h4>
             <div class="form-grid-2">
               <div class="form-group"><label>พื้นที่รับงาน</label><input type="text" id="editProfLocation"></div>
               <div class="form-group"><label>เบอร์โทรศัพท์</label><input type="text" id="editProfPhone"></div>
               <div class="form-group"><label>Line ID</label><input type="text" id="editProfLine"></div>
-              <div class="form-group"><label>Instagram</label><input type="text" id="editProfIG"></div>
+              <div class="form-group"><label>Instagram หลัก</label><input type="text" id="editProfIG"></div>
               <div class="form-group"><label>Facebook URL</label><input type="text" id="editProfFB" placeholder="facebook.com/yourpage"></div>
               <div class="form-group"><label>TikTok URL</label><input type="text" id="editProfTikTok" placeholder="tiktok.com/@yourname"></div>
             </div>
             <div class="form-group"><label>Email</label><input type="email" id="editProfEmail"></div>
-            <button type="submit" class="btn" id="btnSaveProf">บันทึกข้อมูลทั้งหมด</button>
+
+            <hr style="border:0; border-top:1px solid var(--border); margin:1.5rem 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <h4 style="color: var(--accent);">🔗 เพิ่มช่องทางโซเชียลเพิ่มเติม (ไม่จำกัด)</h4>
+              <button type="button" class="btn btn-outline" style="padding:0.4rem 0.8rem;" onclick="addSocialRow()">+ เพิ่มลิงก์โซเชียล</button>
+            </div>
+            <div id="socialInputsContainer"></div>
+
+            <button type="submit" class="btn" id="btnSaveProf" style="margin-top:1rem;">บันทึกข้อมูลทั้งหมด</button>
           </form>
         </div>
       </div>
 
-      <!-- TAB 3: รูปโชว์หน้าแรก -->
+      <!-- TAB 4: รูปโชว์หน้าแรก -->
       <div id="tab-featured" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;">✨ จัดการรูปภาพแนะนำหน้าแรก</h2>
         <div class="admin-card">
@@ -384,7 +421,7 @@
         <div id="featuredPhotoList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;"></div>
       </div>
 
-      <!-- TAB 4: ผลงานรูปภาพ -->
+      <!-- TAB 5: ผลงานรูปภาพ -->
       <div id="tab-photos" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;">📷 อัปโหลดผลงานภาพถ่าย</h2>
         <div class="admin-card">
@@ -402,7 +439,7 @@
         <div id="adminPhotoList"></div>
       </div>
 
-      <!-- TAB 5: ผลงานวิดีโอ -->
+      <!-- TAB 6: ผลงานวิดีโอ -->
       <div id="tab-videos" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;">🎬 อัปโหลดผลงานวิดีโอ</h2>
         <div class="admin-card">
@@ -425,7 +462,7 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
     let token = sessionStorage.getItem("adminPassword");
-    let allData = { profile: {}, portfolio: [], schedule: [] };
+    let allData = { profile: {}, portfolio: [], schedule: [], calendar: [] };
     let liveTimers = [];
 
     if (token) enterPreviewMode();
@@ -544,6 +581,20 @@
       setLink("profTikTok", "linkTikTok", p.tiktok, url);
       setLink("profEmail", "linkEmail", p.email, v => `mailto:${v}`);
 
+      const extraContainer = document.getElementById("previewContactGrid");
+      document.querySelectorAll(".extra-social-card").forEach(e => e.remove());
+      
+      let extraLinks = [];
+      try { extraLinks = JSON.parse(p.socialLinks || "[]"); } catch(e){}
+      extraLinks.forEach(l => {
+        const a = document.createElement("a");
+        a.className = "contact-card extra-social-card";
+        a.target = "_blank";
+        a.href = l.url;
+        a.innerHTML = `<div class="contact-label">🔗 ${l.label || 'Social'}</div><div class="contact-val">${l.url.replace(/^https?:\/\//, '')}</div>`;
+        extraContainer.appendChild(a);
+      });
+
       const featGrid = document.getElementById("featuredGrid");
       if (p.featuredPhotos) {
         const photos = p.featuredPhotos.split(',').filter(x => x.trim());
@@ -632,6 +683,24 @@
       if (data.success) { allData = data; renderAdminPanels(); }
     }
 
+    function toggleSlotsInput() {
+      const type = document.getElementById("calStatusType").value;
+      document.getElementById("slotsGroup").style.display = type === "custom" ? "block" : "none";
+    }
+
+    async function handleSetCalendar(e) {
+      e.preventDefault();
+      const payload = {
+        action: "setCalendar", password: token,
+        date: document.getElementById("calDate").value,
+        statusType: document.getElementById("calStatusType").value,
+        availableSlots: document.getElementById("calAvailableSlots").value
+      };
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+      const result = await res.json();
+      if (result.success) { alert("บันทึกสถานะปฏิทินสำเร็จ!"); reloadAdmin(); } else alert(result.message);
+    }
+
     function populateProfileForm() {
       const p = allData.profile || {};
       const set = (id, v) => document.getElementById(id).value = v || "";
@@ -647,6 +716,24 @@
       set("editProfFB", p.facebook);
       set("editProfTikTok", p.tiktok);
       set("editProfEmail", p.email);
+
+      const container = document.getElementById("socialInputsContainer");
+      container.innerHTML = "";
+      let links = [];
+      try { links = JSON.parse(p.socialLinks || "[]"); } catch(e){}
+      links.forEach(l => addSocialRow(l.label, l.url));
+    }
+
+    function addSocialRow(label = "", url = "") {
+      const container = document.getElementById("socialInputsContainer");
+      const div = document.createElement("div");
+      div.className = "social-input-row";
+      div.innerHTML = `
+        <input type="text" placeholder="ชื่อช่องทาง (เช่น IG รอง, FB Page)" class="soc-label" value="${label}" style="width:35%;">
+        <input type="url" placeholder="https://..." class="soc-url" value="${url}" style="width:55%;">
+        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="width:10%; padding:0.4rem;">&times;</button>
+      `;
+      container.appendChild(div);
     }
 
     const toBase64 = file => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(file); });
@@ -658,6 +745,14 @@
 
       const avatarFile = document.getElementById("profAvatarFile").files[0];
       const avatarData = avatarFile ? await toBase64(avatarFile) : null;
+
+      const rows = document.querySelectorAll(".social-input-row");
+      const socialLinks = [];
+      rows.forEach(r => {
+        const l = r.querySelector(".soc-label").value;
+        const u = r.querySelector(".soc-url").value;
+        if (u) socialLinks.push({ label: l || "Social", url: u });
+      });
 
       const payload = {
         action: "updateProfile", password: token,
@@ -675,7 +770,8 @@
         instagram: document.getElementById("editProfIG").value,
         facebook: document.getElementById("editProfFB").value,
         tiktok: document.getElementById("editProfTikTok").value,
-        email: document.getElementById("editProfEmail").value
+        email: document.getElementById("editProfEmail").value,
+        socialLinks: JSON.stringify(socialLinks)
       };
 
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
