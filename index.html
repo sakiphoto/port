@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portfolio & Schedule | Luxury Minimal</title>
+  <title>Luxury Portfolio & Schedule</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -12,21 +12,20 @@
       --bg-dark: #0a0c10;
       --bg-card: #12161f;
       --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.15);
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --border: rgba(255, 255, 255, 0.08);
-      --status-avail: #10b981;
-      --status-booked: #f59e0b;
-      --status-busy: #ef4444;
+      --status-done: #ef4444;       /* จบแล้ว - กรอบแดง */
+      --status-working: #10b981;    /* กำลังทำงาน - กรอบเขียว */
+      --status-pending: #64748b;    /* ยังไม่เริ่มงาน - กรอบเทา */
+      --badge-avail: #38bdf8;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif; }
     body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; }
 
-    /* Nav */
     header {
       position: sticky; top: 0; z-index: 50;
-      background: rgba(10, 12, 16, 0.85);
+      background: rgba(10, 12, 16, 0.9);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
     }
@@ -34,35 +33,27 @@
       max-width: 1200px; margin: 0 auto; display: flex;
       justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem;
     }
-    .logo { font-size: 1.25rem; font-weight: 700; letter-spacing: 1px; color: #fff; text-decoration: none; }
+    .logo { font-size: 1.25rem; font-weight: 700; color: #fff; text-decoration: none; }
     .logo span { color: var(--accent); }
     nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .nav-link {
       color: var(--text-muted); text-decoration: none; padding: 0.5rem 1rem;
-      border-radius: 9999px; font-size: 0.9rem; font-weight: 500; transition: all 0.3s;
-      cursor: pointer;
+      border-radius: 9999px; font-size: 0.9rem; font-weight: 500; transition: 0.2s; cursor: pointer;
     }
     .nav-link:hover, .nav-link.active { color: #fff; background: rgba(255, 255, 255, 0.05); }
     .nav-link.active { color: var(--accent); }
 
     main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
-    .page-section { display: none; animation: fadeIn 0.4s ease forwards; }
+    .page-section { display: none; animation: fadeIn 0.3s ease forwards; }
     .page-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Hero / Info */
+    /* Home */
     .hero {
       text-align: center; padding: 5rem 1rem 4rem;
       background: radial-gradient(circle at center, rgba(56, 189, 248, 0.08) 0%, rgba(10, 12, 16, 0) 70%);
       border-radius: 24px; margin-bottom: 3rem; border: 1px solid var(--border);
     }
-    .hero h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 700; margin-bottom: 1rem; }
-    .hero p { color: var(--text-muted); font-size: 1.15rem; max-width: 600px; margin: 0 auto; }
-
     .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
     .info-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; }
     .info-card h3 { color: var(--accent); margin-bottom: 0.75rem; }
@@ -70,47 +61,59 @@
     /* Gallery */
     .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
     .gallery-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-    .media-box { width: 100%; height: 260px; background: #000; overflow: hidden; }
+    .media-box { width: 100%; height: 260px; background: #000; }
     .media-box img, .media-box video { width: 100%; height: 100%; object-fit: cover; }
     .gallery-info { padding: 1.25rem; }
-    .gallery-tag { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem; }
-    .gallery-title { font-size: 1.05rem; font-weight: 600; }
+    .gallery-tag { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 600; }
 
-    /* Schedule & Calendar */
+    /* Schedule Header & View Switcher */
     .schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
     .view-toggle { display: flex; gap: 0.5rem; background: var(--bg-card); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
-    .view-btn { padding: 0.4rem 1rem; border: none; background: transparent; color: var(--text-muted); border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .view-btn { padding: 0.4rem 1.2rem; border: none; background: transparent; color: var(--text-muted); border-radius: 6px; cursor: pointer; font-weight: 500; }
     .view-btn.active { background: var(--accent); color: #000; font-weight: 600; }
 
+    /* Calendar Detailed View */
     .calendar-container { background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border); padding: 1.5rem; }
     .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .calendar-nav button { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; padding: 0.4rem 1rem; border-radius: 8px; cursor: pointer; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
-    .calendar-day-header { color: var(--text-muted); font-size: 0.85rem; padding-bottom: 0.5rem; font-weight: 600; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    .calendar-day-header { color: var(--text-muted); font-size: 0.85rem; padding-bottom: 0.5rem; text-align: center; font-weight: 600; }
     .calendar-cell {
-      min-height: 85px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
-      border-radius: 10px; padding: 0.5rem; text-align: left; display: flex; flex-direction: column; justify-content: space-between;
+      min-height: 110px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.5rem; display: flex; flex-direction: column; gap: 4px;
     }
-    .calendar-cell.other-month { opacity: 0.25; }
+    .calendar-cell.other-month { opacity: 0.2; }
     .day-num { font-size: 0.85rem; font-weight: 600; }
-    .status-badge {
-      font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; display: block; margin-top: 4px;
-      font-weight: 500; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    
+    .cal-event {
+      font-size: 0.72rem; padding: 3px 6px; border-radius: 4px; line-height: 1.3;
+      border: 1px solid transparent;
     }
-    .badge-available { background: rgba(16, 185, 129, 0.15); color: var(--status-avail); border: 1px solid rgba(16, 185, 129, 0.3); }
-    .badge-booked { background: rgba(245, 158, 11, 0.15); color: var(--status-booked); border: 1px solid rgba(245, 158, 11, 0.3); }
-    .badge-busy { background: rgba(239, 68, 68, 0.15); color: var(--status-busy); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .cal-event.available { background: rgba(56, 189, 248, 0.15); color: var(--accent); border-color: rgba(56, 189, 248, 0.3); }
+    .cal-event.busy { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+    .cal-event.booked { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
 
-    /* Schedule List Table */
-    .schedule-table-wrap { overflow-x: auto; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; text-align: left; }
-    th, td { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); }
-    th { color: var(--accent); font-weight: 600; }
+    /* Schedule Card List View */
+    .schedule-card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+    .job-card {
+      background: var(--bg-card); border-radius: 16px; padding: 1.5rem;
+      border: 2px solid var(--status-pending); /* Default border */
+      position: relative;
+    }
+    .job-card.working { border-color: var(--status-working); box-shadow: 0 0 15px rgba(16, 185, 129, 0.15); }
+    .job-card.done { border-color: var(--status-done); opacity: 0.75; }
+    .job-card.pending { border-color: var(--status-pending); }
 
-    /* Contact */
-    .contact-container { max-width: 600px; margin: 0 auto; background: var(--bg-card); padding: 2.5rem; border-radius: 20px; border: 1px solid var(--border); }
-    .contact-item { display: flex; align-items: center; gap: 1.25rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
-    .contact-icon { width: 45px; height: 45px; border-radius: 10px; background: rgba(56, 189, 248, 0.1); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+    .job-badge {
+      display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 2px 8px;
+      border-radius: 9999px; margin-bottom: 0.75rem;
+    }
+    .badge-working { background: rgba(16, 185, 129, 0.2); color: var(--status-working); }
+    .badge-done { background: rgba(239, 68, 68, 0.2); color: var(--status-done); }
+    .badge-pending { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; }
+
+    .job-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .job-meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.3rem; }
 
     footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
     footer a { color: var(--text-muted); text-decoration: none; }
@@ -126,26 +129,25 @@
         <a class="nav-link" onclick="navigate('photos')">ผลงานภาพ</a>
         <a class="nav-link" onclick="navigate('videos')">ผลงานวิดีโอ</a>
         <a class="nav-link" onclick="navigate('schedule')">ตารางงาน & คิวว่าง</a>
-        <a class="nav-link" onclick="navigate('contact')">ติดต่อ</a>
       </nav>
     </div>
   </header>
 
   <main>
-    <!-- 1. ข้อมูลทั่วไป -->
+    <!-- 1. หน้าข้อมูลทั่วไป -->
     <section id="sec-home" class="page-section active">
       <div class="hero">
-        <h1 style="color: #fff;">Luxury Visual Experience</h1>
-        <p>สร้างสรรค์ผลงานภาพถ่ายและงานวิดีโอพรีเมียม สื่ออารมณ์และเรื่องราวอย่างมีสไตล์</p>
+        <h1 style="font-size: 2.8rem; margin-bottom: 1rem;">Luxury Visual Portfolio</h1>
+        <p style="color: var(--text-muted);">รับสร้างสรรค์ผลงานภาพถ่ายระดับ High-End และงานผลิตวิดีโอ Cinematic</p>
       </div>
       <div class="info-grid">
         <div class="info-card">
-          <h3>Visual Philosophy</h3>
-          <p>องค์ประกอบคมชัด แสงเงาพรีเมียม ถ่ายทอดความทรงจำได้อย่างเป็นธรรมชาติและหรูหรา</p>
+          <h3>📷 Creative Photography</h3>
+          <p>บริการถ่ายภาพบุคคล แฟชั่น โปรไฟล์ งานแต่งงาน และสถาปัตยกรรมด้วยมุมมองที่โดดเด่น</p>
         </div>
         <div class="info-card">
-          <h3>Work Scope</h3>
-          <p>รับงานถ่ายภาพ Portrait, Fashion, Event, งานแต่งงาน และ Production วิดีโอโฆษณา</p>
+          <h3>🎬 Cinematic Video</h3>
+          <p>งานวิดีโอโฆษณา ไวรัลคลิป คอนเทนต์โซเชียลมีเดีย และงาน Production ครบวงจร</p>
         </div>
       </div>
     </section>
@@ -153,27 +155,27 @@
     <!-- 2. ผลงานภาพ -->
     <section id="sec-photos" class="page-section">
       <h2 style="margin-bottom: 2rem;">ผลงานภาพถ่าย</h2>
-      <div class="gallery" id="photoGallery"><p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p></div>
+      <div class="gallery" id="photoGallery"><p style="color: var(--text-muted);">กำลังโหลดข้อมูล...</p></div>
     </section>
 
     <!-- 3. ผลงานวิดีโอ -->
     <section id="sec-videos" class="page-section">
       <h2 style="margin-bottom: 2rem;">ผลงานวิดีโอ</h2>
-      <div class="gallery" id="videoGallery"><p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p></div>
+      <div class="gallery" id="videoGallery"><p style="color: var(--text-muted);">กำลังโหลดข้อมูล...</p></div>
     </section>
 
-    <!-- 4. ตารางงาน & วันว่าง -->
+    <!-- 4. ตารางงาน & คิวว่าง -->
     <section id="sec-schedule" class="page-section">
       <div class="schedule-header">
-        <h2>ตารางงาน & สถานะการรับงาน</h2>
+        <h2>ตารางงาน & ปฏิทินคิวงาน</h2>
         <div class="view-toggle">
-          <button class="view-btn active" onclick="switchScheduleView('calendar')">📅 ปฏิทิน</button>
-          <button class="view-btn" onclick="switchScheduleView('list')">📋 รายการ</button>
+          <button class="view-btn active" onclick="switchScheduleView('calendar')">📅 ปฏิทินเต็ม</button>
+          <button class="view-btn" onclick="switchScheduleView('cards')">📋 ตารางงาน (Job List)</button>
         </div>
       </div>
 
-      <!-- มุมมองปฏิทิน -->
-      <div id="scheduleCalendarView" class="calendar-container">
+      <!-- มุมมอง 1: ปฏิทินแบบละเอียด -->
+      <div id="view-calendar" class="calendar-container">
         <div class="calendar-nav">
           <button onclick="changeMonth(-1)">&lt; เดือนก่อนหน้า</button>
           <h3 id="currentMonthYear"></h3>
@@ -182,56 +184,15 @@
         <div class="calendar-grid" id="calendarGrid"></div>
       </div>
 
-      <!-- มุมมองรายการ -->
-      <div id="scheduleListView" class="schedule-table-wrap" style="display: none;">
-        <table>
-          <thead>
-            <tr>
-              <th>วันที่</th>
-              <th>เวลา</th>
-              <th>ชื่องาน / กิจกรรม</th>
-              <th>สถานที่</th>
-              <th>สถานะ</th>
-            </tr>
-          </thead>
-          <tbody id="scheduleTableBody">
-            <tr><td colspan="5" style="text-align: center;">กำลังโหลดข้อมูล...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 5. ข้อมูลติดต่อ -->
-    <section id="sec-contact" class="page-section">
-      <div class="contact-container">
-        <h2 style="margin-bottom: 1.5rem; text-align: center;">Get in Touch</h2>
-        <div class="contact-item">
-          <div class="contact-icon">📍</div>
-          <div>
-            <div style="font-size: 0.85rem; color: var(--text-muted);">พื้นที่รับงาน</div>
-            <div>กรุงเทพมหานคร, ทั่วประเทศ & ต่างประเทศ</div>
-          </div>
-        </div>
-        <div class="contact-item">
-          <div class="contact-icon">📱</div>
-          <div>
-            <div style="font-size: 0.85rem; color: var(--text-muted);">Line ID / ติดต่องาน</div>
-            <div>@your_line_id</div>
-          </div>
-        </div>
-        <div class="contact-item">
-          <div class="contact-icon">📧</div>
-          <div>
-            <div style="font-size: 0.85rem; color: var(--text-muted);">อีเมล</div>
-            <div>yourname@email.com</div>
-          </div>
-        </div>
+      <!-- มุมมอง 2: การ์ดตารางงาน พร้อมสีกรอบสถานะ -->
+      <div id="view-cards" style="display: none;">
+        <div class="schedule-card-list" id="jobCardList">กำลังโหลดรายการงาน...</div>
       </div>
     </section>
   </main>
 
   <footer>
-    <p>&copy; Portfolio. All rights reserved. | <a href="admin.html">Admin Access</a></p>
+    <p>&copy; Portfolio. All rights reserved. | <a href="admin.html">Admin System</a></p>
   </footer>
 
   <script>
@@ -239,55 +200,45 @@
     let scheduleData = [];
     let currentDate = new Date();
 
-    function navigate(sectionId) {
-      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
-      document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
-      document.getElementById('sec-' + sectionId).classList.add('active');
+    function navigate(secId) {
+      document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      document.getElementById('sec-' + secId).classList.add('active');
       event.target.classList.add('active');
     }
 
     function switchScheduleView(view) {
-      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
       event.target.classList.add('active');
-      document.getElementById('scheduleCalendarView').style.display = view === 'calendar' ? 'block' : 'none';
-      document.getElementById('scheduleListView').style.display = view === 'list' ? 'block' : 'none';
+      document.getElementById('view-calendar').style.display = view === 'calendar' ? 'block' : 'none';
+      document.getElementById('view-cards').style.display = view === 'cards' ? 'block' : 'none';
     }
 
     async function loadData() {
       try {
         const res = await fetch(API_URL);
-        const result = await res.json();
-        if (result.success) {
-          // Gallery
-          const photos = result.portfolio.filter(item => item.mediaType === 'image');
-          const videos = result.portfolio.filter(item => item.mediaType === 'video');
-          renderGallery('photoGallery', photos, 'image');
-          renderGallery('videoGallery', videos, 'video');
-
-          // Schedule
-          scheduleData = result.schedule || [];
+        const data = await res.json();
+        if (data.success) {
+          renderGallery('photoGallery', data.portfolio.filter(x => x.mediaType === 'image'), 'image');
+          renderGallery('videoGallery', data.portfolio.filter(x => x.mediaType === 'video'), 'video');
+          scheduleData = data.schedule || [];
           renderCalendar();
-          renderScheduleList();
+          renderJobCards();
         }
-      } catch (err) {
-        console.error("Load error:", err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     function renderGallery(elId, items, type) {
       const el = document.getElementById(elId);
-      if (!items || items.length === 0) {
-        el.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1;">ยังไม่มีผลงาน</p>';
-        return;
-      }
-      el.innerHTML = items.map(item => `
+      if (!items || !items.length) { el.innerHTML = '<p style="color:var(--text-muted)">ยังไม่มีผลงาน</p>'; return; }
+      el.innerHTML = items.map(i => `
         <div class="gallery-card">
           <div class="media-box">
-            ${type === 'video' ? `<video src="${item.fileUrl}" controls></video>` : `<img src="${item.fileUrl}" loading="lazy">`}
+            ${type === 'video' ? `<video src="${i.fileUrl}" controls></video>` : `<img src="${i.fileUrl}" loading="lazy">`}
           </div>
           <div class="gallery-info">
-            <div class="gallery-tag">${item.category}</div>
-            <div class="gallery-title">${item.title}</div>
+            <div class="gallery-tag">${i.category}</div>
+            <div style="font-weight:600; margin-top:4px;">${i.title}</div>
           </div>
         </div>
       `).join('');
@@ -309,46 +260,62 @@
       const grid = document.getElementById("calendarGrid");
       grid.innerHTML = ['อา','จ','อ','พ','พฤ','ศ','ส'].map(d => `<div class="calendar-day-header">${d}</div>`).join('');
 
-      for (let i = 0; i < firstDay; i++) {
-        grid.innerHTML += `<div class="calendar-cell other-month"></div>`;
-      }
+      for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div class="calendar-cell other-month"></div>`;
 
       for (let day = 1; day <= lastDate; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dayEvents = scheduleData.filter(item => item.date === dateStr);
 
-        let statusHtml = dayEvents.map(ev => {
-          let badgeClass = ev.status === 'available' ? 'badge-available' : (ev.status === 'busy' ? 'badge-busy' : 'badge-booked');
-          let label = ev.status === 'available' ? 'ว่างรับงาน' : (ev.status === 'busy' ? 'ไม่ว่าง' : ev.title);
-          return `<span class="status-badge ${badgeClass}" title="${ev.title} (${ev.time})">${label}</span>`;
+        let eventHtml = dayEvents.map(ev => {
+          if (ev.status === 'available') {
+            return `<div class="cal-event available">🟢 ว่าง (${ev.time})</div>`;
+          } else if (ev.status === 'busy') {
+            return `<div class="cal-event busy">🔴 ไม่ว่าง (${ev.time})</div>`;
+          } else {
+            return `<div class="cal-event booked">🟠 ${ev.title} (${ev.time})</div>`;
+          }
         }).join('');
 
         grid.innerHTML += `
           <div class="calendar-cell">
             <span class="day-num">${day}</span>
-            <div>${statusHtml}</div>
+            <div>${eventHtml}</div>
           </div>
         `;
       }
     }
 
-    function renderScheduleList() {
-      const tbody = document.getElementById("scheduleTableBody");
-      if (scheduleData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">ไม่มีรายการตารางงาน</td></tr>';
+    function renderJobCards() {
+      const container = document.getElementById("jobCardList");
+      // แสดงเฉพาะงานที่มีการรับงาน (booked)
+      const jobs = scheduleData.filter(i => i.status === 'booked');
+      if (!jobs.length) {
+        container.innerHTML = '<p style="color: var(--text-muted); grid-column:1/-1;">ไม่มีรายการงานในระบบ</p>';
         return;
       }
-      tbody.innerHTML = scheduleData.map(item => {
-        let badgeClass = item.status === 'available' ? 'badge-available' : (item.status === 'busy' ? 'badge-busy' : 'badge-booked');
-        let statusText = item.status === 'available' ? 'ว่างรับงาน' : (item.status === 'busy' ? 'ไม่ว่าง' : 'รับงานแล้ว');
+
+      container.innerHTML = jobs.map(j => {
+        // คำนวณสถานะอัตโนมัติจากวันที่
+        const todayStr = new Date().toISOString().split('T')[0];
+        let statusClass = "pending";
+        let statusLabel = "ยังไม่เริ่มงาน";
+
+        if (j.date === todayStr) {
+          statusClass = "working";
+          statusLabel = "กำลังทำงาน (วันนี้)";
+        } else if (j.date < todayStr) {
+          statusClass = "done";
+          statusLabel = "งานจบแล้ว";
+        }
+
         return `
-          <tr>
-            <td>${item.date}</td>
-            <td>${item.time}</td>
-            <td><strong>${item.title}</strong></td>
-            <td>${item.location}</td>
-            <td><span class="status-badge ${badgeClass}" style="display:inline-block;">${statusText}</span></td>
-          </tr>
+          <div class="job-card ${statusClass}">
+            <span class="job-badge badge-${statusClass}">${statusLabel}</span>
+            <div class="job-title">${j.title}</div>
+            <div class="job-meta">📅 วันที่: <strong>${j.date}</strong></div>
+            <div class="job-meta">⏰ เวลา: ${j.time}</div>
+            <div class="job-meta">📍 สถานที่: ${j.location || '-'}</div>
+          </div>
         `;
       }).join('');
     }
