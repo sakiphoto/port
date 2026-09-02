@@ -762,6 +762,22 @@
 
     const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
+    function getDisplayImageUrl(url) {
+      if (!url) return "https://via.placeholder.com/300";
+      if (url.includes("google.com")) {
+        let fileId = "";
+        const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
+        const matchPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (matchId) fileId = matchId[1];
+        else if (matchPath) fileId = matchPath[1];
+
+        if (fileId) {
+          return `https://wsrv.nl/?url=https://drive.google.com/uc?id=${fileId}`;
+        }
+      }
+      return url;
+    }
+
     function formatThaiDateFull(dateStr) {
       if (!dateStr) return "-";
       const parts = String(dateStr).split('-');
@@ -966,7 +982,7 @@
       document.getElementById("navBrand").innerHTML = `${p.brandName || 'PHOTOGRAPHER'}<span>.</span>`;
       document.getElementById("heroTitle").innerText = p.heroTitle || "Luxury Visual Experience";
       document.getElementById("heroSubtitle").innerText = p.heroSubtitle || "-";
-      document.getElementById("profAvatar").src = p.avatarUrl || "https://via.placeholder.com/150";
+      document.getElementById("profAvatar").src = getDisplayImageUrl(p.avatarUrl);
       document.getElementById("profName").innerText = p.photographerName || "Photographer";
       document.getElementById("profBio").innerText = p.bio || "-";
       document.getElementById("profLocation").innerText = p.location || "-";
@@ -1000,7 +1016,7 @@
       const featGrid = document.getElementById("featuredGrid");
       if (p.featuredPhotos) {
         const photos = p.featuredPhotos.split(',').filter(x => x.trim());
-        featGrid.innerHTML = photos.map(u => `<div class="showcase-item"><img src="${u.trim()}" loading="lazy"></div>`).join('');
+        featGrid.innerHTML = photos.map(u => `<div class="showcase-item"><img src="${getDisplayImageUrl(u.trim())}" loading="lazy"></div>`).join('');
       } else {
         featGrid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1;">ยังไม่มีรูปภาพแนะนำ</p>';
       }
@@ -1033,12 +1049,13 @@
       container.innerHTML = Object.keys(albums).map(key => {
         const alb = albums[key];
         const safeTitle = alb.title.replace(/'/g, "\\'");
+        const imgUrl = getDisplayImageUrl(alb.coverUrl);
         return `
           <div class="album-card" onclick="openAlbumModal('${safeTitle}', '${alb.mediaType}')">
             <div class="album-cover">
               ${alb.mediaType === 'video' 
                 ? `<video src="${alb.coverUrl}#t=0.5" preload="metadata"></video>` 
-                : `<img src="${alb.coverUrl}" loading="lazy" alt="${alb.title}">`
+                : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}">`
               }
               <div class="album-count-badge">${alb.items.length} ${alb.mediaType === 'video' ? 'วิดีโอ' : 'รูปภาพ'}</div>
             </div>
@@ -1083,7 +1100,7 @@
         <div class="media-item-box">
           ${item.mediaType === 'video' 
             ? `<video src="${item.fileUrl}" controls></video>` 
-            : `<img src="${item.fileUrl}" loading="lazy">`
+            : `<img src="${getDisplayImageUrl(item.fileUrl)}" loading="lazy">`
           }
         </div>
       `).join('');
@@ -1268,7 +1285,6 @@
       }
     }
 
-    /* ดึงข้อมูลสถานะในปฏิทินมาเติมใน Modal */
     function openCalModal(dateStr) {
       document.getElementById("modalCalDate").value = dateStr;
       document.getElementById("modalDisplayDate").value = formatThaiDateFull(dateStr);
@@ -1331,7 +1347,6 @@
       } catch(e) {}
     }
 
-    /* ดึงข้อมูลโปรไฟล์ดั้งเดิมขึ้นฟอร์ม */
     function populateProfileForm() {
       const p = allData.profile || {};
       const set = (id, v) => document.getElementById(id).value = (v !== undefined && v !== null) ? v : "";
@@ -1457,7 +1472,6 @@
       }
     }
 
-    /* ดึงข้อมูลคิวงานเดิมมาเติมใส่ฟอร์มเพื่อแก้ไข */
     function editSchedule(id) {
       const item = (allData.schedule || []).find(x => x.id === id);
       if (!item) return;
@@ -1540,7 +1554,7 @@
       const photos = p.featuredPhotos.split(',').filter(x => x.trim());
       c.innerHTML = photos.map((u, idx) => `
         <div style="position:relative; height:120px; border-radius:8px; overflow:hidden;">
-          <img src="${u.trim()}" style="width:100%; height:100%; object-fit:cover;">
+          <img src="${getDisplayImageUrl(u.trim())}" style="width:100%; height:100%; object-fit:cover;">
           <button style="position:absolute; top:4px; right:4px; background:red; color:#fff; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer;" onclick="removeFeaturedPhoto(${idx})">&times;</button>
         </div>
       `).join('');
@@ -1770,7 +1784,6 @@
       } catch(e) {}
     }
 
-    /* ดึงข้อมูลอัลบั้มเดิมขึ้นมาเปิดใน Modal สำหรับแก้ไข */
     function openEditAlbumModal(title, type) {
       const items = (allData.portfolio || []).filter(x => x.title === title && x.mediaType === type);
       if (!items.length) return;
