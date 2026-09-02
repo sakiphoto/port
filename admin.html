@@ -233,7 +233,7 @@
     .admin-tab.active { display: block; animation: fadeIn 0.2s ease; }
 
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-    .form-group { margin-bottom: 1.2rem; text-align: left; }
+    .form-group { margin-bottom: 1.2rem; text-align: left; position: relative; }
     label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.85rem; }
     input, select, textarea {
       width: 100%; padding: 0.8rem 1rem; background: rgba(255, 255, 255, 0.03);
@@ -272,6 +272,20 @@
     .admin-pill-custom { background: rgba(56, 189, 248, 0.2); color: var(--accent); }
     .admin-pill-job { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
 
+    /* CUSTOM THAI DATE PICKER OVERLAY */
+    .thai-date-wrapper {
+      position: relative; width: 100%;
+    }
+    .thai-date-display {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);
+      border-radius: 10px; color: #fff; padding: 0.8rem 1rem; width: 100%;
+      font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    }
+    .thai-date-display:hover { border-color: var(--accent); }
+    .native-date-hidden {
+      position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 5;
+    }
+
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
       z-index: 2500; display: none; align-items: center; justify-content: center; padding: 1rem;
@@ -306,7 +320,7 @@
         <input type="hidden" id="modalCalDate">
         <div class="form-group">
           <label>วันที่เลือก (วัน/เดือน/ปี พ.ศ.)</label>
-          <input type="text" id="modalDisplayDate" readonly style="opacity:0.7; background:rgba(255,255,255,0.05);">
+          <input type="text" id="modalDisplayDate" readonly style="opacity:0.85; background:rgba(255,255,255,0.05); color:var(--accent); font-weight:700;">
         </div>
         <div class="form-group">
           <label>สถานะการรับงาน</label>
@@ -555,8 +569,17 @@
         <div class="admin-card">
           <form onsubmit="handleAddSchedule(event)">
             <input type="hidden" id="schedId">
+            <input type="hidden" id="schedDate" required>
+
             <div class="form-grid-2">
-              <div class="form-group"><label>วันที่ปฏิบัติงาน</label><input type="date" id="schedDate" required></div>
+              <div class="form-group">
+                <label>วันที่ปฏิบัติงาน (วัน/เดือน/ปี พ.ศ.)</label>
+                <!-- THAI DATEPICKER CONTAINER -->
+                <div class="thai-date-wrapper">
+                  <div class="thai-date-display" id="schedDateDisplay">📅 คลิกเลือกวันที่... <span>▼</span></div>
+                  <input type="date" id="schedNativeDate" class="native-date-hidden" onchange="onSchedNativeDateChange(this.value)">
+                </div>
+              </div>
               <div class="form-group"><label>ช่วงเวลา (เช่น 09:00 - 16:00)</label><input type="text" id="schedTime" placeholder="09:00 - 16:00" required></div>
             </div>
             <div class="form-grid-2">
@@ -630,7 +653,6 @@
         <div id="featuredPhotoList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;"></div>
       </div>
 
-      <!-- TAB 5: Photo Upload & Management -->
       <div id="tab-photos" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;">📷 อัปโหลด & จัดการผลงานภาพถ่าย</h2>
         <div class="admin-card">
@@ -661,7 +683,6 @@
         <div id="adminPhotoList"></div>
       </div>
 
-      <!-- TAB 6: Video Upload & Management -->
       <div id="tab-videos" class="admin-tab">
         <h2 style="margin-bottom: 1.5rem;">🎬 อัปโหลด & จัดการผลงานวิดีโอ</h2>
         <div class="admin-card">
@@ -712,6 +733,13 @@
       const monthIndex = parseInt(parts[1]) - 1;
       const day = parseInt(parts[2]);
       return `${day} ${MONTH_NAMES_TH[monthIndex]} ${yearBE}`;
+    }
+
+    function onSchedNativeDateChange(isoVal) {
+      document.getElementById("schedDate").value = isoVal;
+      document.getElementById("schedDateDisplay").innerHTML = isoVal 
+        ? `📅 ${formatThaiDateFull(isoVal)} <span>▼</span>` 
+        : `📅 คลิกเลือกวันที่... <span>▼</span>`;
     }
 
     function formatUrl(url) {
@@ -1325,13 +1353,19 @@
 
     async function handleAddSchedule(e) {
       e.preventDefault();
+      const dateVal = document.getElementById("schedDate").value;
+      if (!dateVal) {
+        showNotification("กรุณาเลือกวันที่ปฏิบัติงาน", true);
+        return;
+      }
+
       const btn = document.getElementById("btnAddSched");
       btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
 
       const payload = {
         action: "addSchedule", password: token,
         id: document.getElementById("schedId").value || null,
-        date: document.getElementById("schedDate").value,
+        date: dateVal,
         time: document.getElementById("schedTime").value,
         title: document.getElementById("schedTitle").value,
         location: document.getElementById("schedLocation").value,
@@ -1354,7 +1388,8 @@
       const item = (allData.schedule || []).find(x => x.id === id);
       if (!item) return;
       document.getElementById("schedId").value = item.id;
-      document.getElementById("schedDate").value = item.date;
+      document.getElementById("schedNativeDate").value = item.date;
+      onSchedNativeDateChange(item.date);
       document.getElementById("schedTime").value = item.time;
       document.getElementById("schedTitle").value = item.title;
       document.getElementById("schedLocation").value = item.location;
@@ -1369,7 +1404,8 @@
 
     function resetSchedForm() {
       document.getElementById("schedId").value = "";
-      document.getElementById("schedDate").value = "";
+      document.getElementById("schedNativeDate").value = "";
+      onSchedNativeDateChange("");
       document.getElementById("schedTime").value = "";
       document.getElementById("schedTitle").value = "";
       document.getElementById("schedLocation").value = "";
