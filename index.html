@@ -3,192 +3,291 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Photography Portfolio</title>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <title>Portfolio | Luxury Minimal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #0284c7;
-      --secondary: #0f172a;
+      --bg-dark: #0a0c10;
+      --bg-card: #12161f;
+      --bg-card-hover: #181f2c;
       --accent: #38bdf8;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #334155;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.08);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
-    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-    
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; overflow-x: hidden; }
+
+    /* Header & Nav */
     header {
-      background: linear-gradient(135deg, #0f172a 0%, #0369a1 50%, #38bdf8 100%);
-      color: white;
-      text-align: center;
-      padding: 4rem 1rem 3rem;
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(10, 12, 16, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
     }
-    header h1 { font-size: 2.5rem; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 0.5rem; }
-    header p { font-weight: 300; opacity: 0.9; font-size: 1.1rem; }
-
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 1.5rem 1rem;
-      background: white;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-      flex-wrap: wrap;
+    .nav-container {
+      max-width: 1200px; margin: 0 auto; display: flex;
+      justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem;
     }
-    .filter-btn {
-      border: none;
-      background: #f1f5f9;
-      color: #64748b;
-      padding: 0.5rem 1.25rem;
-      border-radius: 9999px;
+    .logo { font-size: 1.25rem; font-weight: 700; letter-spacing: 1px; color: #fff; text-decoration: none; }
+    .logo span { color: var(--accent); }
+    nav { display: flex; gap: 0.5rem; }
+    .nav-link {
+      color: var(--text-muted); text-decoration: none; padding: 0.5rem 1rem;
+      border-radius: 9999px; font-size: 0.9rem; font-weight: 500; transition: all 0.3s;
       cursor: pointer;
-      font-weight: 500;
-      transition: all 0.2s;
     }
-    .filter-btn:hover, .filter-btn.active {
-      background: linear-gradient(135deg, #0284c7, #0369a1);
-      color: white;
+    .nav-link:hover, .nav-link.active { color: #fff; background: rgba(255, 255, 255, 0.05); }
+    .nav-link.active { color: var(--accent); }
+
+    /* Sections */
+    main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+    .page-section { display: none; animation: fadeIn 0.4s ease forwards; }
+    .page-section.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    main { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; width: 100%; flex: 1; }
-    
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
+    /* Hero / General Info */
+    .hero {
+      text-align: center; padding: 5rem 1rem 4rem;
+      background: radial-gradient(circle at center, rgba(56, 189, 248, 0.08) 0%, rgba(10, 12, 16, 0) 70%);
+      border-radius: 24px; margin-bottom: 3rem; border: 1px solid var(--border);
     }
-    .card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-      transition: transform 0.3s, box-shadow 0.3s;
-      display: flex;
-      flex-direction: column;
+    .hero h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 700; margin-bottom: 1rem; letter-spacing: -0.5px; }
+    .hero p { color: var(--text-muted); font-size: 1.15rem; max-width: 600px; margin: 0 auto 2rem; }
+    .profile-badge {
+      display: inline-block; padding: 0.4rem 1rem; border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--accent); font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem;
     }
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 20px rgba(2, 132, 199, 0.12);
-    }
-    .media-container {
-      width: 100%;
-      height: 240px;
-      background: #e2e8f0;
-      overflow: hidden;
-    }
-    .media-container img, .media-container video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .info { padding: 1rem 1.25rem; }
-    .tag {
-      font-size: 0.75rem;
-      background: #e0f2fe;
-      color: var(--primary);
-      padding: 0.2rem 0.6rem;
-      border-radius: 6px;
-      font-weight: 500;
-      display: inline-block;
-      margin-bottom: 0.4rem;
-    }
-    .title { font-size: 1.05rem; font-weight: 500; color: var(--secondary); }
 
-    .loading, .empty { text-align: center; grid-column: 1 / -1; padding: 3rem; color: #94a3b8; }
-    footer { text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.875rem; }
-    footer a { color: var(--primary); text-decoration: none; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .info-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 2rem; transition: transform 0.3s, border-color 0.3s;
+    }
+    .info-card:hover { transform: translateY(-4px); border-color: rgba(56, 189, 248, 0.3); }
+    .info-card h3 { color: var(--accent); margin-bottom: 0.75rem; font-size: 1.2rem; }
+
+    /* Gallery (Images & Videos) */
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+    .gallery-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden; transition: all 0.3s ease;
+    }
+    .gallery-card:hover { transform: translateY(-4px); border-color: rgba(56, 189, 248, 0.3); box-shadow: 0 10px 30px var(--accent-glow); }
+    .media-box { width: 100%; height: 260px; background: #000; overflow: hidden; position: relative; }
+    .media-box img, .media-box video { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+    .gallery-card:hover .media-box img { transform: scale(1.05); }
+    .gallery-info { padding: 1.25rem; }
+    .gallery-tag { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.25rem; }
+    .gallery-title { font-size: 1.05rem; font-weight: 600; }
+
+    /* Schedule / Contact */
+    .schedule-table-wrap { overflow-x: auto; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--accent); font-weight: 600; background: rgba(255, 255, 255, 0.02); }
+    tr:last-child td { border-bottom: none; }
+
+    .contact-container { max-width: 600px; margin: 0 auto; background: var(--bg-card); padding: 2.5rem; border-radius: 20px; border: 1px solid var(--border); }
+    .contact-item { display: flex; align-items: center; gap: 1.25rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+    .contact-item:last-child { border-bottom: none; }
+    .contact-icon { width: 45px; height: 45px; border-radius: 10px; background: rgba(56, 189, 248, 0.1); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.25rem; }
+
+    footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
+    footer a { color: var(--text-muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>PHOTOGRAPHY PORTFOLIO</h1>
-    <p>บันทึกทุกเรื่องราวและช่วงเวลาผ่านเลนส์</p>
+    <div class="nav-container">
+      <a href="#" class="logo" onclick="navigate('home')">PORTFOLIO<span>.</span></a>
+      <nav>
+        <a class="nav-link active" onclick="navigate('home')">ข้อมูลทั่วไป</a>
+        <a class="nav-link" onclick="navigate('photos')">ผลงานภาพ</a>
+        <a class="nav-link" onclick="navigate('videos')">ผลงานวิดีโอ</a>
+        <a class="nav-link" onclick="navigate('schedule')">ตารางเรียน</a>
+        <a class="nav-link" onclick="navigate('contact')">ติดต่อ</a>
+      </nav>
+    </div>
   </header>
 
-  <nav id="filterBar">
-    <button class="filter-btn active" onclick="filterGallery('all')">ทั้งหมด</button>
-  </nav>
-
   <main>
-    <div class="gallery" id="galleryContainer">
-      <div class="loading">กำลังโหลดผลงาน...</div>
-    </div>
+    <!-- 1. ข้อมูลทั่วไป (Home) -->
+    <section id="sec-home" class="page-section active">
+      <div class="hero">
+        <span class="profile-badge">PHOTOGRAPHER & CREATOR</span>
+        <h1>Creativity Meets Luxury</h1>
+        <p>สร้างสรรค์มุมมองผ่านภาพถ่ายและวิดีโอคุณภาพสูง เน้นความเรียบหรูและเรื่องราวที่เป็นเอกลักษณ์</p>
+      </div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h3>Visual Philosophy</h3>
+          <p>เน้นความคลีน แสงเงาที่เป็นธรรมชาติ และการจัดองค์ประกอบที่เฉียบคมเพื่อขับเน้นอารมณ์ของภาพ</p>
+        </div>
+        <div class="info-card">
+          <h3>Equipment & Tone</h3>
+          <p>กล้องความละเอียดสูงระดับ 4K Cinema เลนส์ Prime เกรดพรีเมียม พร้อมโทนสี Color Grading เฉพาะตัว</p>
+        </div>
+        <div class="info-card">
+          <h3>Services</h3>
+          <p>Portrait, Event, Commercial Shoot และ Video Cinematic Production</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ผลงานภาพ (Photos) -->
+    <section id="sec-photos" class="page-section">
+      <h2 style="margin-bottom: 2rem; font-weight: 600;">ผลงานภาพถ่าย</h2>
+      <div class="gallery" id="photoGallery">
+        <p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p>
+      </div>
+    </section>
+
+    <!-- 3. ผลงานวิดีโอ (Videos) -->
+    <section id="sec-videos" class="page-section">
+      <h2 style="margin-bottom: 2rem; font-weight: 600;">ผลงานวิดีโอ & คอนเทนต์</h2>
+      <div class="gallery" id="videoGallery">
+        <p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p>
+      </div>
+    </section>
+
+    <!-- 4. ตารางเรียน (Schedule) -->
+    <section id="sec-schedule" class="page-section">
+      <h2 style="margin-bottom: 2rem; font-weight: 600;">ตารางเรียน / ช่วงเวลาที่สะดวก</h2>
+      <div class="schedule-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>วัน</th>
+              <th>ช่วงเวลา</th>
+              <th>วิชา / กิจกรรม</th>
+              <th>สถานที่</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>จันทร์</td>
+              <td>09:00 - 12:00</td>
+              <td>Visual Arts & Composition</td>
+              <td>Building 3, Studio A</td>
+            </tr>
+            <tr>
+              <td>พุธ</td>
+              <td>13:00 - 16:30</td>
+              <td>Digital Cinematography</td>
+              <td>Media Center</td>
+            </tr>
+            <tr>
+              <td>ศุกร์</td>
+              <td>10:00 - 15:00</td>
+              <td>Color Grading & Post-Production</td>
+              <td>Lab 4</td>
+            </tr>
+            <tr>
+              <td>เสาร์ - อาทิตย์</td>
+              <td>ทั้งวัน</td>
+              <td><span style="color: var(--accent);">เปิดรับงานถ่ายภาพ/วิดีโอ (Booking Only)</span></td>
+              <td>On Location</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5. ข้อมูลติดต่อ (Contact) -->
+    <section id="sec-contact" class="page-section">
+      <div class="contact-container">
+        <h2 style="margin-bottom: 1.5rem; text-align: center; font-weight: 600;">Get in Touch</h2>
+        <div class="contact-item">
+          <div class="contact-icon">📍</div>
+          <div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">ที่อยู่ / พื้นที่รับงาน</div>
+            <div>กรุงเทพมหานคร และปริมณฑล</div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">📧</div>
+          <div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">อีเมล</div>
+            <div>yourname@email.com</div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">📱</div>
+          <div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Instagram / Line</div>
+            <div>@your_handle</div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer>
-    <p>&copy; Portfolio Gallery | <a href="admin.html">เข้าสู่ระบบจัดการ</a></p>
+    <p>&copy; Portfolio. All rights reserved. | <a href="admin.html">Admin Access</a></p>
   </footer>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
-    let portfolioData = [];
 
-    async function loadPortfolio() {
+    function navigate(sectionId) {
+      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+      
+      document.getElementById('sec-' + sectionId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    async function fetchGallery() {
       try {
         const res = await fetch(API_URL);
         const result = await res.json();
-        
         if (result.success) {
-          portfolioData = result.data;
-          setupFilters();
-          renderGallery(portfolioData);
-        } else {
-          document.getElementById('galleryContainer').innerHTML = '<div class="empty">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
+          const photos = result.data.filter(item => item.mediaType === 'image');
+          const videos = result.data.filter(item => item.mediaType === 'video');
+
+          renderGallery('photoGallery', photos, 'image');
+          renderGallery('videoGallery', videos, 'video');
         }
-      } catch (err) {
-        document.getElementById('galleryContainer').innerHTML = '<div class="empty">ไม่สามารถเชื่อมต่อระบบได้</div>';
+      } catch (e) {
+        console.error("Fetch error:", e);
       }
     }
 
-    function setupFilters() {
-      const categories = ['all', ...new Set(portfolioData.map(item => item.category).filter(Boolean))];
-      const filterBar = document.getElementById('filterBar');
-      filterBar.innerHTML = categories.map(cat => `
-        <button class="filter-btn ${cat === 'all' ? 'active' : ''}" onclick="filterGallery('${cat}')">
-          ${cat === 'all' ? 'ทั้งหมด' : cat}
-        </button>
-      `).join('');
-    }
-
-    function filterGallery(category) {
-      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-
-      const filtered = category === 'all' 
-        ? portfolioData 
-        : portfolioData.filter(item => item.category === category);
-      
-      renderGallery(filtered);
-    }
-
-    function renderGallery(items) {
-      const container = document.getElementById('galleryContainer');
+    function renderGallery(elementId, items, type) {
+      const el = document.getElementById(elementId);
       if (!items || items.length === 0) {
-        container.innerHTML = '<div class="empty">ยังไม่มีข้อมูลผลงาน</div>';
+        el.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1;">ยังไม่มีข้อมูลผลงานในส่วนนี้</p>';
         return;
       }
 
-      container.innerHTML = items.map(item => `
-        <div class="card">
-          <div class="media-container">
-            ${item.mediaType === 'video' 
-              ? `<video src="${item.fileUrl}" controls playsinline></video>` 
+      el.innerHTML = items.map(item => `
+        <div class="gallery-card">
+          <div class="media-box">
+            ${type === 'video'
+              ? `<video src="${item.fileUrl}" controls playsinline preload="metadata"></video>`
               : `<img src="${item.fileUrl}" alt="${item.title}" loading="lazy">`
             }
           </div>
-          <div class="info">
-            <span class="tag">${item.category || 'General'}</span>
-            <div class="title">${item.title}</div>
+          <div class="gallery-info">
+            <div class="gallery-tag">${item.category || 'Portfolio'}</div>
+            <div class="gallery-title">${item.title}</div>
           </div>
         </div>
       `).join('');
     }
 
-    window.onload = loadPortfolio;
+    window.onload = fetchGallery;
   </script>
 </body>
 </html>
