@@ -622,7 +622,7 @@
             <div id="videoLinkContainer"></div>
 
             <div class="form-group" style="margin-top:1rem;">
-              <label>เลือกไฟล์วิดีโอ (ไม่เกิน 20MB)</label>
+              <label>เลือกไฟล์วิดีโอ (ไม่เกิน 30MB)</label>
               <input type="file" id="pVidFile" accept="video/*" required>
             </div>
             <button type="submit" class="btn" id="btnUpVid">อัปโหลดวิดีโอใหม่</button>
@@ -792,12 +792,19 @@
       setTimeout(() => { toast.className = ""; }, 3500);
     }
 
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+    }
+
     function compressAndBase64(file, maxWidth = 1920, quality = 0.8) {
       return new Promise((resolve) => {
         if (file.type.startsWith('video/')) {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(file);
+          readFileAsBase64(file).then(resolve);
           return;
         }
         const reader = new FileReader();
@@ -1550,18 +1557,21 @@
             extLink: extLinks
           });
         }
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "upload", password: token, files: payloads }) });
+        const res = await fetch(API_URL, { 
+          method: "POST", 
+          body: JSON.stringify({ action: "upload", password: token, files: payloads }) 
+        });
         const result = await res.json();
         btn.innerText = "อัปโหลดภาพผลงานใหม่"; btn.disabled = false;
         if (result.success) { 
-          showNotification("อัปโหลดสำเร็จ!"); 
+          showNotification("อัปโหลดรูปภาพสำเร็จ!"); 
           e.target.reset(); 
           document.getElementById('photoLinkContainer').innerHTML = '';
           reloadAdmin(); 
-        } else showNotification(result.message, true);
+        } else showNotification(result.message || "อัปโหลดล้มเหลว", true);
       } catch(err) {
         btn.innerText = "อัปโหลดภาพผลงานใหม่"; btn.disabled = false;
-        showNotification("ไฟล์มีขนาดใหญ่เกินไป หรือเกิดข้อผิดพลาด", true);
+        showNotification("เกิดข้อผิดพลาดในการประมวลผลรูปภาพ", true);
       }
     }
 
@@ -1570,13 +1580,13 @@
       const file = document.getElementById("pVidFile").files[0];
       if (!file) return;
 
-      if (file.size > 20 * 1024 * 1024) {
-        showNotification("ไฟล์วิดีโอต้องมีขนาดไม่เกิน 20MB", true);
+      if (file.size > 30 * 1024 * 1024) {
+        showNotification("ไฟล์วิดีโอต้องมีขนาดไม่เกิน 30MB", true);
         return;
       }
 
       const btn = document.getElementById("btnUpVid");
-      btn.innerText = "กำลังอัปโหลด..."; btn.disabled = true;
+      btn.innerText = "กำลังอัปโหลดวิดีโอ (อาจใช้เวลาสักครู่)..."; btn.disabled = true;
 
       const title = document.getElementById("pVidTitle").value;
       const cat = document.getElementById("pVidCat").value;
@@ -1584,7 +1594,7 @@
       const extLinks = collectDynamicLinks('videoLinkContainer');
 
       try {
-        const videoData = await compressAndBase64(file);
+        const videoData = await readFileAsBase64(file);
         const payload = {
           action: "upload", password: token,
           files: [{
@@ -1597,18 +1607,18 @@
             extLink: extLinks
           }]
         };
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "upload", password: token, files: payload.files }) });
+        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
         const result = await res.json();
         btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
         if (result.success) { 
-          showNotification("อัปโหลดสำเร็จ!"); 
+          showNotification("อัปโหลดวิดีโอสำเร็จ!"); 
           e.target.reset(); 
           document.getElementById('videoLinkContainer').innerHTML = '';
           reloadAdmin(); 
-        } else showNotification(result.message, true);
+        } else showNotification(result.message || "อัปโหลดวิดีโอล้มเหลว", true);
       } catch(err) {
         btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
-        showNotification("อัปโหลดวิดีโอไม่สำเร็จ", true);
+        showNotification("เกิดข้อผิดพลาดในการอ่านไฟล์วิดีโอ", true);
       }
     }
 
