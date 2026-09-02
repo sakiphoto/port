@@ -79,7 +79,7 @@
 
     .showcase-title { font-size: 1.25rem; font-weight: 700; margin: 2rem 0 1rem; }
     .showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
-    .showcase-item { height: 200px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); background: #000; }
+    .showcase-item { height: 200px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); background: #000; cursor: pointer; }
     .showcase-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
     .showcase-item:hover img { transform: scale(1.05); }
 
@@ -112,7 +112,8 @@
       box-shadow: 0 25px 50px rgba(0,0,0,0.7);
     }
     .album-media-masonry { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; margin-top: 1.25rem; }
-    .media-item-box { width: 100%; height: 220px; border-radius: 10px; overflow: hidden; background: #000; border: 1px solid var(--border); }
+    .media-item-box { width: 100%; height: 220px; border-radius: 10px; overflow: hidden; background: #000; border: 1px solid var(--border); cursor: pointer; transition: transform 0.2s ease; }
+    .media-item-box:hover { transform: scale(1.02); border-color: var(--accent); }
     .media-item-box img { width: 100%; height: 100%; object-fit: cover; }
     .media-item-box iframe { width: 100%; height: 100%; border: none; }
     .album-link-chip {
@@ -121,6 +122,25 @@
       border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 600; margin-right: 6px; margin-top: 6px;
     }
     .album-link-chip:hover { background: var(--accent); color: #000; }
+
+    /* LIGHTBOX IMAGE MODAL */
+    .lightbox-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.93); backdrop-filter: blur(12px);
+      z-index: 3500; display: none; align-items: center; justify-content: center; padding: 1.5rem;
+      cursor: zoom-out;
+    }
+    .lightbox-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+    .lightbox-img {
+      max-width: 92vw; max-height: 92vh; object-fit: contain; border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9); border: 1px solid rgba(255,255,255,0.1);
+      cursor: default;
+    }
+    .lightbox-close {
+      position: absolute; top: 20px; right: 25px; color: #fff; font-size: 2.5rem;
+      cursor: pointer; background: transparent; border: none; font-weight: 300; line-height: 1; z-index: 3600;
+      transition: color 0.2s;
+    }
+    .lightbox-close:hover { color: var(--accent); }
 
     .schedule-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
     .toggle-btn { padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; font-size: 0.85rem; }
@@ -187,6 +207,12 @@
   </style>
 </head>
 <body>
+
+  <!-- LIGHTBOX IMAGE MODAL -->
+  <div class="lightbox-overlay" id="lightboxModal" onclick="closeLightbox(event)">
+    <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
+    <img src="" id="lightboxImg" class="lightbox-img" alt="Enlarged Image" onclick="event.stopPropagation()">
+  </div>
 
   <!-- ALBUM DETAIL MODAL -->
   <div class="modal-overlay" id="albumDetailModal">
@@ -321,6 +347,19 @@
       return url;
     }
 
+    function openLightbox(imageUrl) {
+      if (!imageUrl) return;
+      const modal = document.getElementById("lightboxModal");
+      const img = document.getElementById("lightboxImg");
+      img.src = imageUrl;
+      modal.classList.add("active");
+    }
+
+    function closeLightbox(e) {
+      if (e) e.stopPropagation();
+      document.getElementById("lightboxModal").classList.remove("active");
+    }
+
     function formatThaiDateFull(dateStr) {
       if (!dateStr) return "-";
       const parts = String(dateStr).split('-');
@@ -404,7 +443,7 @@
       const featGrid = document.getElementById("featuredGrid");
       if (p.featuredPhotos) {
         const photos = p.featuredPhotos.split(',').filter(x => x.trim());
-        featGrid.innerHTML = photos.map(u => `<div class="showcase-item"><img src="${getDisplayImageUrl(u.trim())}" loading="lazy"></div>`).join('');
+        featGrid.innerHTML = photos.map(u => `<div class="showcase-item" onclick="openLightbox('${getDisplayImageUrl(u.trim())}')"><img src="${getDisplayImageUrl(u.trim())}" loading="lazy"></div>`).join('');
       } else {
         featGrid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1;">ยังไม่มีรูปภาพแนะนำ</p>';
       }
@@ -489,11 +528,13 @@
       const mediaGrid = document.getElementById("modalAlbumMediaGrid");
       mediaGrid.innerHTML = filtered.map(item => {
         const videoEmbedUrl = item.fileId ? `https://drive.google.com/file/d/${item.fileId}/preview` : item.fileUrl;
+        const displayImgUrl = getDisplayImageUrl(item.fileUrl);
+
         return `
-          <div class="media-item-box">
+          <div class="media-item-box" ${item.mediaType === 'image' ? `onclick="openLightbox('${displayImgUrl}')"` : ''}>
             ${item.mediaType === 'video' 
               ? `<iframe src="${videoEmbedUrl}" allow="autoplay" style="width:100%; height:100%; border:none;"></iframe>` 
-              : `<img src="${getDisplayImageUrl(item.fileUrl)}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
+              : `<img src="${displayImgUrl}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
             }
           </div>
         `;
