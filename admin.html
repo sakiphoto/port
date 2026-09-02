@@ -705,7 +705,7 @@
             <div class="form-group"><label>คำโปรยย่อย (Hero Subtitle)</label><input type="text" id="editHeroSubtitle" required></div>
             <hr style="border:0; border-top:1px solid var(--border); margin:1.5rem 0;">
             <div class="form-grid-2">
-              <div class="form-group"><label>เปลี่ยนรูปโปรไฟล์ช่างภาพ</label><input type="file" id="profAvatarFile" accept="image/*"></div>
+              <div class="form-group"><label>เปลี่ยนรูปโปรไฟล์ช่างภาพ (เลือกเมื่อต้องการเปลี่ยนใหม่)</label><input type="file" id="profAvatarFile" accept="image/*"></div>
               <div class="form-group"><label>ชื่อช่างภาพ</label><input type="text" id="editProfName" required></div>
             </div>
             <div class="form-group"><label>ประวัติย่อ / Bio</label><textarea id="editProfBio" rows="3"></textarea></div>
@@ -1268,6 +1268,7 @@
       }
     }
 
+    /* ดึงข้อมูลสถานะในปฏิทินมาเติมใน Modal */
     function openCalModal(dateStr) {
       document.getElementById("modalCalDate").value = dateStr;
       document.getElementById("modalDisplayDate").value = formatThaiDateFull(dateStr);
@@ -1330,9 +1331,10 @@
       } catch(e) {}
     }
 
+    /* ดึงข้อมูลโปรไฟล์ดั้งเดิมขึ้นฟอร์ม */
     function populateProfileForm() {
       const p = allData.profile || {};
-      const set = (id, v) => document.getElementById(id).value = v || "";
+      const set = (id, v) => document.getElementById(id).value = (v !== undefined && v !== null) ? v : "";
       set("editBrandName", p.brandName || "PHOTOGRAPHER");
       set("editHeroTitle", p.heroTitle);
       set("editHeroSubtitle", p.heroSubtitle);
@@ -1350,7 +1352,9 @@
       container.innerHTML = "";
       let links = [];
       try { links = JSON.parse(p.socialLinks || "[]"); } catch(e){}
-      links.forEach(l => addSocialRow(l.label, l.url));
+      if (Array.isArray(links)) {
+        links.forEach(l => addSocialRow(l.label, l.url));
+      }
     }
 
     function addSocialRow(label = "", url = "") {
@@ -1453,22 +1457,23 @@
       }
     }
 
+    /* ดึงข้อมูลคิวงานเดิมมาเติมใส่ฟอร์มเพื่อแก้ไข */
     function editSchedule(id) {
       const item = (allData.schedule || []).find(x => x.id === id);
       if (!item) return;
       document.getElementById("schedId").value = item.id;
       document.getElementById("schedNativeDate").value = item.date;
       onSchedNativeDateChange(item.date);
-      document.getElementById("schedTime").value = item.time;
-      document.getElementById("schedTitle").value = item.title;
-      document.getElementById("schedLocation").value = item.location;
-      document.getElementById("schedExtLink").value = item.extLink;
-      document.getElementById("schedDetails").value = item.details;
+      document.getElementById("schedTime").value = item.time || "";
+      document.getElementById("schedTitle").value = item.title || "";
+      document.getElementById("schedLocation").value = item.location || "";
+      document.getElementById("schedExtLink").value = item.extLink || "";
+      document.getElementById("schedDetails").value = item.details || "";
 
       document.getElementById("formSchedHeader").innerText = "✏️ แก้ไขข้อมูลคิวงาน";
       document.getElementById("btnAddSched").innerText = "อัปเดตคิวงาน";
       document.getElementById("btnCancelEditSched").style.display = "inline-block";
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function resetSchedForm() {
@@ -1491,7 +1496,7 @@
             <strong>${i.title}</strong> (${formatThaiDateFull(i.date)} | ${i.time})
             <div style="font-size:0.8rem; color:var(--text-muted);">📍 ${i.location} ${i.extLink ? `| <a href="${formatUrl(i.extLink)}" target="_blank" style="color:var(--accent);">🔗 เปิดลิงก์</a>` : ''}</div>
           </div>
-          <div style="display:flex; gap:0.5rem;">
+          <div style="display:flex; gap:0.4rem;">
             <button class="btn btn-warning" style="padding:0.4rem 0.8rem;" onclick="editSchedule('${i.id}')">✏️ แก้ไข</button>
             <button class="btn btn-danger" style="padding:0.4rem 0.8rem;" onclick="deleteItem('${i.id}','schedule')">🗑️ ลบ</button>
           </div>
@@ -1765,6 +1770,7 @@
       } catch(e) {}
     }
 
+    /* ดึงข้อมูลอัลบั้มเดิมขึ้นมาเปิดใน Modal สำหรับแก้ไข */
     function openEditAlbumModal(title, type) {
       const items = (allData.portfolio || []).filter(x => x.title === title && x.mediaType === type);
       if (!items.length) return;
@@ -1772,8 +1778,8 @@
 
       document.getElementById("editAlbumOldTitle").value = first.title;
       document.getElementById("editAlbumMediaType").value = type;
-      document.getElementById("editAlbumTitle").value = first.title;
-      document.getElementById("editAlbumCategory").value = first.category;
+      document.getElementById("editAlbumTitle").value = first.title || "";
+      document.getElementById("editAlbumCategory").value = first.category || "";
       document.getElementById("editAlbumDetails").value = first.details || "";
 
       const container = document.getElementById("editAlbumLinkContainer");
@@ -1783,8 +1789,12 @@
           const links = JSON.parse(first.extLink);
           if (Array.isArray(links)) {
             links.forEach(l => addDynamicLinkRow("editAlbumLinkContainer", l.label, l.url));
+          } else {
+            addDynamicLinkRow("editAlbumLinkContainer", "ลิงก์เดิม", first.extLink);
           }
-        } catch(e){}
+        } catch(e){
+          addDynamicLinkRow("editAlbumLinkContainer", "ลิงก์เดิม", first.extLink);
+        }
       }
 
       document.getElementById("editAlbumModal").classList.add("active");
