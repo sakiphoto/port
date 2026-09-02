@@ -132,7 +132,7 @@
     }
     .album-card:hover { transform: translateY(-4px); border-color: var(--accent); }
     .album-cover { position: relative; width: 100%; height: 200px; background: #000; overflow: hidden; }
-    .album-cover img, .album-cover video { width: 100%; height: 100%; object-fit: cover; }
+    .album-cover img, .album-cover iframe { width: 100%; height: 100%; object-fit: cover; border: none; }
     .album-count-badge {
       position: absolute; bottom: 10px; right: 10px;
       background: rgba(10, 12, 16, 0.85); color: #fff; padding: 3px 10px;
@@ -242,7 +242,8 @@
     }
     .album-media-masonry { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; margin-top: 1.25rem; }
     .media-item-box { width: 100%; height: 200px; border-radius: 10px; overflow: hidden; background: #000; border: 1px solid var(--border); }
-    .media-item-box img, .media-item-box video { width: 100%; height: 100%; object-fit: cover; }
+    .media-item-box img { width: 100%; height: 100%; object-fit: cover; }
+    .media-item-box iframe { width: 100%; height: 100%; border: none; }
     .album-link-chip {
       display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1);
       color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); padding: 5px 12px;
@@ -762,8 +763,8 @@
     const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
     function getDisplayImageUrl(url) {
-      if (!url) return "https://via.placeholder.com/300";
-      if (url.includes("google.com")) {
+      if (!url) return "https://via.placeholder.com/300?text=No+Media";
+      if (url.includes("drive.google.com") || url.includes("googleusercontent.com")) {
         let fileId = "";
         const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
         const matchPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -771,7 +772,7 @@
         else if (matchPath) fileId = matchPath[1];
 
         if (fileId) {
-          return `https://wsrv.nl/?url=https://drive.google.com/uc?id=${fileId}`;
+          return `https://lh3.googleusercontent.com/d/${fileId}`;
         }
       }
       return url;
@@ -1038,6 +1039,7 @@
             details: item.details,
             extLink: item.extLink,
             coverUrl: item.fileUrl,
+            fileId: item.fileId,
             mediaType: item.mediaType,
             items: []
           };
@@ -1049,12 +1051,14 @@
         const alb = albums[key];
         const safeTitle = alb.title.replace(/'/g, "\\'");
         const imgUrl = getDisplayImageUrl(alb.coverUrl);
+        const videoEmbedUrl = alb.fileId ? `https://drive.google.com/file/d/${alb.fileId}/preview` : alb.coverUrl;
+
         return `
           <div class="album-card" onclick="openAlbumModal('${safeTitle}', '${alb.mediaType}')">
             <div class="album-cover">
               ${alb.mediaType === 'video' 
-                ? `<video src="${alb.coverUrl}#t=0.5" preload="metadata"></video>` 
-                : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}">`
+                ? `<iframe src="${videoEmbedUrl}" allow="autoplay" style="pointer-events: none;"></iframe>` 
+                : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
               }
               <div class="album-count-badge">${alb.items.length} ${alb.mediaType === 'video' ? 'วิดีโอ' : 'รูปภาพ'}</div>
             </div>
@@ -1095,14 +1099,17 @@
       }
 
       const mediaGrid = document.getElementById("modalAlbumMediaGrid");
-      mediaGrid.innerHTML = filtered.map(item => `
-        <div class="media-item-box">
-          ${item.mediaType === 'video' 
-            ? `<video src="${item.fileUrl}" controls></video>` 
-            : `<img src="${getDisplayImageUrl(item.fileUrl)}" loading="lazy">`
-          }
-        </div>
-      `).join('');
+      mediaGrid.innerHTML = filtered.map(item => {
+        const videoEmbedUrl = item.fileId ? `https://drive.google.com/file/d/${item.fileId}/preview` : item.fileUrl;
+        return `
+          <div class="media-item-box">
+            ${item.mediaType === 'video' 
+              ? `<iframe src="${videoEmbedUrl}" allow="autoplay" style="width:100%; height:100%; border:none;"></iframe>` 
+              : `<img src="${getDisplayImageUrl(item.fileUrl)}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
+            }
+          </div>
+        `;
+      }).join('');
 
       document.getElementById("albumDetailModal").classList.add("active");
     }
