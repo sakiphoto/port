@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Admin System | Photographer Portfolio</title>
+  <title>Admin System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -502,24 +502,23 @@
           </div>
         </div>
 
-        <div class="showcase-title">✨ รูปภาพแนะนำหน้าแรก (Featured Gallery)</div>
+        <div class="showcase-title">✨</div>
         <div class="showcase-grid" id="featuredGrid"></div>
       </section>
 
       <section id="sec-photos" class="page-section">
-        <h2 style="margin-bottom: 2rem;">ผลงานภาพถ่าย (จัดกลุ่มตามงาน)</h2>
+        <h2 style="margin-bottom: 2rem;">ผลงานภาพถ่าย</h2>
         <div class="album-grid" id="photoAlbumGrid"><p style="color: var(--text-muted);">กำลังโหลด...</p></div>
       </section>
 
       <section id="sec-videos" class="page-section">
-        <h2 style="margin-bottom: 2rem;">ผลงานวิดีโอ (จัดกลุ่มตามงาน)</h2>
+        <h2 style="margin-bottom: 2rem;">ผลงานวิดีโอ</h2>
         <div class="album-grid" id="videoAlbumGrid"><p style="color: var(--text-muted);">กำลังโหลด...</p></div>
       </section>
 
       <section id="sec-schedule" class="page-section">
         <div style="margin-bottom: 2rem;">
           <h2>ตารางงาน & สถานะการปฏิบัติงาน</h2>
-          <small style="color: var(--accent);">⚡ ประมวลผลสถานะอัตโนมัติตามเวลาจริง (Real-time)</small>
         </div>
 
         <div class="schedule-toggle">
@@ -1061,7 +1060,7 @@
         const photos = p.featuredPhotos.split(',').filter(x => x.trim());
         featGrid.innerHTML = photos.map(u => `<div class="showcase-item" onclick="openLightbox('${getDisplayImageUrl(u.trim())}')"><img src="${getDisplayImageUrl(u.trim())}" loading="lazy"></div>`).join('');
       } else {
-        featGrid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1;">ยังไม่มีรูปภาพแนะนำ</p>';
+        featGrid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1;"> </p>';
       }
     }
 
