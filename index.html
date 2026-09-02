@@ -306,8 +306,8 @@
     const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
     function getDisplayImageUrl(url) {
-      if (!url) return "https://via.placeholder.com/600x400?text=No+Image";
-      if (url.includes("google.com") || url.includes("googleusercontent.com")) {
+      if (!url) return "https://via.placeholder.com/600x400?text=No+Media";
+      if (url.includes("drive.google.com") || url.includes("googleusercontent.com")) {
         let fileId = "";
         const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
         const matchPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -315,7 +315,7 @@
         else if (matchPath) fileId = matchPath[1];
 
         if (fileId) {
-          return `https://lh3.googleusercontent.com/d/${fileId}=w1600`;
+          return `https://lh3.googleusercontent.com/d/${fileId}`;
         }
       }
       return url;
@@ -427,6 +427,7 @@
             details: item.details,
             extLink: item.extLink,
             coverUrl: item.fileUrl,
+            fileId: item.fileId,
             mediaType: item.mediaType,
             items: []
           };
@@ -438,12 +439,14 @@
         const alb = albums[key];
         const safeTitle = alb.title.replace(/'/g, "\\'");
         const imgUrl = getDisplayImageUrl(alb.coverUrl);
+        const videoEmbedUrl = alb.fileId ? `https://drive.google.com/file/d/${alb.fileId}/preview` : alb.coverUrl;
+
         return `
           <div class="album-card" onclick="openAlbumModal('${safeTitle}', '${alb.mediaType}')">
             <div class="album-cover">
               ${alb.mediaType === 'video' 
-                ? `<iframe src="${alb.coverUrl}" allow="autoplay"></iframe>` 
-                : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}">`
+                ? `<iframe src="${videoEmbedUrl}" allow="autoplay" style="pointer-events: none;"></iframe>` 
+                : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
               }
               <div class="album-count-badge">${alb.items.length} ${alb.mediaType === 'video' ? 'วิดีโอ' : 'รูปภาพ'}</div>
             </div>
@@ -484,14 +487,17 @@
       }
 
       const mediaGrid = document.getElementById("modalAlbumMediaGrid");
-      mediaGrid.innerHTML = filtered.map(item => `
-        <div class="media-item-box">
-          ${item.mediaType === 'video' 
-            ? `<iframe src="${item.fileUrl}" allow="autoplay"></iframe>` 
-            : `<img src="${getDisplayImageUrl(item.fileUrl)}" loading="lazy">`
-          }
-        </div>
-      `).join('');
+      mediaGrid.innerHTML = filtered.map(item => {
+        const videoEmbedUrl = item.fileId ? `https://drive.google.com/file/d/${item.fileId}/preview` : item.fileUrl;
+        return `
+          <div class="media-item-box">
+            ${item.mediaType === 'video' 
+              ? `<iframe src="${videoEmbedUrl}" allow="autoplay" style="width:100%; height:100%; border:none;"></iframe>` 
+              : `<img src="${getDisplayImageUrl(item.fileUrl)}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
+            }
+          </div>
+        `;
+      }).join('');
 
       document.getElementById("albumDetailModal").classList.add("active");
     }
