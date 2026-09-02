@@ -300,13 +300,35 @@
   </main>
 
   <footer>
-    <p>© Photographer Portfolio | <a href="admin.html" class="footer-admin-link">Admin panel</a></p>
+    <p>© Photographer Portfolio | <a href="admin.html" class="footer-admin-link">Admin panel (เข้าหน้าแอดมิน)</a></p>
   </footer>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
     let allData = { profile: {}, portfolio: [], schedule: [], calendar: [] };
     let currentCalDate = new Date();
+
+    const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    // แปลง YYYY-MM-DD เป็น "วัน เดือน ปี (พ.ศ.)" เช่น "15 มกราคม 2569"
+    function formatThaiDateFull(dateStr) {
+      if (!dateStr) return "-";
+      const parts = String(dateStr).split('-');
+      if (parts.length !== 3) return dateStr;
+      const yearBE = parseInt(parts[0]) + 543;
+      const monthIndex = parseInt(parts[1]) - 1;
+      const day = parseInt(parts[2]);
+      return `${day} ${MONTH_NAMES_TH[monthIndex]} ${yearBE}`;
+    }
+
+    // แปลง YYYY-MM-DD เป็น "DD/MM/YYYY(พ.ศ.)"
+    function formatThaiDateNumeric(dateStr) {
+      if (!dateStr) return "-";
+      const parts = String(dateStr).split('-');
+      if (parts.length !== 3) return dateStr;
+      const yearBE = parseInt(parts[0]) + 543;
+      return `${parts[2]}/${parts[1]}/${yearBE}`;
+    }
 
     function formatUrl(url) {
       if (!url) return "#";
@@ -482,11 +504,11 @@
     }
 
     function renderCalendar() {
-      const year = currentCalDate.getFullYear();
+      const yearBE = currentCalDate.getFullYear() + 543;
       const month = currentCalDate.getMonth();
-      const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-      document.getElementById("calMonthTitle").innerText = `${monthNames[month]} ${year}`;
+      document.getElementById("calMonthTitle").innerText = `${MONTH_NAMES_TH[month]} ${yearBE}`;
 
+      const year = currentCalDate.getFullYear();
       const firstDay = new Date(year, month, 1).getDay();
       const totalDays = new Date(year, month + 1, 0).getDate();
       const grid = document.getElementById("calDaysGrid");
@@ -562,13 +584,14 @@
       const sorted = [...list].sort((a, b) => new Date(a.date) - new Date(b.date));
       container.innerHTML = sorted.map(item => {
         const st = evaluateRealtimeJobStatus(item.date, item.time);
+        const thaiDateStr = formatThaiDateFull(item.date);
         return `
           <div class="job-row ${st.cls}">
             <div class="job-info-left">
               <span class="job-badge badge-${st.cls}">${st.live ? '<span class="pulse-dot"></span>' : ''}${st.label}</span>
               <div style="font-size: 1.25rem; font-weight: 700; color: #fff;">${item.title}</div>
               <div style="color: var(--text-muted); font-size: 0.9rem;">
-                📅 <strong>${item.date}</strong> | ⏰ <strong>${item.time}</strong> | 📍 <strong>${item.location || '-'}</strong>
+                📅 <strong>${thaiDateStr}</strong> | ⏰ <strong>${item.time}</strong> | 📍 <strong>${item.location || '-'}</strong>
               </div>
               ${item.details ? `<div style="font-size:0.85rem; color:#cbd5e1; margin-top:4px;">📝 ${item.details}</div>` : ''}
             </div>
