@@ -31,10 +31,9 @@
     }
     .nav-container {
       max-width: 1200px; margin: 0 auto; display: flex;
-      justify-content: space-between; align-items: center; padding: 1rem 1.25rem; gap: 1rem;
+      justify-content: space-between; align-items: center; padding: 0.75rem 1.25rem; gap: 1rem;
     }
-    .logo { font-size: 1.25rem; font-weight: 700; color: #fff; cursor: pointer; white-space: nowrap; }
-    .logo span { color: var(--accent); }
+    .logo-img { height: 42px; width: auto; object-fit: contain; cursor: pointer; display: block; }
     nav { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; justify-content: center; }
     .nav-link {
       color: var(--text-muted); text-decoration: none; padding: 0.5rem 0.9rem;
@@ -238,7 +237,8 @@
 
   <header class="site-header">
     <div class="nav-container">
-      <div class="logo" onclick="navigate('home', this)" id="navBrand">PHOTOGRAPHER<span>.</span></div>
+      <!-- รูปภาพโลโก้แบรนด์จากลิงก์ Google Drive -->
+      <img src="https://lh3.googleusercontent.com/d/1529nRXv5tXmTxerKVa05yDQ-842KdMjY" class="logo-img" alt="Logo" onclick="navigate('home', this)">
       <nav>
         <a class="nav-link active" onclick="navigate('home', this)">ข้อมูลทั่วไป & ช่างภาพ</a>
         <a class="nav-link" onclick="navigate('photos', this)">ผลงานภาพ</a>
@@ -406,7 +406,6 @@
 
     function renderProfile() {
       const p = allData.profile || {};
-      document.getElementById("navBrand").innerHTML = `${p.brandName || 'PHOTOGRAPHER'}<span>.</span>`;
       document.getElementById("heroTitle").innerText = p.heroTitle || "Luxury Visual Experience";
       document.getElementById("heroSubtitle").innerText = p.heroSubtitle || "-";
       document.getElementById("profAvatar").src = getDisplayImageUrl(p.avatarUrl);
