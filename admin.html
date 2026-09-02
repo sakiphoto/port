@@ -436,10 +436,21 @@
         else if (matchPath) fileId = matchPath[1];
 
         if (fileId) {
-          return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
+          return `https://drive.google.com/uc?export=download&id=${fileId}`;
         }
       }
       return url;
+    }
+
+    function handleImgError(img) {
+      const src = img.src;
+      if (src && src.includes('drive.google.com') && !img.dataset.triedProxy) {
+        img.dataset.triedProxy = "true";
+        const fileId = src.match(/id=([a-zA-Z0-9_-]+)/)?.[1];
+        if (fileId) {
+          img.src = `https://wsrv.nl/?url=https://drive.google.com/uc?id=${fileId}`;
+        }
+      }
     }
 
     /* 1. PROFILE MANAGEMENT */
@@ -460,7 +471,7 @@
 
       if (p.avatarUrl) {
         document.getElementById("avatarPreviewContainer").innerHTML = `
-          <img src="${getDisplayImageUrl(p.avatarUrl)}" class="preview-thumb">
+          <img src="${getDisplayImageUrl(p.avatarUrl)}" class="preview-thumb" referrerpolicy="no-referrer" onerror="handleImgError(this)">
         `;
       }
     }
@@ -630,7 +641,7 @@
         return `
           <div class="item-row">
             <div style="display:flex; align-items:center; gap:1rem;">
-              <img src="${getDisplayImageUrl(g.sampleUrl)}" class="preview-thumb">
+              <img src="${getDisplayImageUrl(g.sampleUrl)}" class="preview-thumb" referrerpolicy="no-referrer" onerror="handleImgError(this)">
               <div class="item-info">
                 <h4>${g.title} <span style="font-size:0.75rem; color:var(--accent);">[${g.mediaType.toUpperCase()}]</span></h4>
                 <p>หมวดหมู่: ${g.category} | จำนวน: ${g.count} ไฟล์</p>
