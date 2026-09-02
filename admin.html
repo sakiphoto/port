@@ -14,6 +14,7 @@
       --bg-card: #12161f;
       --accent: #38bdf8;
       --danger: #ef4444;
+      --warning: #f59e0b;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --border: rgba(255, 255, 255, 0.08);
@@ -241,13 +242,14 @@
     input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     .btn { padding: 0.8rem 1.5rem; background: var(--accent); color: #000; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
     .btn-danger { background: var(--danger); color: #fff; }
+    .btn-warning { background: var(--warning); color: #000; }
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
 
     .admin-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
     .item-list-row {
       display: flex; justify-content: space-between; align-items: center;
       padding: 1rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
-      border-radius: 12px; margin-bottom: 0.75rem;
+      border-radius: 12px; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.75rem;
     }
     .dynamic-link-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
 
@@ -277,7 +279,7 @@
     .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
     .modal-card {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
-      padding: 2rem; width: 100%; max-width: 480px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      padding: 2rem; width: 100%; max-width: 540px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
     }
 
     @media (max-width: 860px) {
@@ -318,15 +320,54 @@
           <label>ระบุช่วงเวลาว่าง (เช่น 08:00 - 10:00, 15:00 - 18:00)</label>
           <input type="text" id="modalCalAvailableSlots" placeholder="08:00 - 10:00, 15:00 - 18:00">
         </div>
-        <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.5rem;">
-          <button type="button" class="btn btn-outline" onclick="closeCalModal()">ยกเลิก</button>
-          <button type="submit" class="btn" id="btnSaveCalModal">บันทึกข้อมูล</button>
+        <div style="display:flex; gap:0.75rem; justify-content:space-between; margin-top:1.5rem;">
+          <button type="button" class="btn btn-danger" onclick="deleteCalendarStatus()">🗑️ ลบสถานะ (รีเซ็ต)</button>
+          <div style="display:flex; gap:0.5rem;">
+            <button type="button" class="btn btn-outline" onclick="closeCalModal()">ยกเลิก</button>
+            <button type="submit" class="btn" id="btnSaveCalModal">บันทึกข้อมูล</button>
+          </div>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ALBUM DETAIL MODAL -->
+  <!-- EDIT ALBUM MODAL -->
+  <div class="modal-overlay" id="editAlbumModal">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
+        <h3>✏️ แก้ไขข้อมูลอัลบั้มผลงาน</h3>
+        <button style="background:transparent; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;" onclick="closeEditAlbumModal()">&times;</button>
+      </div>
+      <form onsubmit="handleSaveEditAlbum(event)">
+        <input type="hidden" id="editAlbumOldTitle">
+        <input type="hidden" id="editAlbumMediaType">
+        <div class="form-group">
+          <label>ชื่องาน / อัลบั้ม</label>
+          <input type="text" id="editAlbumTitle" required>
+        </div>
+        <div class="form-group">
+          <label>หมวดหมู่</label>
+          <input type="text" id="editAlbumCategory" required>
+        </div>
+        <div class="form-group">
+          <label>รายละเอียดงาน / คำอธิบาย</label>
+          <textarea id="editAlbumDetails" rows="3"></textarea>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+          <label style="margin-bottom:0; color:var(--accent);">🔗 ลิงก์เพิ่มเติม</label>
+          <button type="button" class="btn btn-outline" style="padding:0.3rem 0.8rem; font-size:0.8rem;" onclick="addDynamicLinkRow('editAlbumLinkContainer')">+ เพิ่มลิงก์</button>
+        </div>
+        <div id="editAlbumLinkContainer"></div>
+
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.5rem;">
+          <button type="button" class="btn btn-outline" onclick="closeEditAlbumModal()">ยกเลิก</button>
+          <button type="submit" class="btn" id="btnSaveEditAlbum">บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ALBUM DETAIL MODAL (PREVIEW) -->
   <div class="modal-overlay" id="albumDetailModal">
     <div class="album-modal-card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
@@ -488,7 +529,7 @@
 
       <div id="tab-calendar" class="admin-tab active">
         <h2>📅 กำหนดวันว่าง / สถานะการรับงานในปฏิทิน</h2>
-        <p style="color:var(--text-muted); font-size:0.9rem; margin-top:4px;">💡 คลิกที่ช่องวันที่ในปฏิทินเพื่อตั้งค่าสถานะ หรือระบุช่วงเวลาว่างได้ทันที</p>
+        <p style="color:var(--text-muted); font-size:0.9rem; margin-top:4px;">💡 คลิกที่ช่องวันที่ในปฏิทินเพื่อตั้งค่าสถานะ, ระบุช่วงเวลา หรือกดลบสถานะได้ทันที</p>
         
         <div class="admin-cal-container">
           <div class="admin-cal-header">
@@ -510,9 +551,10 @@
       </div>
 
       <div id="tab-schedule" class="admin-tab">
-        <h2 style="margin-bottom: 1.5rem;">📌 กรอกข้อมูลคิวงานที่รับ</h2>
+        <h2 style="margin-bottom: 1.5rem;" id="formSchedHeader">📌 เพิ่ม / จัดการคิวงานที่รับ</h2>
         <div class="admin-card">
           <form onsubmit="handleAddSchedule(event)">
+            <input type="hidden" id="schedId">
             <div class="form-grid-2">
               <div class="form-group"><label>วันที่ปฏิบัติงาน</label><input type="date" id="schedDate" required></div>
               <div class="form-group"><label>ช่วงเวลา (เช่น 09:00 - 16:00)</label><input type="text" id="schedTime" placeholder="09:00 - 16:00" required></div>
@@ -523,7 +565,11 @@
             </div>
             <div class="form-group"><label>ลิงก์ภายนอก (Google Maps / Live / Drive)</label><input type="text" id="schedExtLink" placeholder="maps.app.goo.gl/..."></div>
             <div class="form-group"><label>รายละเอียดเพิ่มเติม</label><textarea id="schedDetails" rows="2" placeholder="เช่น เตรียมชุดไฟและเลนส์เทเล"></textarea></div>
-            <button type="submit" class="btn" id="btnAddSched">บันทึกงานใหม่</button>
+            
+            <div style="display:flex; gap:0.5rem;">
+              <button type="submit" class="btn" id="btnAddSched">บันทึกคิวงาน</button>
+              <button type="button" class="btn btn-outline" id="btnCancelEditSched" style="display:none;" onclick="resetSchedForm()">ยกเลิกการแก้ไข</button>
+            </div>
           </form>
         </div>
         <h3 style="margin: 2rem 0 1rem;">📋 รายการงานทั้งหมดในระบบ</h3>
@@ -584,9 +630,9 @@
         <div id="featuredPhotoList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;"></div>
       </div>
 
-      <!-- TAB 5: Photo Upload with Multi-link & Details -->
+      <!-- TAB 5: Photo Upload & Management -->
       <div id="tab-photos" class="admin-tab">
-        <h2 style="margin-bottom: 1.5rem;">📷 อัปโหลดผลงานภาพถ่าย</h2>
+        <h2 style="margin-bottom: 1.5rem;">📷 อัปโหลด & จัดการผลงานภาพถ่าย</h2>
         <div class="admin-card">
           <form onsubmit="handleUploadPhotos(event)">
             <div class="form-grid-2">
@@ -608,16 +654,16 @@
               <label>เลือกไฟล์รูปภาพ (เลือกได้หลายรูปในงานเดียวกัน)</label>
               <input type="file" id="pImgFiles" accept="image/*" multiple required>
             </div>
-            <button type="submit" class="btn" id="btnUpImgs">อัปโหลดภาพผลงาน</button>
+            <button type="submit" class="btn" id="btnUpImgs">อัปโหลดภาพผลงานใหม่</button>
           </form>
         </div>
-        <h3 style="margin: 2rem 0 1rem;">รายการผลงานภาพถ่ายในระบบ</h3>
+        <h3 style="margin: 2rem 0 1rem;">รายการอัลบั้มภาพถ่ายในระบบ (แก้ไข/ลบได้ทั้งอัลบั้ม)</h3>
         <div id="adminPhotoList"></div>
       </div>
 
-      <!-- TAB 6: Video Upload with Multi-link & Details -->
+      <!-- TAB 6: Video Upload & Management -->
       <div id="tab-videos" class="admin-tab">
-        <h2 style="margin-bottom: 1.5rem;">🎬 อัปโหลดผลงานวิดีโอ</h2>
+        <h2 style="margin-bottom: 1.5rem;">🎬 อัปโหลด & จัดการผลงานวิดีโอ</h2>
         <div class="admin-card">
           <form onsubmit="handleUploadVideo(event)">
             <div class="form-grid-2">
@@ -639,10 +685,10 @@
               <label>เลือกไฟล์วิดีโอ (ไม่เกิน 20MB)</label>
               <input type="file" id="pVidFile" accept="video/*" required>
             </div>
-            <button type="submit" class="btn" id="btnUpVid">อัปโหลดวิดีโอ</button>
+            <button type="submit" class="btn" id="btnUpVid">อัปโหลดวิดีโอใหม่</button>
           </form>
         </div>
-        <h3 style="margin: 2rem 0 1rem;">รายการผลงานวิดีโอในระบบ</h3>
+        <h3 style="margin: 2rem 0 1rem;">รายการวิดีโอในระบบ (แก้ไข/ลบได้)</h3>
         <div id="adminVideoList"></div>
       </div>
     </div>
@@ -702,13 +748,13 @@
       });
     }
 
-    // Add Dynamic Extra Link Row Function
+    // Dynamic Extra Link Component
     function addDynamicLinkRow(containerId, label = "", url = "") {
       const container = document.getElementById(containerId);
       const div = document.createElement("div");
       div.className = "dynamic-link-row";
       div.innerHTML = `
-        <input type="text" placeholder="ชื่อปุ่มลิงก์ (เช่น ดูรูปความละเอียดสูง / ดูคลิปบน YouTube)" class="dyn-label" value="${label}" style="width:40%;">
+        <input type="text" placeholder="ชื่อปุ่มลิงก์ (เช่น ดูรูปความละเอียดสูง)" class="dyn-label" value="${label}" style="width:40%;">
         <input type="text" placeholder="https://..." class="dyn-url" value="${url}" style="width:50%;">
         <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="width:10%; padding:0.4rem;">&times;</button>
       `;
@@ -727,20 +773,6 @@
       });
       return JSON.stringify(links);
     }
-
-    document.addEventListener("keydown", function(e) {
-      if (e.key === "Enter" && e.target.tagName === "INPUT" && e.target.type !== "submit") {
-        e.preventDefault();
-        const form = e.target.form;
-        if (form) {
-          const focusables = Array.from(form.querySelectorAll("input, select, textarea, button")).filter(el => !el.disabled && el.type !== "hidden");
-          const index = focusables.indexOf(e.target);
-          if (index > -1 && index < focusables.length - 1) {
-            focusables[index + 1].focus();
-          }
-        }
-      }
-    });
 
     if (token) enterPreviewMode();
 
@@ -886,7 +918,7 @@
       }
     }
 
-    /* ALBUM GROUPING & DISPLAY ENGINE */
+    /* ALBUM GROUPING DISPLAY ENGINE */
     function renderAlbumGrid(containerId, items, type) {
       const container = document.getElementById(containerId);
       if (!items || !items.length) {
@@ -894,7 +926,6 @@
         return;
       }
 
-      // Group items by Title (Job Name)
       const albums = {};
       items.forEach(item => {
         const key = item.title;
@@ -943,7 +974,6 @@
       document.getElementById("modalAlbumCategory").innerText = first.category;
       document.getElementById("modalAlbumDesc").innerText = first.details || "ไม่มีรายละเอียดเพิ่มเติม";
 
-      // Render External Links
       const linksContainer = document.getElementById("modalAlbumLinks");
       linksContainer.innerHTML = "";
       if (first.extLink) {
@@ -961,7 +991,6 @@
         }
       }
 
-      // Render Media List inside Modal
       const mediaGrid = document.getElementById("modalAlbumMediaGrid");
       mediaGrid.innerHTML = filtered.map(item => `
         <div class="media-item-box">
@@ -1086,8 +1115,8 @@
       populateProfileForm();
       renderAdminSchedule();
       renderAdminFeatured();
-      renderAdminPortfolioList('adminPhotoList', 'image');
-      renderAdminPortfolioList('adminVideoList', 'video');
+      renderAdminPortfolioGroupList('adminPhotoList', 'image');
+      renderAdminPortfolioGroupList('adminVideoList', 'video');
       renderAdminCalendar();
     }
 
@@ -1189,22 +1218,21 @@
         availableSlots: document.getElementById("modalCalAvailableSlots").value
       };
       
-      try {
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-        const result = await res.json();
-        btn.disabled = false; btn.innerText = "บันทึกข้อมูล";
-        closeCalModal();
-        
-        if (result.success) { 
-          showNotification("บันทึกสถานะปฏิทินเรียบร้อย!"); 
-          await reloadAdmin();
-        } else {
-          showNotification(result.message, true);
-        }
-      } catch(err) {
-        btn.disabled = false; btn.innerText = "บันทึกข้อมูล";
-        showNotification("เกิดข้อผิดพลาดในการบันทึก", true);
-      }
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+      const result = await res.json();
+      btn.disabled = false; btn.innerText = "บันทึกข้อมูล";
+      closeCalModal();
+      if (result.success) { showNotification("บันทึกปฏิทินเรียบร้อย!"); await reloadAdmin(); } 
+      else { showNotification(result.message, true); }
+    }
+
+    async function deleteCalendarStatus() {
+      const dateStr = document.getElementById("modalCalDate").value;
+      if (!confirm(`ต้องการลบสถานะพิเศษของวันที่ ${dateStr} ใช่หรือไม่?`)) return;
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "setCalendar", password: token, date: dateStr, isDelete: true }) });
+      const result = await res.json();
+      closeCalModal();
+      if (result.success) { showNotification("รีเซ็ตสถานะเรียบร้อย!"); await reloadAdmin(); }
     }
 
     function populateProfileForm() {
@@ -1288,8 +1316,10 @@
       e.preventDefault();
       const btn = document.getElementById("btnAddSched");
       btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
+
       const payload = {
         action: "addSchedule", password: token,
+        id: document.getElementById("schedId").value || null,
         date: document.getElementById("schedDate").value,
         time: document.getElementById("schedTime").value,
         title: document.getElementById("schedTitle").value,
@@ -1298,10 +1328,46 @@
         extLink: formatUrl(document.getElementById("schedExtLink").value),
         details: document.getElementById("schedDetails").value
       };
+
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
       const result = await res.json();
-      btn.innerText = "บันทึกงานใหม่"; btn.disabled = false;
-      if (result.success) { showNotification("บันทึกคิวงานสำเร็จ!"); e.target.reset(); reloadAdmin(); } else showNotification(result.message, true);
+      btn.innerText = "บันทึกคิวงาน"; btn.disabled = false;
+      if (result.success) { 
+        showNotification(payload.id ? "อัปเดตคิวงานสำเร็จ!" : "เพิ่มคิวงานสำเร็จ!"); 
+        resetSchedForm(); 
+        reloadAdmin(); 
+      } else showNotification(result.message, true);
+    }
+
+    function editSchedule(id) {
+      const item = (allData.schedule || []).find(x => x.id === id);
+      if (!item) return;
+      document.getElementById("schedId").value = item.id;
+      document.getElementById("schedDate").value = item.date;
+      document.getElementById("schedTime").value = item.time;
+      document.getElementById("schedTitle").value = item.title;
+      document.getElementById("schedLocation").value = item.location;
+      document.getElementById("schedExtLink").value = item.extLink;
+      document.getElementById("schedDetails").value = item.details;
+
+      document.getElementById("formSchedHeader").innerText = "✏️ แก้ไขข้อมูลคิวงาน";
+      document.getElementById("btnAddSched").innerText = "อัปเดตคิวงาน";
+      document.getElementById("btnCancelEditSched").style.display = "inline-block";
+      window.scrollTo(0, 0);
+    }
+
+    function resetSchedForm() {
+      document.getElementById("schedId").value = "";
+      document.getElementById("schedDate").value = "";
+      document.getElementById("schedTime").value = "";
+      document.getElementById("schedTitle").value = "";
+      document.getElementById("schedLocation").value = "";
+      document.getElementById("schedExtLink").value = "";
+      document.getElementById("schedDetails").value = "";
+
+      document.getElementById("formSchedHeader").innerText = "📌 เพิ่ม / จัดการคิวงานที่รับ";
+      document.getElementById("btnAddSched").innerText = "บันทึกคิวงาน";
+      document.getElementById("btnCancelEditSched").style.display = "none";
     }
 
     function renderAdminSchedule() {
@@ -1314,7 +1380,10 @@
             <strong>${i.title}</strong> (${i.date} | ${i.time})
             <div style="font-size:0.8rem; color:var(--text-muted);">📍 ${i.location} ${i.extLink ? `| <a href="${formatUrl(i.extLink)}" target="_blank" style="color:var(--accent);">🔗 เปิดลิงก์</a>` : ''}</div>
           </div>
-          <button class="btn btn-danger" style="padding:0.4rem 0.8rem;" onclick="deleteItem('${i.id}','schedule')">ลบงาน</button>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-warning" style="padding:0.4rem 0.8rem;" onclick="editSchedule('${i.id}')">✏️ แก้ไข</button>
+            <button class="btn btn-danger" style="padding:0.4rem 0.8rem;" onclick="deleteItem('${i.id}','schedule')">🗑️ ลบ</button>
+          </div>
         </div>
       `).join('');
     }
@@ -1340,7 +1409,7 @@
         if (result.success) { showNotification("อัปโหลดสำเร็จ!"); e.target.reset(); reloadAdmin(); } else showNotification(result.message, true);
       } catch(err) {
         btn.innerText = "อัปโหลดรูปภาพหน้าแรก"; btn.disabled = false;
-        showNotification("เกิดข้อผิดพลาดในการบีบอัดหรืออัปโหลดรูปภาพ", true);
+        showNotification("เกิดข้อผิดพลาดในการอัปโหลด", true);
       }
     }
 
@@ -1366,7 +1435,6 @@
       if (result.success) { showNotification("ลบรูปภาพสำเร็จ!"); reloadAdmin(); }
     }
 
-    /* Enhanced Photo Upload Handler with Multi-links & Details */
     async function handleUploadPhotos(e) {
       e.preventDefault();
       const files = document.getElementById("pImgFiles").files;
@@ -1395,22 +1463,19 @@
         }
         const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "upload", password: token, files: payloads }) });
         const result = await res.json();
-        btn.innerText = "อัปโหลดภาพผลงาน"; btn.disabled = false;
+        btn.innerText = "อัปโหลดภาพผลงานใหม่"; btn.disabled = false;
         if (result.success) { 
           showNotification("อัปโหลดสำเร็จ!"); 
           e.target.reset(); 
           document.getElementById('photoLinkContainer').innerHTML = '';
           reloadAdmin(); 
-        } else {
-          showNotification(result.message, true);
-        }
+        } else showNotification(result.message, true);
       } catch(err) {
-        btn.innerText = "อัปโหลดภาพผลงาน"; btn.disabled = false;
-        showNotification("ไฟล์มีขนาดใหญ่เกินไป หรือเกิดข้อผิดพลาดในการส่งข้อมูล", true);
+        btn.innerText = "อัปโหลดภาพผลงานใหม่"; btn.disabled = false;
+        showNotification("ไฟล์มีขนาดใหญ่เกินไป หรือเกิดข้อผิดพลาด", true);
       }
     }
 
-    /* Enhanced Video Upload Handler with Multi-links & Details */
     async function handleUploadVideo(e) {
       e.preventDefault();
       const file = document.getElementById("pVidFile").files[0];
@@ -1445,37 +1510,110 @@
         };
         const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "upload", password: token, files: payload.files }) });
         const result = await res.json();
-        btn.innerText = "อัปโหลดวิดีโอ"; btn.disabled = false;
+        btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
         if (result.success) { 
           showNotification("อัปโหลดสำเร็จ!"); 
           e.target.reset(); 
           document.getElementById('videoLinkContainer').innerHTML = '';
           reloadAdmin(); 
-        } else {
-          showNotification(result.message, true);
-        }
+        } else showNotification(result.message, true);
       } catch(err) {
-        btn.innerText = "อัปโหลดวิดีโอ"; btn.disabled = false;
-        showNotification("อัปโหลดวิดีโอไม่สำเร็จ ไฟล์อาจมีขนาดใหญ่เกินขีดจำกัดของ Apps Script", true);
+        btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
+        showNotification("อัปโหลดวิดีโอไม่สำเร็จ", true);
       }
     }
 
-    function renderAdminPortfolioList(elId, type) {
+    /* ALBUM BATCH EDIT & DELETE */
+    function renderAdminPortfolioGroupList(elId, type) {
       const c = document.getElementById(elId);
       const items = (allData.portfolio || []).filter(x => x.mediaType === type);
       if (!items.length) { c.innerHTML = '<p style="color:var(--text-muted);">ไม่มีข้อมูล</p>'; return; }
-      c.innerHTML = items.map(i => `
-        <div class="item-list-row">
-          <div>
-            <strong>${i.title}</strong> (${i.category})
-            ${i.details ? `<div style="font-size:0.8rem; color:var(--text-muted);">${i.details}</div>` : ''}
+
+      const groups = {};
+      items.forEach(i => {
+        if (!groups[i.title]) groups[i.title] = { title: i.title, category: i.category, details: i.details, extLink: i.extLink, count: 0, mediaType: type };
+        groups[i.title].count++;
+      });
+
+      c.innerHTML = Object.keys(groups).map(k => {
+        const g = groups[k];
+        const safeTitle = g.title.replace(/'/g, "\\'");
+        return `
+          <div class="item-list-row">
+            <div>
+              <strong>${g.title}</strong> (${g.category}) — <span style="color:var(--accent);">${g.count} รายการ</span>
+              ${g.details ? `<div style="font-size:0.8rem; color:var(--text-muted);">${g.details}</div>` : ''}
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn btn-warning" style="padding:0.4rem 0.8rem;" onclick="openEditAlbumModal('${safeTitle}', '${type}')">✏️ แก้ไขอัลบั้ม</button>
+              <button class="btn btn-danger" style="padding:0.4rem 0.8rem;" onclick="deletePortfolioGroup('${safeTitle}', '${type}')">🗑️ ลบอัลบั้ม</button>
+            </div>
           </div>
-          <button class="btn btn-danger" style="padding:0.4rem 0.8rem;" onclick="deleteItem('${i.id}','portfolio')">ลบ</button>
-        </div>
-      `).join('');
+        `;
+      }).join('');
+    }
+
+    function openEditAlbumModal(title, type) {
+      const items = (allData.portfolio || []).filter(x => x.title === title && x.mediaType === type);
+      if (!items.length) return;
+      const first = items[0];
+
+      document.getElementById("editAlbumOldTitle").value = first.title;
+      document.getElementById("editAlbumMediaType").value = type;
+      document.getElementById("editAlbumTitle").value = first.title;
+      document.getElementById("editAlbumCategory").value = first.category;
+      document.getElementById("editAlbumDetails").value = first.details || "";
+
+      const container = document.getElementById("editAlbumLinkContainer");
+      container.innerHTML = "";
+      if (first.extLink) {
+        try {
+          const links = JSON.parse(first.extLink);
+          if (Array.isArray(links)) {
+            links.forEach(l => addDynamicLinkRow("editAlbumLinkContainer", l.label, l.url));
+          }
+        } catch(e){}
+      }
+
+      document.getElementById("editAlbumModal").classList.add("active");
+    }
+
+    function closeEditAlbumModal() {
+      document.getElementById("editAlbumModal").classList.remove("active");
+    }
+
+    async function handleSaveEditAlbum(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSaveEditAlbum");
+      btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
+
+      const payload = {
+        action: "editPortfolioGroup",
+        password: token,
+        oldTitle: document.getElementById("editAlbumOldTitle").value,
+        mediaType: document.getElementById("editAlbumMediaType").value,
+        newTitle: document.getElementById("editAlbumTitle").value,
+        category: document.getElementById("editAlbumCategory").value,
+        details: document.getElementById("editAlbumDetails").value,
+        extLink: collectDynamicLinks("editAlbumLinkContainer")
+      };
+
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+      const result = await res.json();
+      btn.innerText = "บันทึกการแก้ไข"; btn.disabled = false;
+      closeEditAlbumModal();
+      if (result.success) { showNotification("แก้ไขอัลบั้มเรียบร้อย!"); reloadAdmin(); } else showNotification(result.message, true);
+    }
+
+    async function deletePortfolioGroup(title, type) {
+      if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบอัลบั้ม "${title}" ทั้งหมด? (ไฟล์ใน Drive จะถูกลบด้วย)`)) return;
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "delete", password: token, title: title, mediaType: type, type: "portfolioGroup" }) });
+      const result = await res.json();
+      if (result.success) { showNotification("ลบอัลบั้มสำเร็จ!"); reloadAdmin(); }
     }
 
     async function deleteItem(id, type) {
+      if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?")) return;
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "delete", password: token, id, type }) });
       const result = await res.json();
       if (result.success) { showNotification("ลบรายการสำเร็จ!"); reloadAdmin(); }
