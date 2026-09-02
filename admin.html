@@ -186,7 +186,6 @@
       border-radius: 10px; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.6rem;
     }
 
-    /* Drag & Drop Styling */
     .drag-item {
       cursor: grab; transition: background 0.2s, transform 0.2s; user-select: none;
     }
@@ -762,7 +761,6 @@
 
     const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
-    // ฟังก์ชันแปลง URL ภาพจาก Google Drive ให้แสดงผลได้ 100%
     function getDisplayImageUrl(url) {
       if (!url) return "https://via.placeholder.com/300";
       if (url.includes("google.com")) {
@@ -1216,7 +1214,6 @@
       }).join('');
     }
 
-    /* ADMIN DASHBOARD FUNCTIONS */
     function renderAdminPanels() {
       populateProfileForm();
       renderAdminSchedule();
