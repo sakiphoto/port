@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Luxury Portfolio & Schedule System</title>
+  <title>Photographer Portfolio & Schedule</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -12,18 +12,16 @@
       --bg-dark: #0a0c10;
       --bg-card: #12161f;
       --accent: #38bdf8;
-      --danger: #ef4444;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --border: rgba(255, 255, 255, 0.08);
-      --status-done: #ef4444;       /* งานจบแล้ว - กรอบแดง */
-      --status-working: #10b981;    /* กำลังทำงาน - กรอบเขียว */
-      --status-pending: #64748b;    /* ยังไม่เริ่มงาน - กรอบเทา */
+      --status-done: #ef4444;       /* กรอบแดง - จบแล้ว */
+      --status-working: #10b981;    /* กรอบเขียว - กำลังทำ */
+      --status-pending: #64748b;    /* กรอบเทา - ยังไม่เริ่ม */
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif; }
     body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; }
 
-    /* Header */
     header {
       position: sticky; top: 0; z-index: 50;
       background: rgba(10, 12, 16, 0.9);
@@ -32,14 +30,14 @@
     }
     .nav-container {
       max-width: 1200px; margin: 0 auto; display: flex;
-      justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem;
+      justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem;
     }
-    .logo { font-size: 1.25rem; font-weight: 700; color: #fff; text-decoration: none; cursor: pointer; }
+    .logo { font-size: 1.25rem; font-weight: 700; color: #fff; cursor: pointer; }
     .logo span { color: var(--accent); }
     nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .nav-link {
       color: var(--text-muted); text-decoration: none; padding: 0.5rem 1rem;
-      border-radius: 9999px; font-size: 0.9rem; font-weight: 500; transition: 0.2s; cursor: pointer;
+      border-radius: 9999px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: 0.2s;
     }
     .nav-link:hover, .nav-link.active { color: #fff; background: rgba(255, 255, 255, 0.05); }
     .nav-link.active { color: var(--accent); }
@@ -47,27 +45,43 @@
     main { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
     .page-section { display: none; animation: fadeIn 0.3s ease forwards; }
     .page-section.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Hero / General Info */
-    .hero {
-      text-align: center; padding: 5rem 1rem 4rem;
-      background: radial-gradient(circle at center, rgba(56, 189, 248, 0.08) 0%, rgba(10, 12, 16, 0) 70%);
-      border-radius: 24px; margin-bottom: 3rem; border: 1px solid var(--border);
+    /* Photographer Profile / Hero */
+    .profile-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px;
+      padding: 3rem 2rem; display: flex; flex-direction: column; align-items: center; text-align: center;
+      gap: 1.5rem; margin-bottom: 2rem;
     }
-    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-    .info-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; }
-    .info-card h3 { color: var(--accent); margin-bottom: 0.75rem; }
+    .profile-avatar {
+      width: 140px; height: 140px; border-radius: 50%; object-fit: cover;
+      border: 3px solid var(--accent); box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+    }
+    .profile-name { font-size: 2rem; font-weight: 700; color: #fff; }
+    .profile-bio { max-width: 650px; color: var(--text-muted); font-size: 1.05rem; }
+
+    /* Contact Details Grid */
+    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; width: 100%; max-width: 850px; }
+    .contact-card {
+      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
+      padding: 1rem; border-radius: 12px; text-align: left;
+    }
+    .contact-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+    .contact-val { font-size: 0.95rem; font-weight: 600; color: #fff; margin-top: 2px; }
 
     /* Gallery */
     .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
     .gallery-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-    .media-box { width: 100%; height: 260px; background: #000; }
+    .media-box { width: 100%; height: 260px; background: #000; position: relative; }
     .media-box img, .media-box video { width: 100%; height: 100%; object-fit: cover; }
     .gallery-info { padding: 1.25rem; }
     .gallery-tag { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 600; }
+    .gallery-link-btn {
+      display: inline-block; margin-top: 0.5rem; color: var(--accent);
+      text-decoration: none; font-size: 0.85rem; font-weight: 600;
+    }
 
-    /* Schedule / Calendar */
+    /* Calendar Grid */
     .schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
     .view-toggle { display: flex; gap: 0.5rem; background: var(--bg-card); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
     .view-btn { padding: 0.4rem 1.2rem; border: none; background: transparent; color: var(--text-muted); border-radius: 6px; cursor: pointer; font-weight: 500; }
@@ -76,11 +90,17 @@
     .calendar-container { background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border); padding: 1.5rem; }
     .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .calendar-nav button { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; padding: 0.4rem 1rem; border-radius: 8px; cursor: pointer; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    
+    .calendar-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+    }
     .calendar-day-header { color: var(--text-muted); font-size: 0.85rem; padding-bottom: 0.5rem; text-align: center; font-weight: 600; }
+    
+    /* กล่องช่องปฏิทินที่ชัดเจน */
     .calendar-cell {
-      min-height: 110px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
-      border-radius: 10px; padding: 0.5rem; display: flex; flex-direction: column; gap: 4px;
+      min-height: 110px; background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 0.5rem;
+      display: flex; flex-direction: column; gap: 4px;
     }
     .calendar-cell.other-month { opacity: 0.2; }
     .day-num { font-size: 0.85rem; font-weight: 600; }
@@ -92,10 +112,7 @@
 
     /* Schedule Card List View */
     .schedule-card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
-    .job-card {
-      background: var(--bg-card); border-radius: 16px; padding: 1.5rem;
-      border: 2px solid var(--status-pending);
-    }
+    .job-card { background: var(--bg-card); border-radius: 16px; padding: 1.5rem; border: 2px solid var(--status-pending); }
     .job-card.working { border-color: var(--status-working); box-shadow: 0 0 15px rgba(16, 185, 129, 0.15); }
     .job-card.done { border-color: var(--status-done); opacity: 0.75; }
     .job-card.pending { border-color: var(--status-pending); }
@@ -105,70 +122,16 @@
     .badge-done { background: rgba(239, 68, 68, 0.2); color: var(--status-done); }
     .badge-pending { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; }
 
-    /* Floating Admin Toggle */
-    .admin-float-btn {
-      position: fixed; bottom: 25px; right: 25px; z-index: 100;
-      background: var(--accent); color: #000; border: none; padding: 0.8rem 1.4rem;
-      border-radius: 50px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 25px rgba(56, 189, 248, 0.4);
-    }
-
-    /* Modals */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200;
-      display: none; align-items: center; justify-content: center; padding: 1rem;
-      backdrop-filter: blur(8px);
-    }
-    .modal-overlay.active { display: flex; }
-    .modal-box {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
-      width: 100%; max-width: 750px; max-height: 90vh; overflow-y: auto; padding: 2rem;
-    }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-    .btn-close { background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
-
-    .form-group { margin-bottom: 1.2rem; }
-    label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.85rem; }
-    input, select {
-      width: 100%; padding: 0.8rem 1rem; background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border); border-radius: 10px; color: #fff; outline: none;
-    }
-    input:focus, select:focus { border-color: var(--accent); }
-    .btn {
-      width: 100%; padding: 0.8rem; background: var(--accent); color: #000;
-      border: none; border-radius: 10px; font-weight: 600; cursor: pointer;
-    }
-    .btn-danger { background: var(--danger); color: #fff; }
-
-    /* Admin Calendar */
-    .admin-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .admin-cal-cell {
-      min-height: 75px; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
-      border-radius: 8px; padding: 6px; cursor: pointer; transition: 0.2s;
-    }
-    .admin-cal-cell:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
-    .admin-cal-cell.other-month { opacity: 0.2; pointer-events: none; }
-
-    .nav-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
-    .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; }
-    .tab-btn.active { background: var(--accent); color: #000; font-weight: 600; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    .item-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 0.75rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
-      border-radius: 10px; margin-bottom: 0.5rem;
-    }
+    footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
   </style>
 </head>
 <body>
 
-  <!-- Navigation Bar -->
   <header>
     <div class="nav-container">
-      <div class="logo" onclick="navigate('home')">PORTFOLIO<span>.</span></div>
+      <div class="logo" onclick="navigate('home')">PHOTOGRAPHER<span>.</span></div>
       <nav>
-        <a class="nav-link active" onclick="navigate('home')">ข้อมูลทั่วไป</a>
+        <a class="nav-link active" onclick="navigate('home')">ข้อมูลช่างภาพ</a>
         <a class="nav-link" onclick="navigate('photos')">ผลงานภาพ</a>
         <a class="nav-link" onclick="navigate('videos')">ผลงานวิดีโอ</a>
         <a class="nav-link" onclick="navigate('schedule')">ตารางงาน & คิวว่าง</a>
@@ -177,47 +140,45 @@
   </header>
 
   <main>
-    <!-- Section 1: ข้อมูลทั่วไป -->
+    <!-- 1. ข้อมูลช่างภาพ & ติดต่อ -->
     <section id="sec-home" class="page-section active">
-      <div class="hero">
-        <h1 style="font-size: 2.8rem; margin-bottom: 1rem;">Luxury Visual Experience</h1>
-        <p style="color: var(--text-muted);">รับสร้างสรรค์ผลงานภาพถ่ายระดับพรีเมียม และงานผลิตวิดีโอ Cinematic ครบวงจร</p>
-      </div>
-      <div class="info-grid">
-        <div class="info-card">
-          <h3>📷 Creative Photography</h3>
-          <p>บริการถ่ายภาพ Portrait, Fashion, Event, คอนเทนต์แบรนด์ และสถาปัตยกรรมระดับพรีเมียม</p>
+      <div class="profile-card">
+        <img src="" id="profAvatar" class="profile-avatar" alt="Avatar">
+        <div>
+          <div class="profile-name" id="profName">-</div>
+          <div class="profile-bio" id="profBio">-</div>
         </div>
-        <div class="info-card">
-          <h3>🎬 Cinematic Video</h3>
-          <p>งานวิดีโอโฆษณา ไวรัลคลิป คอนเทนต์ และงาน Production ที่เน้นการเล่าเรื่องที่น่าดึงดูด</p>
+        <div class="contact-grid">
+          <div class="contact-card"><div class="contact-label">📍 พื้นที่รับงาน</div><div class="contact-val" id="profLocation">-</div></div>
+          <div class="contact-card"><div class="contact-label">📱 โทรศัพท์</div><div class="contact-val" id="profPhone">-</div></div>
+          <div class="contact-card"><div class="contact-label">💬 Line</div><div class="contact-val" id="profLine">-</div></div>
+          <div class="contact-card"><div class="contact-label">📷 Instagram</div><div class="contact-val" id="profIG">-</div></div>
         </div>
       </div>
     </section>
 
-    <!-- Section 2: ผลงานภาพ -->
+    <!-- 2. ผลงานภาพ -->
     <section id="sec-photos" class="page-section">
       <h2 style="margin-bottom: 2rem;">ผลงานภาพถ่าย</h2>
-      <div class="gallery" id="photoGallery"><p style="color: var(--text-muted);">กำลังโหลดข้อมูล...</p></div>
+      <div class="gallery" id="photoGallery"><p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p></div>
     </section>
 
-    <!-- Section 3: ผลงานวิดีโอ -->
+    <!-- 3. ผลงานวิดีโอ -->
     <section id="sec-videos" class="page-section">
       <h2 style="margin-bottom: 2rem;">ผลงานวิดีโอ</h2>
-      <div class="gallery" id="videoGallery"><p style="color: var(--text-muted);">กำลังโหลดข้อมูล...</p></div>
+      <div class="gallery" id="videoGallery"><p style="color: var(--text-muted);">กำลังโหลดผลงาน...</p></div>
     </section>
 
-    <!-- Section 4: ตารางงาน & คิวว่าง -->
+    <!-- 4. ตารางงาน & คิวว่าง -->
     <section id="sec-schedule" class="page-section">
       <div class="schedule-header">
         <h2>ตารางงาน & ปฏิทินคิวงาน</h2>
         <div class="view-toggle">
-          <button class="view-btn active" onclick="switchScheduleView('calendar')">📅 ปฏิทินเต็ม</button>
-          <button class="view-btn" onclick="switchScheduleView('cards')">📋 ตารางงาน (Job List)</button>
+          <button class="view-btn active" onclick="switchScheduleView('calendar')">📅 ปฏิทิน</button>
+          <button class="view-btn" onclick="switchScheduleView('cards')">📋 รายการงาน</button>
         </div>
       </div>
 
-      <!-- ปฏิทินแบบละเอียด -->
       <div id="view-calendar" class="calendar-container">
         <div class="calendar-nav">
           <button onclick="changeMonth(-1)">&lt; เดือนก่อนหน้า</button>
@@ -227,115 +188,20 @@
         <div class="calendar-grid" id="calendarGrid"></div>
       </div>
 
-      <!-- รายการตารางงานแบบการ์ดพร้อมสีกรอบสถานะ -->
       <div id="view-cards" style="display: none;">
         <div class="schedule-card-list" id="jobCardList">กำลังโหลดรายการงาน...</div>
       </div>
     </section>
   </main>
 
-  <!-- ปุ่มเปิดแผงควบคุมระบบ (Admin Panel) -->
-  <button class="admin-float-btn" onclick="openControlCenter()">⚙️ จัดการระบบ (Admin)</button>
-
-  <!-- Modal: แผงควบคุมระบบ -->
-  <div id="controlCenterModal" class="modal-overlay">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h2>🛠️ แผงควบคุมระบบ</h2>
-        <button class="btn-close" onclick="closeControlCenter()">&times;</button>
-      </div>
-
-      <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('tab-schedule')">📅 ลงคิวงาน (คลิกปฏิทิน)</button>
-        <button class="tab-btn" onclick="switchTab('tab-photos')">📷 อัปโหลดภาพ</button>
-        <button class="tab-btn" onclick="switchTab('tab-videos')">🎬 อัปโหลดวิดีโอ</button>
-      </div>
-
-      <!-- แท็บลงคิวปฏิทิน -->
-      <div id="tab-schedule" class="tab-content active">
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">👉 <strong>คลิกที่วันที่ในปฏิทิน</strong> เพื่อลงวันว่าง หรือบันทึกงานที่รับ</p>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
-          <button class="btn" style="width: auto; padding: 0.3rem 0.8rem;" onclick="adminChangeMonth(-1)">&lt;</button>
-          <strong id="adminMonthLabel"></strong>
-          <button class="btn" style="width: auto; padding: 0.3rem 0.8rem;" onclick="adminChangeMonth(1)">&gt;</button>
-        </div>
-        <div class="admin-cal-grid" id="adminCalGrid"></div>
-      </div>
-
-      <!-- แท็บอัปโหลดภาพ -->
-      <div id="tab-photos" class="tab-content">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3>อัปโหลดภาพใหม่</h3>
-          <button class="btn" style="width: auto; padding: 0.4rem 0.8rem; background: transparent; border: 1px solid var(--accent); color: var(--accent);" onclick="openPopupList('image')">📋 ดูรายการภาพทั้งหมด</button>
-        </div>
-        <form onsubmit="handleUploadMedia(event, 'image')">
-          <div class="form-group"><label>ชื่อภาพ</label><input type="text" id="imgTitle" required></div>
-          <div class="form-group"><label>หมวดหมู่</label><input type="text" id="imgCategory" required></div>
-          <div class="form-group"><label>เลือกไฟล์รูปภาพ</label><input type="file" id="imgFileInput" accept="image/*" required></div>
-          <button type="submit" class="btn" id="btnUploadImg">บันทึกรูปภาพ</button>
-        </form>
-      </div>
-
-      <!-- แท็บอัปโหลดวิดีโอ -->
-      <div id="tab-videos" class="tab-content">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3>อัปโหลดวิดีโอใหม่</h3>
-          <button class="btn" style="width: auto; padding: 0.4rem 0.8rem; background: transparent; border: 1px solid var(--accent); color: var(--accent);" onclick="openPopupList('video')">📋 ดูรายการวิดีโอทั้งหมด</button>
-        </div>
-        <form onsubmit="handleUploadMedia(event, 'video')">
-          <div class="form-group"><label>ชื่อวิดีโอ</label><input type="text" id="vidTitle" required></div>
-          <div class="form-group"><label>หมวดหมู่</label><input type="text" id="vidCategory" required></div>
-          <div class="form-group"><label>เลือกไฟล์วิดีโอ</label><input type="file" id="vidFileInput" accept="video/*" required></div>
-          <button type="submit" class="btn" id="btnUploadVid">บันทึกวิดีโอ</button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: ลงคิวตามวันที่คลิก -->
-  <div id="dateActionModal" class="modal-overlay">
-    <div class="modal-box" style="max-width: 480px;">
-      <div class="modal-header">
-        <h3 id="selectedDateLabel">จัดการวันที่</h3>
-        <button class="btn-close" onclick="closeDateActionModal()">&times;</button>
-      </div>
-      <form onsubmit="saveScheduleEvent(event)">
-        <input type="hidden" id="selectedDateValue">
-        <div class="form-group">
-          <label>สถานะของวัน</label>
-          <select id="popStatus" onchange="toggleJobFields(this.value)">
-            <option value="available">🟢 ว่างรับงาน (Available)</option>
-            <option value="booked">🟠 รับงานแล้ว / ลงคิวงาน (Booked)</option>
-            <option value="busy">🔴 ไม่ว่างรับงาน (Busy)</option>
-          </select>
-        </div>
-        <div class="form-group"><label>ช่วงเวลา</label><input type="text" id="popTime" placeholder="เช่น ทั้งวัน หรือ 09:00 - 16:00" required></div>
-        <div id="jobDetailsGroup">
-          <div class="form-group"><label>ชื่องาน / ชื่อผู้ว่าจ้าง</label><input type="text" id="popTitle" placeholder="เช่น งานแต่งคุณแนน"></div>
-          <div class="form-group"><label>สถานที่</label><input type="text" id="popLocation" placeholder="เช่น โรงแรมแกรนด์"></div>
-        </div>
-        <button type="submit" class="btn" id="btnSaveSchedule">บันทึกลงตาราง</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal: ดูรายการผลงาน Popup -->
-  <div id="mediaListModal" class="modal-overlay">
-    <div class="modal-box" style="max-width: 600px;">
-      <div class="modal-header">
-        <h3 id="mediaListModalTitle">รายการผลงาน</h3>
-        <button class="btn-close" onclick="closeMediaListModal()">&times;</button>
-      </div>
-      <div id="mediaItemsContainer">กำลังโหลด...</div>
-    </div>
-  </div>
+  <footer>
+    <p>&copy; Photographer Portfolio. All rights reserved.</p>
+  </footer>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
-    const ADMIN_PWD = "adminPassword123";
-    let allData = { portfolio: [], schedule: [] };
+    let allData = { profile: {}, portfolio: [], schedule: [] };
     let currentDate = new Date();
-    let adminDate = new Date();
 
     function navigate(secId) {
       document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
@@ -357,13 +223,24 @@
         const data = await res.json();
         if (data.success) {
           allData = data;
+          renderProfile();
           renderGallery('photoGallery', data.portfolio.filter(x => x.mediaType === 'image'), 'image');
           renderGallery('videoGallery', data.portfolio.filter(x => x.mediaType === 'video'), 'video');
           renderCalendar();
           renderJobCards();
-          renderAdminCalendar();
         }
       } catch (err) { console.error(err); }
+    }
+
+    function renderProfile() {
+      const p = allData.profile || {};
+      document.getElementById("profAvatar").src = p.avatarUrl || "https://via.placeholder.com/150";
+      document.getElementById("profName").innerText = p.name || "Photographer";
+      document.getElementById("profBio").innerText = p.bio || "-";
+      document.getElementById("profLocation").innerText = p.location || "-";
+      document.getElementById("profPhone").innerText = p.phone || "-";
+      document.getElementById("profLine").innerText = p.line || "-";
+      document.getElementById("profIG").innerText = p.instagram || "-";
     }
 
     function renderGallery(elId, items, type) {
@@ -377,6 +254,7 @@
           <div class="gallery-info">
             <div class="gallery-tag">${i.category}</div>
             <div style="font-weight:600; margin-top:4px;">${i.title}</div>
+            ${i.extLink ? `<a href="${i.extLink}" target="_blank" class="gallery-link-btn">🔗 ดูเพิ่มเติม / ลิงก์ภายนอก</a>` : ''}
           </div>
         </div>
       `).join('');
@@ -436,160 +314,6 @@
           </div>
         `;
       }).join('');
-    }
-
-    /* Admin Functions */
-    function openControlCenter() { document.getElementById("controlCenterModal").classList.add("active"); renderAdminCalendar(); }
-    function closeControlCenter() { document.getElementById("controlCenterModal").classList.remove("active"); }
-
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      event.target.classList.add('active');
-    }
-
-    function adminChangeMonth(delta) {
-      adminDate.setMonth(adminDate.getMonth() + delta);
-      renderAdminCalendar();
-    }
-
-    function renderAdminCalendar() {
-      const year = adminDate.getFullYear();
-      const month = adminDate.getMonth();
-      const monthNames = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-      document.getElementById("adminMonthLabel").innerText = `${monthNames[month]} ${year + 543}`;
-
-      const firstDay = new Date(year, month, 1).getDay();
-      const lastDate = new Date(year, month + 1, 0).getDate();
-      const grid = document.getElementById("adminCalGrid");
-      grid.innerHTML = ['อา','จ','อ','พ','พฤ','ศ','ส'].map(d => `<div style="text-align:center; font-size:0.75rem; color:var(--text-muted);">${d}</div>`).join('');
-
-      for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div class="admin-cal-cell other-month"></div>`;
-
-      for (let day = 1; day <= lastDate; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = (allData.schedule || []).filter(i => i.date === dateStr);
-        let tags = dayEvents.map(e => {
-          let color = e.status === 'available' ? 'var(--accent)' : (e.status === 'busy' ? 'var(--danger)' : '#f59e0b');
-          return `<div style="font-size:0.65rem; color:${color}; white-space:nowrap; overflow:hidden;">• ${e.title || e.status}</div>`;
-        }).join('');
-
-        grid.innerHTML += `
-          <div class="admin-cal-cell" onclick="openDateModal('${dateStr}')">
-            <div style="font-size:0.75rem; font-weight:600;">${day}</div>
-            <div>${tags}</div>
-          </div>
-        `;
-      }
-    }
-
-    function openDateModal(dateStr) {
-      document.getElementById("selectedDateValue").value = dateStr;
-      document.getElementById("selectedDateLabel").innerText = `📅 วันที่: ${dateStr}`;
-      document.getElementById("dateActionModal").classList.add("active");
-    }
-    function closeDateActionModal() { document.getElementById("dateActionModal").classList.remove("active"); }
-
-    function toggleJobFields(status) {
-      document.getElementById("jobDetailsGroup").style.display = status === 'busy' ? 'none' : 'block';
-    }
-
-    async function saveScheduleEvent(e) {
-      e.preventDefault();
-      const btn = document.getElementById("btnSaveSchedule");
-      btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
-
-      const payload = {
-        action: "addSchedule",
-        password: ADMIN_PWD,
-        date: document.getElementById("selectedDateValue").value,
-        status: document.getElementById("popStatus").value,
-        time: document.getElementById("popTime").value,
-        title: document.getElementById("popTitle").value || "-",
-        location: document.getElementById("popLocation").value || "-"
-      };
-
-      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-      const result = await res.json();
-      btn.innerText = "บันทึกลงตาราง"; btn.disabled = false;
-
-      if (result.success) {
-        alert("บันทึกสำเร็จ!");
-        closeDateActionModal();
-        loadData();
-      } else alert(result.message);
-    }
-
-    async function handleUploadMedia(e, type) {
-      e.preventDefault();
-      const fileInput = document.getElementById(type === 'image' ? 'imgFileInput' : 'vidFileInput');
-      const title = document.getElementById(type === 'image' ? 'imgTitle' : 'vidTitle').value;
-      const category = document.getElementById(type === 'image' ? 'imgCategory' : 'vidCategory').value;
-      const file = fileInput.files[0];
-      if (!file) return;
-
-      const btn = document.getElementById(type === 'image' ? 'btnUploadImg' : 'btnUploadVid');
-      btn.innerText = "กำลังอัปโหลด..."; btn.disabled = true;
-
-      const reader = new FileReader();
-      reader.onload = async function() {
-        const payload = {
-          action: "upload",
-          password: ADMIN_PWD,
-          mediaType: type,
-          title: title,
-          category: category,
-          fileName: file.name,
-          fileData: reader.result
-        };
-
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-        const result = await res.json();
-        btn.innerText = "บันทึก"; btn.disabled = false;
-
-        if (result.success) {
-          alert("อัปโหลดสำเร็จ!");
-          e.target.reset();
-          loadData();
-        } else alert(result.message);
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function openPopupList(type) {
-      document.getElementById("mediaListModalTitle").innerText = type === 'image' ? "📷 รายการรูปภาพทั้งหมด" : "🎬 รายการวิดีโอทั้งหมด";
-      const container = document.getElementById("mediaItemsContainer");
-      const items = (allData.portfolio || []).filter(x => x.mediaType === type);
-
-      if (!items.length) {
-        container.innerHTML = '<p style="color:var(--text-muted);">ไม่มีรายการ</p>';
-      } else {
-        container.innerHTML = items.map(i => `
-          <div class="item-row">
-            <div>
-              <strong>${i.title}</strong>
-              <div style="font-size:0.75rem; color:var(--text-muted);">${i.category}</div>
-            </div>
-            <button class="btn btn-danger" style="width:auto; padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="deleteItem('${i.id}')">ลบ</button>
-          </div>
-        `).join('');
-      }
-      document.getElementById("mediaListModal").classList.add("active");
-    }
-    function closeMediaListModal() { document.getElementById("mediaListModal").classList.remove("active"); }
-
-    async function deleteItem(id) {
-      if (!confirm("ต้องการลบรายการนี้?")) return;
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "delete", password: ADMIN_PWD, id: id })
-      });
-      const result = await res.json();
-      if (result.success) {
-        closeMediaListModal();
-        loadData();
-      }
     }
 
     window.onload = loadData;
