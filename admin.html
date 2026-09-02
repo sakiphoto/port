@@ -305,7 +305,7 @@
       <form onsubmit="handleSetCalendarModal(event)">
         <input type="hidden" id="modalCalDate">
         <div class="form-group">
-          <label>วันที่เลือก</label>
+          <label>วันที่เลือก (วัน/เดือน/ปี พ.ศ.)</label>
           <input type="text" id="modalDisplayDate" readonly style="opacity:0.7; background:rgba(255,255,255,0.05);">
         </div>
         <div class="form-group">
@@ -702,6 +702,18 @@
     let adminCalDate = new Date();
     let currentCalDate = new Date();
 
+    const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    function formatThaiDateFull(dateStr) {
+      if (!dateStr) return "-";
+      const parts = String(dateStr).split('-');
+      if (parts.length !== 3) return dateStr;
+      const yearBE = parseInt(parts[0]) + 543;
+      const monthIndex = parseInt(parts[1]) - 1;
+      const day = parseInt(parts[2]);
+      return `${day} ${MONTH_NAMES_TH[monthIndex]} ${yearBE}`;
+    }
+
     function formatUrl(url) {
       if (!url) return "#";
       return url.match(/^https?:\/\//i) ? url : 'https://' + url;
@@ -748,7 +760,6 @@
       });
     }
 
-    // Dynamic Extra Link Component
     function addDynamicLinkRow(containerId, label = "", url = "") {
       const container = document.getElementById(containerId);
       const div = document.createElement("div");
@@ -918,7 +929,6 @@
       }
     }
 
-    /* ALBUM GROUPING DISPLAY ENGINE */
     function renderAlbumGrid(containerId, items, type) {
       const container = document.getElementById(containerId);
       if (!items || !items.length) {
@@ -1014,11 +1024,11 @@
     }
 
     function renderCalendar() {
-      const year = currentCalDate.getFullYear();
+      const yearBE = currentCalDate.getFullYear() + 543;
       const month = currentCalDate.getMonth();
-      const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-      document.getElementById("calMonthTitle").innerText = `${monthNames[month]} ${year}`;
+      document.getElementById("calMonthTitle").innerText = `${MONTH_NAMES_TH[month]} ${yearBE}`;
 
+      const year = currentCalDate.getFullYear();
       const firstDay = new Date(year, month, 1).getDay();
       const totalDays = new Date(year, month + 1, 0).getDate();
       const grid = document.getElementById("calDaysGrid");
@@ -1094,13 +1104,14 @@
       const sorted = [...list].sort((a, b) => new Date(a.date) - new Date(b.date));
       container.innerHTML = sorted.map(item => {
         const st = evaluateRealtimeJobStatus(item.date, item.time);
+        const thaiDateStr = formatThaiDateFull(item.date);
         return `
           <div class="job-row ${st.cls}">
             <div class="job-info-left">
               <span class="job-badge badge-${st.cls}">${st.live ? '<span class="pulse-dot"></span>' : ''}${st.label}</span>
               <div style="font-size: 1.25rem; font-weight: 700; color: #fff;">${item.title}</div>
               <div style="color: var(--text-muted); font-size: 0.9rem;">
-                📅 <strong>${item.date}</strong> | ⏰ <strong>${item.time}</strong> | 📍 <strong>${item.location || '-'}</strong>
+                📅 <strong>${thaiDateStr}</strong> | ⏰ <strong>${item.time}</strong> | 📍 <strong>${item.location || '-'}</strong>
               </div>
               ${item.details ? `<div style="font-size:0.85rem; color:#cbd5e1; margin-top:4px;">📝 ${item.details}</div>` : ''}
             </div>
@@ -1132,11 +1143,11 @@
     }
 
     function renderAdminCalendar() {
-      const year = adminCalDate.getFullYear();
+      const yearBE = adminCalDate.getFullYear() + 543;
       const month = adminCalDate.getMonth();
-      const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-      document.getElementById("adminCalMonthTitle").innerText = `${monthNames[month]} ${year}`;
+      document.getElementById("adminCalMonthTitle").innerText = `${MONTH_NAMES_TH[month]} ${yearBE}`;
 
+      const year = adminCalDate.getFullYear();
       const firstDay = new Date(year, month, 1).getDay();
       const totalDays = new Date(year, month + 1, 0).getDate();
       const grid = document.getElementById("adminCalDaysGrid");
@@ -1182,7 +1193,7 @@
 
     function openCalModal(dateStr) {
       document.getElementById("modalCalDate").value = dateStr;
-      document.getElementById("modalDisplayDate").value = dateStr;
+      document.getElementById("modalDisplayDate").value = formatThaiDateFull(dateStr);
       
       const calSetting = (allData.calendar || []).find(c => c.date === dateStr);
       if (calSetting) {
@@ -1228,7 +1239,7 @@
 
     async function deleteCalendarStatus() {
       const dateStr = document.getElementById("modalCalDate").value;
-      if (!confirm(`ต้องการลบสถานะพิเศษของวันที่ ${dateStr} ใช่หรือไม่?`)) return;
+      if (!confirm(`ต้องการลบสถานะพิเศษของวันที่ ${formatThaiDateFull(dateStr)} ใช่หรือไม่?`)) return;
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "setCalendar", password: token, date: dateStr, isDelete: true }) });
       const result = await res.json();
       closeCalModal();
@@ -1377,7 +1388,7 @@
       c.innerHTML = list.map(i => `
         <div class="item-list-row">
           <div>
-            <strong>${i.title}</strong> (${i.date} | ${i.time})
+            <strong>${i.title}</strong> (${formatThaiDateFull(i.date)} | ${i.time})
             <div style="font-size:0.8rem; color:var(--text-muted);">📍 ${i.location} ${i.extLink ? `| <a href="${formatUrl(i.extLink)}" target="_blank" style="color:var(--accent);">🔗 เปิดลิงก์</a>` : ''}</div>
           </div>
           <div style="display:flex; gap:0.5rem;">
@@ -1523,7 +1534,6 @@
       }
     }
 
-    /* ALBUM BATCH EDIT & DELETE */
     function renderAdminPortfolioGroupList(elId, type) {
       const c = document.getElementById(elId);
       const items = (allData.portfolio || []).filter(x => x.mediaType === type);
