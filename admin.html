@@ -688,7 +688,7 @@
             <div id="videoLinkContainer"></div>
 
             <div class="form-group" style="margin-top:1rem;">
-              <label>เลือกไฟล์วิดีโอ (ไม่เกิน 25MB)</label>
+              <label>เลือกไฟล์วิดีโอ (อัปโหลดลง Google Drive โดยตรงได้ไม่จำกัดขนาด)</label>
               <input type="file" id="pVidFile" accept="video/*" onchange="previewVideoUploadFile(this.files[0])">
             </div>
 
@@ -1849,13 +1849,8 @@
         return;
       }
 
-      if (selectedVideoFile.size > 25 * 1024 * 1024) {
-        showNotification("ไฟล์วิดีโอต้องมีขนาดไม่เกิน 25MB", true);
-        return;
-      }
-
       const btn = document.getElementById("btnUpVid");
-      btn.innerText = "กำลังอัปโหลดวิดีโอ..."; btn.disabled = true;
+      btn.disabled = true;
 
       const title = document.getElementById("pVidTitle").value;
       const cat = document.getElementById("pVidCat").value;
@@ -1863,35 +1858,108 @@
       const extLinks = collectDynamicLinks('videoLinkContainer');
 
       try {
-        const videoData = await readFileAsBase64(selectedVideoFile);
+        btn.innerText = "กำลังเตรียมการอัปโหลดวิดีโอ...";
+        
+        // 1. ขอ Resumable Upload URL สำหรับไดรฟ์
+        const initRes = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "createUploadUrl",
+            password: token,
+            fileName: selectedVideoFile.name,
+            mimeType: selectedVideoFile.type || "video/mp4"
+          })
+        });
+        
+        const initData = await initRes.json();
+        if (!initData.success || !initData.uploadUrl) {
+          throw new Error(initData.message || "ไม่สามารถเริ่มการอัปโหลดได้");
+        }
+
+        // 2. ส่งสตรีมไฟล์วิดีโอขนาดใหญ่ไปยัง Google Drive Direct Upload URL
+        const uploadUrl = initData.uploadUrl;
+        btn.innerText = "กำลังอัปโหลดวิดีโอลง Google Drive (0%)...";
+
+        const driveRes = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("PUT", uploadUrl, true);
+          xhr.setRequestHeader("Content-Type", selectedVideoFile.type || "video/mp4");
+
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 100);
+              btn.innerText = `กำลังอัปโหลดวิดีโอลง Google Drive (${percent}%)...`;
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status === 200 || xhr.status === 201) {
+              try {
+                const driveFile = JSON.parse(xhr.responseText);
+                resolve(driveFile);
+              } catch (err) {
+                reject("ไม่สามารถอ่านข้อมูลไฟล์จาก Google Drive ได้");
+              }
+            } else {
+              reject("การอัปโหลดไฟล์วิดีโอล้มเหลว Status: " + xhr.status);
+            }
+          };
+
+          xhr.onerror = () => reject("เกิดข้อผิดพลาดในการเชื่อมต่อเพื่ออัปโหลดไฟล์");
+          xhr.send(selectedVideoFile);
+        });
+
+        const fileId = driveRes.id;
+        if (!fileId) throw new Error("ไม่พบ File ID ที่ส่งกลับมา");
+
+        // 3. ปรับสิทธิ์ไฟล์เป็น Public
+        btn.innerText = "กำลังบันทึกข้อมูลวิดีโอ...";
+        await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "setFilePublic",
+            password: token,
+            fileId: fileId
+          })
+        });
+
+        // 4. บันทึกข้อมูลวิดีโอลงใน Google Sheet
+        const directUrl = "https://drive.google.com/file/d/" + fileId + "/preview";
         const payload = {
-          action: "upload", password: token,
+          action: "upload",
+          password: token,
           files: [{
-            fileName: selectedVideoFile.name, 
-            fileData: videoData, 
+            fileName: selectedVideoFile.name,
             mediaType: "video",
+            directUrl: directUrl,
+            fileId: fileId,
             title: title,
             category: cat,
             details: details,
             extLink: extLinks
           }]
         };
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-        const result = await res.json();
-        btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
-        
-        if (result.success) { 
-          showNotification("อัปโหลดวิดีโอสำเร็จ!"); 
+
+        const sheetRes = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+        const result = await sheetRes.json();
+
+        btn.innerText = "อัปโหลดวิดีโอใหม่";
+        btn.disabled = false;
+
+        if (result.success) {
+          showNotification("อัปโหลดวิดีโอเรียบร้อยแล้ว!");
           document.getElementById('uploadVideoForm').reset();
           document.getElementById('videoLinkContainer').innerHTML = '';
           removeSelectedVideoFile();
           await reloadAdmin();
         } else {
-          showNotification(result.message || "อัปโหลดวิดีโอล้มเหลว", true);
+          showNotification(result.message || "การบันทึกข้อมูลล้มเหลว", true);
         }
+
       } catch(err) {
-        btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false;
-        showNotification("เกิดข้อผิดพลาดในการอ่านไฟล์วิดีโอ", true);
+        btn.innerText = "อัปโหลดวิดีโอใหม่";
+        btn.disabled = false;
+        showNotification(err.message || "เกิดข้อผิดพลาดในการอัปโหลดวิดีโอ", true);
       }
     }
 
