@@ -826,7 +826,9 @@
   </div>
 
   <script>
+    // ⚠️ สำคัญมาก: เปลี่ยนเป็น URL ของ Web App หลังจากทำการ Deploy เป็น New Version เรียบร้อยแล้ว
     const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
+    
     let token = sessionStorage.getItem("adminPassword");
     let allData = { profile: {}, portfolio: [], schedule: [], calendar: [] };
     let liveTimers = [];
@@ -1074,7 +1076,11 @@
       btn.innerText = "กำลังตรวจสอบ..."; btn.disabled = true;
       const pwd = document.getElementById("adminPassword").value;
       try {
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "login", password: pwd }) });
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "login", password: pwd })
+        });
         const data = await res.json();
         if (data.success) {
           sessionStorage.setItem("adminPassword", pwd);
@@ -1514,20 +1520,21 @@
       const btn = document.getElementById("btnSaveCalModal");
       btn.disabled = true; btn.innerText = "กำลังบันทึก...";
       
-      const statusTypeVal = document.getElementById("modalCalStatusType").value;
-      const slotsVal = document.getElementById("modalCalAvailableSlots").value;
-      
       const payload = {
         action: "setCalendar", 
         password: token,
         date: document.getElementById("modalCalDate").value,
-        statusType: statusTypeVal,
-        availableSlots: slotsVal,
+        statusType: document.getElementById("modalCalStatusType").value,
+        availableSlots: document.getElementById("modalCalAvailableSlots").value,
         isDelete: false
       };
       
       try {
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
         const result = await res.json();
         btn.disabled = false; btn.innerText = "บันทึกข้อมูล";
         closeCalModal();
@@ -1547,7 +1554,11 @@
       const dateStr = document.getElementById("modalCalDate").value;
       if (!confirm(`ต้องการลบสถานะพิเศษของวันที่ ${formatThaiDateFull(dateStr)} ใช่หรือไม่?`)) return;
       try {
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "setCalendar", password: token, date: dateStr, isDelete: true }) });
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "setCalendar", password: token, date: dateStr, isDelete: true })
+        });
         const result = await res.json();
         closeCalModal();
         if (result.success) { showNotification("รีเซ็ตสถานะเรียบร้อย!"); await reloadAdmin(); }
@@ -1628,7 +1639,11 @@
           socialLinks: JSON.stringify(socialLinks)
         };
 
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
         const result = await res.json();
         btn.innerText = "บันทึกข้อมูลทั้งหมด"; btn.disabled = false;
         if (result.success) { 
@@ -1665,7 +1680,11 @@
       };
 
       try {
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
         const result = await res.json();
         btn.innerText = "บันทึกคิวงาน"; btn.disabled = false;
         if (result.success) { 
@@ -1742,7 +1761,11 @@
         }
 
         const payload = { action: "updateProfile", password: token, ...allData.profile, newFeaturedFiles: filePayloads };
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
         const result = await res.json();
         btn.innerText = "อัปโหลดรูปภาพหน้าแรก"; btn.disabled = false;
         if (result.success) { 
@@ -1776,7 +1799,11 @@
       photos.splice(index, 1);
       const payload = { action: "updateProfile", password: token, ...allData.profile, featuredPhotos: photos.join(',') };
       try {
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
         const result = await res.json();
         if (result.success) { showNotification("ลบรูปภาพสำเร็จ!"); reloadAdmin(); }
       } catch(e) {}
@@ -1819,6 +1846,7 @@
 
           const res = await fetch(API_URL, { 
             method: "POST", 
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload) 
           });
           const result = await res.json();
@@ -1889,6 +1917,7 @@
 
           const res = await fetch(API_URL, {
             method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
           });
           const result = await res.json();
@@ -2012,6 +2041,7 @@
       try {
         const res = await fetch(API_URL, {
           method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "reorderPortfolio", password: token, orderMap: orderMap })
         });
         const data = await res.json();
@@ -2074,7 +2104,11 @@
       };
 
       try {
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
         const result = await res.json();
         btn.innerText = "บันทึกการแก้ไข"; btn.disabled = false;
         closeEditAlbumModal();
@@ -2091,7 +2125,11 @@
     async function deletePortfolioGroup(title, type) {
       if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบอัลบั้ม "${title}" ทั้งหมด? (ไฟล์ใน Drive จะถูกลบด้วย)`)) return;
       try {
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "delete", password: token, title: title, mediaType: type, type: "portfolioGroup" }) });
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "delete", password: token, title: title, mediaType: type, type: "portfolioGroup" })
+        });
         const result = await res.json();
         if (result.success) { 
           showNotification("ลบอัลบั้มสำเร็จ!"); 
@@ -2103,7 +2141,11 @@
     async function deleteItem(id, type) {
       if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?")) return;
       try {
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "delete", password: token, id, type }) });
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "delete", password: token, id, type })
+        });
         const result = await res.json();
         if (result.success) { 
           showNotification("ลบรายการสำเร็จ!"); 
