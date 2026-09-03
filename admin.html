@@ -826,7 +826,7 @@
   </div>
 
   <script>
-    // ⚠️ สำคัญมาก: เปลี่ยนเป็น URL ของ Web App หลังจากทำการ Deploy เป็น New Version เรียบร้อยแล้ว
+    // ⚠️ สำคัญมาก: อย่าลืมอัปเดตเป็น Web App URL ล่าสุดที่คุณได้รับจากการ Deploy
     const API_URL = "https://script.google.com/macros/s/AKfycbzyWvESyDYpi1ndxtFSLpWnC0Y5W4awL1OC9tjJ0HJNe8tFUczDV3Vrr2qPaVgQ0uWaWg/exec";
     
     let token = sessionStorage.getItem("adminPassword");
@@ -1885,7 +1885,7 @@
       const details = document.getElementById("pVidDetails").value;
       const extLinks = collectDynamicLinks('videoLinkContainer');
 
-      const chunkSize = 1024 * 1024 * 2; // ส่งทีละ 2MB เพื่อความเสถียร
+      const chunkSize = 1024 * 1024 * 1; // 1MB Per Chunk
       const totalChunks = Math.ceil(selectedVideoFile.size / chunkSize);
       let currentFileId = null;
 
@@ -1908,7 +1908,7 @@
             mimeType: selectedVideoFile.type || "video/mp4",
             chunkData: chunkBase64,
             fileId: currentFileId,
-            isLast: i === totalChunks - 1,
+            isLast: (i === totalChunks - 1),
             title: title,
             category: cat,
             details: details,
@@ -1920,6 +1920,7 @@
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
           });
+          
           const result = await res.json();
 
           if (!result.success) {
