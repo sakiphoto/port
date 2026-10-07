@@ -40,6 +40,18 @@
     #customToast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
     #customToast.error { border-color: var(--danger); }
 
+
+    /* System status popup */
+    #systemStatusModal { position:fixed; inset:0; z-index:99999; display:none; align-items:center; justify-content:center; padding:1rem; background:rgba(0,0,0,.72); backdrop-filter:blur(10px); }
+    #systemStatusModal.active { display:flex; animation:fadeIn .18s ease; }
+    .system-status-card { width:min(92vw,390px); background:var(--bg-card); color:var(--text-main); border:1px solid var(--border); border-radius:22px; padding:2rem 1.5rem; text-align:center; box-shadow:0 25px 70px rgba(0,0,0,.55); }
+    .system-status-icon { width:58px; height:58px; margin:0 auto 1rem; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.55rem; background:rgba(56,189,248,.12); border:1px solid rgba(56,189,248,.35); }
+    .system-status-spinner { width:28px; height:28px; border:3px solid rgba(255,255,255,.16); border-top-color:var(--accent); border-radius:50%; animation:statusSpin .8s linear infinite; }
+    @keyframes statusSpin { to { transform:rotate(360deg); } }
+    .system-status-title { font-size:1.05rem; font-weight:700; color:#fff; }
+    .system-status-message { margin-top:.35rem; font-size:.82rem; color:var(--text-muted); line-height:1.55; }
+    .system-status-error { color:var(--danger); }
+
     select { background-color: var(--bg-card) !important; color: #ffffff !important; }
     option { background-color: #12161f !important; color: #ffffff !important; padding: 10px; }
 
@@ -363,6 +375,14 @@
 <body>
 
   <div id="customToast">🔔 <span id="toastMsg">แจ้งเตือนจากระบบ</span></div>
+  <div id="systemStatusModal" aria-live="polite" aria-busy="true">
+    <div class="system-status-card">
+      <div class="system-status-icon" id="systemStatusIcon"><div class="system-status-spinner"></div></div>
+      <div class="system-status-title" id="systemStatusTitle">กำลังโหลดข้อมูล...</div>
+      <div class="system-status-message" id="systemStatusMessage">กรุณารอสักครู่ ระบบกำลังเชื่อมต่อกับฐานข้อมูล</div>
+    </div>
+  </div>
+
 
   <div class="lightbox-overlay" id="lightboxModal" onclick="closeLightbox(event)">
     <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
@@ -838,6 +858,24 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyZnkAIVNbFEFZlr4wZR9tON_bspCiXSc2hqLHZcj-0Z_0dyJINpFqtQEpvOOGwEb7bXw/exec";
+
+    const nativeFetch = window.fetch.bind(window);
+    let statusRequestCount = 0;
+    let statusHideTimer = null;
+    function showStatusPopup(title, message, type = "loading") {
+      const modal=document.getElementById("systemStatusModal"); if(!modal)return;
+      document.getElementById("systemStatusTitle").innerText=title||"กำลังดำเนินการ...";
+      const msg=document.getElementById("systemStatusMessage"); msg.innerText=message||"กรุณารอสักครู่"; msg.className="system-status-message"+(type==="error"?" system-status-error":"");
+      document.getElementById("systemStatusIcon").innerHTML=type==="loading"?'<div class="system-status-spinner"></div>':(type==="success"?"✓":"!"); modal.classList.add("active");
+    }
+    function hideStatusPopup(delay=0){ clearTimeout(statusHideTimer); const close=()=>{const m=document.getElementById("systemStatusModal");if(m)m.classList.remove("active")}; if(delay)statusHideTimer=setTimeout(close,delay);else close(); }
+    async function apiFetch(url,options={},statusOptions={}){
+      const isPost=String(options.method||"GET").toUpperCase()==="POST", silent=statusOptions.silent===true;
+      if(!silent){statusRequestCount++;showStatusPopup(isPost?"กำลังบันทึกข้อมูล...":"กำลังโหลดข้อมูล...",isPost?"ระบบกำลังบันทึกข้อมูล กรุณารอสักครู่":"กำลังเชื่อมต่อกับข้อมูลเว็บไซต์","loading");}
+      try{const response=await nativeFetch(url,options);if(!response.ok)throw new Error("HTTP "+response.status);return response;}
+      catch(err){if(!silent)showStatusPopup("เชื่อมต่อไม่สำเร็จ","ไม่สามารถเชื่อมต่อกับระบบได้ กรุณาลองใหม่อีกครั้ง","error");throw err;}
+      finally{if(!silent){statusRequestCount=Math.max(0,statusRequestCount-1);if(statusRequestCount===0)hideStatusPopup(250);}}
+    }
     
     let token = sessionStorage.getItem("adminPassword");
     let allData = { profile: {}, portfolio: [], schedule: [], calendar: [] };
@@ -1089,7 +1127,7 @@
       btn.innerText = "กำลังตรวจสอบ..."; btn.disabled = true;
       const pwd = document.getElementById("adminPassword").value;
       try {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "login", password: pwd })
@@ -1174,7 +1212,7 @@
 
     async function loadData(fullRender = false) {
       try {
-        const res = await fetch(API_URL);
+        const res = await apiFetch(API_URL, {}, { silent: !fullRender });
         const data = await res.json();
         if (data.success) {
           allData = data;
@@ -1185,8 +1223,14 @@
           }
           renderCalendar();
           renderScheduleVertical();
+        } else if (fullRender) {
+          showStatusPopup("โหลดข้อมูลไม่สำเร็จ", data.message || "ระบบไม่สามารถส่งข้อมูลกลับมาได้", "error");
+          hideStatusPopup(1800);
         }
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error(err);
+        if (fullRender) hideStatusPopup(1800);
+      }
     }
 
     function renderProfile() {
@@ -1450,7 +1494,7 @@
     }
 
     async function reloadAdmin() {
-      const res = await fetch(API_URL);
+      const res = await apiFetch(API_URL);
       const data = await res.json();
       if (data.success) { allData = data; renderAdminPanels(); }
     }
@@ -1549,7 +1593,7 @@
       };
       
       try {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
@@ -1573,7 +1617,7 @@
       const dateStr = document.getElementById("modalCalDate").value;
       if (!confirm(`ต้องการลบสถานะพิเศษของวันที่ ${formatThaiDateFull(dateStr)} ใช่หรือไม่?`)) return;
       try {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "setCalendar", password: token, date: dateStr, isDelete: true })
@@ -1658,7 +1702,7 @@
           socialLinks: JSON.stringify(socialLinks)
         };
 
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
@@ -1729,7 +1773,7 @@
       };
 
       try {
-        const res = await fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload) });
+        const res = await apiFetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload) });
         const result = await res.json();
         btn.innerText = "บันทึกคิวงาน"; btn.disabled = false;
         if (result.success) {
@@ -1778,7 +1822,7 @@
         details:document.getElementById("editSchedDetails").value
       };
       try {
-        const res = await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+        const res = await apiFetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
         const result = await res.json();
         btn.innerText = "บันทึกการแก้ไข"; btn.disabled = false;
         if (result.success) {
@@ -1842,7 +1886,7 @@
         }
 
         const payload = { action: "updateProfile", password: token, ...allData.profile, newFeaturedFiles: filePayloads };
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
@@ -1880,7 +1924,7 @@
       photos.splice(index, 1);
       const payload = { action: "updateProfile", password: token, ...allData.profile, featuredPhotos: photos.join(',') };
       try {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
@@ -1925,7 +1969,7 @@
             }]
           };
 
-          const res = await fetch(API_URL, { 
+          const res = await apiFetch(API_URL, { 
             method: "POST", 
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload) 
@@ -2010,7 +2054,7 @@
           let success = false;
           while (attempts < 3 && !success) {
             try {
-              const res = await fetch(API_URL, {
+              const res = await apiFetch(API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify(payload)
@@ -2137,7 +2181,7 @@
       });
 
       try {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "reorderPortfolio", password: token, orderMap: orderMap })
@@ -2202,7 +2246,7 @@
       };
 
       try {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
@@ -2223,7 +2267,7 @@
     async function deletePortfolioGroup(title, type) {
       if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบอัลบั้ม "${title}" ทั้งหมด? (ไฟล์ใน Drive จะถูกลบด้วย)`)) return;
       try {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "delete", password: token, title: title, mediaType: type, type: "portfolioGroup" })
@@ -2239,7 +2283,7 @@
     async function deleteItem(id, type) {
       if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?")) return;
       try {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "delete", password: token, id, type })
