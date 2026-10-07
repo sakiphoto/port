@@ -1507,6 +1507,7 @@
             details: item.details,
             extLink: item.extLink,
             coverUrl: item.fileUrl,
+            thumbUrl: item.thumbUrl || "",
             fileId: item.fileId,
             mediaType: item.mediaType,
             items: []
@@ -1522,10 +1523,10 @@
         const videoEmbedUrl = alb.fileId ? `https://drive.google.com/file/d/${alb.fileId}/preview` : alb.coverUrl;
 
         return `
-          <div class="album-card" onclick="openAlbumModal('${safeTitle}', '${alb.mediaType}')">
+          <div class="album-card" data-album-title="${rateEscape(alb.title)}" onclick="openAlbumModal(this.dataset.albumTitle, '${alb.mediaType}')">
             <div class="album-cover">
               ${alb.mediaType === 'video' 
-                ? `<iframe src="${videoEmbedUrl}" allow="autoplay" style="pointer-events: none;"></iframe>` 
+                ? `<img src="${rateEscape(alb.thumbUrl || (alb.fileId ? 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(alb.fileId) + '&sz=w1000' : ''))}" alt="${rateEscape(alb.title)}" loading="lazy" onerror="this.style.display='none'"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"><span style="display:flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:50%;background:rgba(0,0,0,.55);color:white;font-size:1.6rem;">▶</span></span>` 
                 : `<img src="${imgUrl}" loading="lazy" alt="${safeTitle}" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
               }
               <div class="album-count-badge">${alb.items.length} ${alb.mediaType === 'video' ? 'วิดีโอ' : 'รูปภาพ'}</div>
@@ -2318,93 +2319,88 @@
       }
     }
 
+    function createVideoCover(file) {
+      return new Promise(resolve => {
+        const video = document.createElement('video'); video.muted = true; video.preload = 'auto'; video.playsInline = true;
+        const url = URL.createObjectURL(file); let finished = false;
+        const finish = data => { if (finished) return; finished = true; clearTimeout(timer); video.pause(); video.removeAttribute('src'); video.load(); URL.revokeObjectURL(url); resolve(data || ''); };
+        const timer = setTimeout(() => finish(''), 12000);
+        const capture = () => {
+          if (finished) return;
+          try {
+            if (!video.videoWidth || !video.videoHeight) { finish(''); return; }
+            const canvas = document.createElement('canvas'); canvas.width = Math.min(960, video.videoWidth); canvas.height = Math.round(video.videoHeight * canvas.width / video.videoWidth);
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height); finish(canvas.toDataURL('image/jpeg', .75));
+          } catch (err) { finish(''); }
+        };
+        video.onerror = () => finish('');
+        video.onloadeddata = () => { const target = Number.isFinite(video.duration) ? Math.min(1, video.duration / 4) : 0; if (target > 0) video.currentTime = target; else capture(); };
+        video.onseeked = capture; video.src = url;
+      });
+    }
+
+    async function videoUploadRequest(payload, timeout = 90000) {
+      const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), timeout);
+      try {
+        const res = await apiFetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), signal: controller.signal }, { silent: true });
+        const result = await res.json(); if (!result.success) throw new Error(result.message || "บันทึกวิดีโอไม่สำเร็จ"); return result;
+      } finally { clearTimeout(timer); }
+    }
+    async function recoverVideoUpload(uploadId) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
+        try {
+          const response = await apiFetch(API_URL, { signal: controller.signal }, { silent: true }); const data = await response.json();
+          const item = data.success && (data.portfolio || []).find(item => item.id === uploadId);
+          if (item) return { success: true, completed: true, item };
+        } catch (err) { console.error(err); }
+        finally { clearTimeout(timer); }
+        if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      return null;
+    }
     async function handleUploadVideo(e) {
       e.preventDefault();
-      if (!selectedVideoFile) {
-        showNotification("กรุณาเลือกไฟล์วิดีโออย่างน้อย 1 ไฟล์", true);
-        return;
-      }
-
-      const btn = document.getElementById("btnUpVid");
+      if (!selectedVideoFile || !selectedVideoFile.size) { showNotification("กรุณาเลือกไฟล์วิดีโอที่มีข้อมูล", true); return; }
+      const btn = document.getElementById("btnUpVid"), file = selectedVideoFile;
+      if (btn.disabled) return;
       btn.disabled = true;
-
-      const title = document.getElementById("pVidTitle").value;
-      const cat = document.getElementById("pVidCat").value;
-      const details = document.getElementById("pVidDetails").value;
-      const extLinks = collectDynamicLinks('videoLinkContainer');
-
-      const chunkSize = 4 * 1024 * 1024; 
-      const totalChunks = Math.ceil(selectedVideoFile.size / chunkSize);
-      const uploadId = "VID_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-
+      const chunkSize = 4 * 1024 * 1024, totalChunks = Math.ceil(file.size / chunkSize);
+      const uploadId = "VID_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+      let completed = null;
       try {
+        showStatusPopup("กำลังอัปโหลดวิดีโอ", "กำลังเตรียมไฟล์และรูปปก...", "loading");
+        const coverData = await createVideoCover(file);
         for (let i = 0; i < totalChunks; i++) {
-          const start = i * chunkSize;
-          const end = Math.min(selectedVideoFile.size, start + chunkSize);
-          const blobChunk = selectedVideoFile.slice(start, end);
-          
-          const chunkBase64WithHeader = await readFileAsBase64(blobChunk);
-          const chunkBase64 = chunkBase64WithHeader.split(',')[1] || chunkBase64WithHeader;
-          const percent = Math.round(((i + 1) / totalChunks) * 100);
-
-          if (i === totalChunks - 1) {
-            btn.innerText = `กำลังประมวลผลวิดีโอบน Google Drive (100%)...`;
-          } else {
-            btn.innerText = `กำลังส่งวิดีโอ (${percent}%)... (${i + 1}/${totalChunks})`;
-          }
-
-          const payload = {
-            action: "uploadVideoChunk",
-            password: token,
-            uploadId: uploadId,
-            chunkIndex: i,
-            totalChunks: totalChunks,
-            fileName: selectedVideoFile.name,
-            mimeType: selectedVideoFile.type || "video/mp4",
-            chunkData: chunkBase64,
-            isLast: (i === totalChunks - 1),
-            title: title,
-            category: cat,
-            details: details,
-            extLink: extLinks
-          };
-
-          let attempts = 0;
-          let success = false;
-          while (attempts < 3 && !success) {
-            try {
-              const res = await apiFetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
-              });
-              const result = await res.json();
-              if (result.success) {
-                success = true;
-              } else {
-                throw new Error(result.message || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์");
-              }
-            } catch (errAttempt) {
-              attempts++;
-              if (attempts >= 3) throw errAttempt;
-              await new Promise(r => setTimeout(r, 1500));
+          const base64 = await readFileAsBase64(file.slice(i * chunkSize, Math.min(file.size, (i + 1) * chunkSize)));
+          const last = i === totalChunks - 1;
+          const progress = last ? "กำลังส่งส่วนสุดท้ายและบันทึกไฟล์..." : `กำลังส่งวิดีโอ ${Math.floor(i / totalChunks * 100)}% (${i + 1}/${totalChunks})`;
+          btn.innerText = progress; showStatusPopup("กำลังอัปโหลดวิดีโอ", progress, "loading");
+          const payload = { action: "uploadVideoChunk", password: token, uploadId, chunkIndex: i, totalChunks, fileName: file.name, mimeType: file.type || "video/mp4", chunkData: base64.split(',')[1], isLast: last, title: document.getElementById("pVidTitle").value, category: document.getElementById("pVidCat").value, details: document.getElementById("pVidDetails").value, extLink: collectDynamicLinks('videoLinkContainer'), ...(last && coverData ? { coverData } : {}) };
+          if (last) {
+            try { completed = await videoUploadRequest(payload); }
+            catch (err) {
+              showStatusPopup("กำลังตรวจสอบผลบันทึก", "ตรวจสอบว่าบันทึกวิดีโอสำเร็จแล้วหรือไม่...", "loading");
+              completed = await recoverVideoUpload(uploadId);
+              if (!completed) throw new Error("ยังยืนยันผลบันทึกไม่ได้ กรุณารีเฟรชรายการเพื่อตรวจสอบก่อนอัปโหลดซ้ำ");
             }
+            if (!completed.completed || !completed.item) throw new Error("เซิร์ฟเวอร์ยังไม่ยืนยันบันทึกครบ กรุณาอัปเดต Code.gs และ Deployment เป็นเวอร์ชันล่าสุด");
+          } else {
+            let lastError;
+            for (let attempt = 0; attempt < 3; attempt++) {
+              try { await videoUploadRequest(payload); lastError = null; break; }
+              catch (err) { lastError = err; }
+            }
+            if (lastError) throw lastError;
           }
         }
-
-        btn.innerText = "อัปโหลดวิดีโอใหม่";
-        btn.disabled = false;
-        showNotification("อัปโหลดวิดีโอลง Google Drive เรียบร้อยแล้ว!");
-        document.getElementById('uploadVideoForm').reset();
-        document.getElementById('videoLinkContainer').innerHTML = '';
-        removeSelectedVideoFile();
-        await reloadAdmin();
-
-      } catch (err) {
-        btn.innerText = "อัปโหลดวิดีโอใหม่";
-        btn.disabled = false;
-        showNotification(err.message || "เกิดข้อผิดพลาดในการอัปโหลดวิดีโอ", true);
-      }
+        allData.portfolio = (allData.portfolio || []).filter(item => item.id !== completed.item.id).concat(completed.item);
+        document.getElementById('uploadVideoForm').reset(); document.getElementById('videoLinkContainer').innerHTML = ''; removeSelectedVideoFile();
+        renderAdminPortfolioGroupList('adminVideoList', 'video'); renderAlbumGrid('videoAlbumGrid', allData.portfolio.filter(item => item.mediaType === 'video'), 'video');
+        showStatusPopup("บันทึกวิดีโอสำเร็จ", "เพิ่มผลงานแล้ว Google Drive อาจใช้เวลาเตรียมวิดีโอสำหรับเล่น", "success"); hideStatusPopup(1500);
+        showNotification("บันทึกสำเร็จและแสดงรายการวิดีโอแล้ว");
+      } catch (err) { showStatusPopup("ตรวจสอบการอัปโหลด", err.message || "อัปโหลดไม่สำเร็จ", "error"); hideStatusPopup(3500); showNotification(err.message, true); }
+      finally { btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false; }
     }
 
     function renderAdminPortfolioGroupList(elId, type) {

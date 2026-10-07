@@ -614,6 +614,7 @@
             details: item.details,
             extLink: item.extLink,
             coverUrl: item.fileUrl,
+            thumbUrl: item.thumbUrl || "",
             fileId: item.fileId,
             mediaType: item.mediaType,
             items: []
@@ -629,10 +630,10 @@
         const videoEmbedUrl = alb.fileId ? `https://drive.google.com/file/d/${alb.fileId}/preview` : alb.coverUrl;
 
         return `
-          <div class="album-card" onclick="openAlbumModal('${safeTitle}', '${alb.mediaType}')">
+          <div class="album-card" data-album-title="${rateEscape(alb.title)}" onclick="openAlbumModal(this.dataset.albumTitle, '${alb.mediaType}')">
             <div class="album-cover">
               ${alb.mediaType === 'video' 
-                ? `<iframe src="${videoEmbedUrl}" allow="autoplay" style="pointer-events: none;"></iframe>` 
+                ? `<img src="${rateEscape(alb.thumbUrl || (alb.fileId ? 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(alb.fileId) + '&sz=w1000' : ''))}" alt="${rateEscape(alb.title)}" loading="lazy" onerror="this.style.display='none'"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"><span style="display:flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:50%;background:rgba(0,0,0,.55);color:white;font-size:1.6rem;">▶</span></span>` 
                 : `<img src="${imgUrl}" loading="lazy" alt="${alb.title}" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
               }
               <div class="album-count-badge">${alb.items.length} ${alb.mediaType === 'video' ? 'วิดีโอ' : 'รูปภาพ'}</div>
