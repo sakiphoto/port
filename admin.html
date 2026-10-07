@@ -50,7 +50,15 @@
     @keyframes statusSpin { to { transform:rotate(360deg); } }
     .system-status-title { font-size:1.05rem; font-weight:700; color:#fff; }
     .system-status-message { margin-top:.35rem; font-size:.82rem; color:var(--text-muted); line-height:1.55; }
-    .system-status-error { color:var(--danger); }
+     .system-status-error { color:var(--danger); }
+
+    /* Web confirmation popup — ไม่ใช้ confirm() ของเบราว์เซอร์ */
+    #webConfirmModal { position:fixed; inset:0; z-index:100000; display:none; align-items:center; justify-content:center; padding:1rem; background:rgba(0,0,0,.72); backdrop-filter:blur(10px); }
+    #webConfirmModal.active { display:flex; animation:fadeIn .18s ease; }
+    .web-confirm-card { width:min(92vw,420px); background:var(--bg-card); color:var(--text-main); border:1px solid var(--border); border-radius:22px; padding:1.6rem; box-shadow:0 25px 70px rgba(0,0,0,.55); }
+    .web-confirm-title { font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:.45rem; }
+    .web-confirm-message { font-size:.85rem; color:var(--text-muted); line-height:1.6; white-space:pre-line; }
+    .web-confirm-actions { display:flex; justify-content:flex-end; gap:.6rem; margin-top:1.25rem; }
 
     select { background-color: var(--bg-card) !important; color: #ffffff !important; }
     option { background-color: #12161f !important; color: #ffffff !important; padding: 10px; }
@@ -383,6 +391,17 @@
     </div>
   </div>
 
+  <div id="webConfirmModal" aria-hidden="true">
+    <div class="web-confirm-card">
+      <div style="font-size:1.8rem; margin-bottom:.65rem;">⚠️</div>
+      <div class="web-confirm-title" id="webConfirmTitle">ยืนยันการดำเนินการ</div>
+      <div class="web-confirm-message" id="webConfirmMessage">คุณต้องการดำเนินการต่อหรือไม่?</div>
+      <div class="web-confirm-actions">
+        <button type="button" class="btn btn-outline" id="webConfirmCancel">ยกเลิก</button>
+        <button type="button" class="btn btn-danger" id="webConfirmOk">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
 
   <div class="lightbox-overlay" id="lightboxModal" onclick="closeLightbox(event)">
     <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
@@ -1051,7 +1070,43 @@
       const msgSpan = document.getElementById("toastMsg");
       msgSpan.innerText = msg;
       toast.className = isError ? "show error" : "show";
-      setTimeout(() => { toast.className = ""; }, 3500);
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => { toast.className = ""; }, 3500);
+    }
+
+    function showWebConfirm(message, title = "ยืนยันการดำเนินการ") {
+      return new Promise(resolve => {
+        const modal = document.getElementById("webConfirmModal");
+        const titleEl = document.getElementById("webConfirmTitle");
+        const messageEl = document.getElementById("webConfirmMessage");
+        const ok = document.getElementById("webConfirmOk");
+        const cancel = document.getElementById("webConfirmCancel");
+        if (!modal || !ok || !cancel) { resolve(false); return; }
+
+        titleEl.innerText = title;
+        messageEl.innerText = message;
+        modal.classList.add("active");
+        modal.setAttribute("aria-hidden", "false");
+
+        let finished = false;
+        const finish = value => {
+          if (finished) return;
+          finished = true;
+          modal.classList.remove("active");
+          modal.setAttribute("aria-hidden", "true");
+          ok.onclick = null;
+          cancel.onclick = null;
+          modal.onclick = null;
+          document.removeEventListener("keydown", onKey);
+          resolve(value);
+        };
+        const onKey = e => { if (e.key === "Escape") finish(false); };
+        ok.onclick = () => finish(true);
+        cancel.onclick = () => finish(false);
+        modal.onclick = e => { if (e.target === modal) finish(false); };
+        document.addEventListener("keydown", onKey);
+        setTimeout(() => ok.focus(), 0);
+      });
     }
 
     function readFileAsBase64(file) {
@@ -1461,10 +1516,23 @@
       const list = allData.schedule || [];
       if (!list.length) { container.innerHTML = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงาน</p>'; return; }
 
-      const sorted = [...list].sort((a, b) => new Date(a.date) - new Date(b.date));
+      // คิวงานที่เพิ่มล่าสุดอยู่บนสุด ไม่ว่ากำหนดวันทำงานจะเป็นวันไหน
+      const sorted = [...list].sort((a, b) => {
+        const ac = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bc = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bc - ac;
+      });
       container.innerHTML = sorted.map(item => {
-        const st = evaluateRealtimeJobStatus(item.date, item.time);
-        const thaiDateStr = formatThaiDateFull(item.date);
+        const dates = (item.dates && item.dates.length ? item.dates : [item.date]).filter(Boolean);
+        const now = new Date();
+        const activeDate = dates.find(d => {
+          const x = evaluateRealtimeJobStatus(d, item.time);
+          return x.cls === "working";
+        }) || dates.find(d => new Date(d) >= new Date(now.getFullYear(), now.getMonth(), now.getDate())) || dates[0];
+        const st = evaluateRealtimeJobStatus(activeDate, item.time);
+        const thaiDateStr = dates.length > 1
+          ? `${formatThaiDateFull(dates[0])} - ${formatThaiDateFull(dates[dates.length - 1])} (${dates.length} วัน)`
+          : formatThaiDateFull(dates[0]);
         return `
           <div class="job-row ${st.cls}">
             <div class="job-info-left">
@@ -1615,7 +1683,7 @@
 
     async function deleteCalendarStatus() {
       const dateStr = document.getElementById("modalCalDate").value;
-      if (!confirm(`ต้องการลบสถานะพิเศษของวันที่ ${formatThaiDateFull(dateStr)} ใช่หรือไม่?`)) return;
+      if (!await showWebConfirm(`ต้องการลบสถานะพิเศษของวันที่ ${formatThaiDateFull(dateStr)} ใช่หรือไม่?`, "ยืนยันการลบสถานะ")) return;
       try {
         const res = await apiFetch(API_URL, {
           method: "POST",
@@ -2093,9 +2161,16 @@
       const items = (allData.portfolio || []).filter(x => x.mediaType === type);
       if (!items.length) { c.innerHTML = '<p style="color:var(--text-muted);">ไม่มีข้อมูลอัลบั้ม</p>'; return; }
 
+      // อัลบั้มที่มีข้อมูลสร้างล่าสุดอยู่บนสุด
+      items.sort((a, b) => {
+        const ac = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bc = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bc - ac;
+      });
+
       const groups = {};
       items.forEach(i => {
-        if (!groups[i.title]) groups[i.title] = { title: i.title, category: i.category, details: i.details, extLink: i.extLink, count: 0, mediaType: type };
+        if (!groups[i.title]) groups[i.title] = { title: i.title, category: i.category, details: i.details, extLink: i.extLink, count: 0, mediaType: type, createdAt: i.createdAt || "" };
         groups[i.title].count++;
       });
 
@@ -2265,7 +2340,7 @@
     }
 
     async function deletePortfolioGroup(title, type) {
-      if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบอัลบั้ม "${title}" ทั้งหมด? (ไฟล์ใน Drive จะถูกลบด้วย)`)) return;
+      if (!await showWebConfirm(`คุณแน่ใจหรือไม่ว่าต้องการลบอัลบั้ม "${title}" ทั้งหมด? (ไฟล์ใน Drive จะถูกลบด้วย)`, "ยืนยันการลบอัลบั้ม")) return;
       try {
         const res = await apiFetch(API_URL, {
           method: "POST",
@@ -2281,7 +2356,7 @@
     }
 
     async function deleteItem(id, type) {
-      if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?")) return;
+      if (!await showWebConfirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?", "ยืนยันการลบรายการ")) return;
       try {
         const res = await apiFetch(API_URL, {
           method: "POST",
