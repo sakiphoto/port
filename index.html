@@ -245,6 +245,35 @@
     #calendarDayModal { z-index: 1600; }
     .cal-day-cell[data-calendar-date] { cursor: pointer; }
     .cal-day-cell[data-calendar-date]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+    .modal-overlay { overflow: hidden; box-sizing: border-box; }
+    .modal-overlay > .modal-card, .modal-overlay > .album-modal-card {
+      box-sizing: border-box; min-height: 0; min-width: 0;
+      max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);
+      overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    #editAlbumModal > .modal-card { max-width: 760px; }
+    #editAlbumModal > .modal-card > div:first-child {
+      position: sticky; top: -1.5rem; z-index: 2; background: var(--bg-card);
+      padding: .75rem 0;
+    }
+    #editAlbumMediaList, #editAlbumMediaList .edit-media-card { min-width: 0; }
+    #editAlbumMediaList input, #editAlbumMediaList textarea { max-width: 100%; box-sizing: border-box; }
+    .lightbox-frame { position: relative; display: inline-block; max-width: 100%; line-height: 0; }
+    .lightbox-frame .lightbox-img {
+      display: block; width: auto; height: auto;
+      max-width: calc(100vw - 3rem);
+      max-height: calc(100vh - 3rem); max-height: calc(100dvh - 3rem);
+    }
+    .lightbox-frame .lightbox-download {
+      position: absolute; top: 10px; right: 10px; z-index: 2;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      color: #fff; background: rgba(10,12,16,.8); border: 1px solid rgba(255,255,255,.25);
+      border-radius: 10px; text-decoration: none; cursor: pointer; line-height: normal;
+    }
+    .lightbox-frame .lightbox-download:hover { color: var(--accent); background: rgba(10,12,16,.95); }
+    .lightbox-frame .lightbox-download svg { width: 20px; height: 20px; }
   </style>
 </head>
 <body>
@@ -269,13 +298,11 @@
 
   <!-- LIGHTBOX IMAGE MODAL -->
   <div class="lightbox-overlay" id="lightboxModal" onclick="closeLightbox(event)">
-    <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
-    <a id="lightboxDownload" class="lightbox-download" href="#" download target="_blank" rel="noopener" aria-label="บันทึกรูปภาพ" onclick="event.stopPropagation()" title="บันทึกรูปภาพ">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path>
-      </svg>
-    </a>
-    <img src="" id="lightboxImg" class="lightbox-img" alt="Enlarged Image" onclick="event.stopPropagation()">
+    <button class="lightbox-close" onclick="closeLightbox(event)" aria-label="ปิดรูปภาพ">&times;</button>
+    <div class="lightbox-frame" onclick="event.stopPropagation()">
+      <img src="" id="lightboxImg" class="lightbox-img" alt="Enlarged Image">
+      <a id="lightboxDownload" class="lightbox-download" href="#" download target="_blank" rel="noopener" aria-label="ดาวน์โหลดรูปภาพ" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg></a>
+    </div>
   </div>
 
   <!-- ALBUM DETAIL MODAL -->
@@ -419,8 +446,11 @@
     const MONTH_NAMES_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
     function getDownloadImageUrl(url, fileId) {
-      if (fileId) return `https://drive.google.com/uc?export=download&id=${fileId}`;
-      return url || "#";
+      let id = fileId && !/^https?:/i.test(String(fileId)) ? String(fileId) : "";
+      if (!id && /drive\.google\.com|googleusercontent\.com/.test(String(url || ""))) {
+        const match = String(url).match(/(?:[?&]id=|\/d\/)([a-zA-Z0-9_-]+)/); if (match) id = match[1];
+      }
+      return id ? `https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}` : url || "#";
     }
 
     function getDisplayImageUrl(url) {
