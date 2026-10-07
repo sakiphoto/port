@@ -429,6 +429,11 @@
     .edit-photo-number { left:5px; } .edit-photo-cover { right:5px; background:var(--accent); color:#111; }
     .edit-photo-thumb.drag-over { outline:3px solid var(--accent); outline-offset:-3px; }
     .edit-photo-thumb.dragging { opacity:.4; }
+    .edit-photo-tile { position:relative; }
+    .edit-photo-delete { position:absolute; right:5px; bottom:5px; z-index:2; display:flex; align-items:center; justify-content:center; width:30px; height:30px; padding:0; border:1px solid rgba(255,255,255,.65); border-radius:7px; background:#dc2626; color:white; cursor:pointer; }
+    .edit-photo-delete:hover { background:#b91c1c; }
+    .edit-photo-delete:focus-visible { outline:2px solid white; outline-offset:2px; }
+    .edit-photo-delete:disabled { opacity:.5; cursor:wait; }
     .edit-photo-info { padding:5px; font-size:11px; }
     .edit-photo-info summary { cursor:pointer; }
     .edit-photo-info textarea,.edit-photo-info input { min-width:0; width:100%; }
@@ -1447,6 +1452,7 @@
       finally { panel.disabled = false; btn.innerText = "บันทึกเรทราคาทั้งหมด"; }
     }
 
+    let editingAlbumDeleteBusy = false;
     let editingAlbumItems = [];
     let editingAlbumDefaults = {};
 
@@ -2795,7 +2801,12 @@ File ID: ${rateEscape(item.fileId)}</div>
           const info = document.createElement("details"); info.className = "edit-photo-info";
           const summary = document.createElement("summary"); summary.textContent = "แก้ไขข้อมูล"; info.appendChild(summary);
           while (card.firstChild) info.appendChild(card.firstChild);
-          card.appendChild(thumb); card.appendChild(info);
+          const tile = document.createElement("div"); tile.className = "edit-photo-tile";
+          const remove = document.createElement("button"); remove.type = "button"; remove.className = "edit-photo-delete";
+          remove.title = "ลบรูปภาพนี้"; remove.setAttribute("aria-label", "ลบรูปภาพลำดับ " + (i + 1));
+          remove.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg>';
+          remove.onclick = event => { event.preventDefault(); event.stopPropagation(); deleteEditAlbumPhoto(item.id); };
+          tile.appendChild(thumb); tile.appendChild(remove); card.appendChild(tile); card.appendChild(info);
           let moved = false;
           thumb.onclick = () => { if (!moved) openLightbox(url, item.fileId); };
           thumb.addEventListener("dragstart", e => {
@@ -2828,6 +2839,61 @@ File ID: ${rateEscape(item.fileId)}</div>
         links.forEach(link => addDynamicLinkRow('editMediaLinks' + i, link.label, link.url));
       });
     }
+    async function deleteEditAlbumPhoto(id) {
+      const saveButton = document.getElementById("btnSaveEditAlbum");
+      if (editingAlbumDeleteBusy || saveButton.disabled) return;
+      const item = editingAlbumItems.find(item => String(item.id) === String(id));
+      if (!item || item.mediaType !== "image") return;
+      editingAlbumDeleteBusy = true; saveButton.disabled = true;
+      let deleted = false;
+      try {
+        collectEditAlbumMedia();
+        const last = editingAlbumItems.length === 1;
+        const message = last
+          ? "ลบรูปภาพสุดท้ายนี้หรือไม่? อัลบั้มจะถูกนำออกจากรายการ และไฟล์รูปจะถูกย้ายไปถังขยะใน Drive การลบมีผลทันที"
+          : "ลบรูปภาพนี้หรือไม่? ไฟล์รูปจะถูกย้ายไปถังขยะใน Drive การลบมีผลทันที";
+        if (!await showWebConfirm(message, "ยืนยันการลบรูปภาพ")) return;
+        collectEditAlbumMedia();
+        document.querySelectorAll(".edit-photo-delete").forEach(button => button.disabled = true);
+        const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 90000);
+        try {
+          const response = await apiFetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "delete", password: token, type: "portfolio", id: item.id }), signal: controller.signal });
+          const result = await response.json();
+          if (!result.success) throw new Error(result.message || "ยังยืนยันผลการลบไม่ได้");
+          deleted = true;
+        } catch (error) {
+          // A missing response does not imply the server failed to delete the row.
+          try { deleted = await verifyDeletedAlbumPhoto(item); } catch (verifyError) { console.error(verifyError); }
+          if (!deleted) showNotification(error.name === "AbortError" ? "ยังยืนยันผลการลบไม่ได้ กรุณาเปิดอัลบั้มอีกครั้งเพื่อตรวจสอบ" : error.message || "ลบรูปภาพไม่สำเร็จ", true);
+        } finally { clearTimeout(timer); }
+        if (deleted) {
+          editingAlbumItems = editingAlbumItems.filter(photo => String(photo.id) !== String(item.id));
+          allData.portfolio = (allData.portfolio || []).filter(photo => String(photo.id) !== String(item.id));
+          rememberCurrentData();
+          // Keep unsaved text and the draft drag order for the remaining photos.
+          if (editingAlbumItems.length) renderEditAlbumMedia();
+          else closeEditAlbumModal();
+          try { renderAdminPanels(); renderSiteData(allData); } catch (error) { console.error(error); }
+          showNotification(editingAlbumItems.length ? "ลบรูปภาพแล้ว" : "ลบรูปภาพสุดท้ายและนำอัลบั้มออกแล้ว");
+        }
+      } catch (error) {
+        showNotification(deleted ? "ลบรูปภาพแล้ว กรุณาเปิดอัลบั้มอีกครั้งเพื่ออัปเดตภาพ" : error.message || "ลบรูปภาพไม่สำเร็จ", !deleted);
+      } finally {
+        editingAlbumDeleteBusy = false; saveButton.disabled = false;
+        document.querySelectorAll(".edit-photo-delete").forEach(button => button.disabled = false);
+      }
+    }
+    async function verifyDeletedAlbumPhoto(item) {
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 25000);
+      try {
+        const response = await nativeFetch(API_URL + "?action=albumStatus&mediaType=image&title=" + encodeURIComponent(item.title), { cache: "no-store", signal: controller.signal });
+        if (!response.ok) return false;
+        const data = await response.json();
+        const items = Array.isArray(data.items) ? data.items : Array.isArray(data.portfolio) ? data.portfolio : null;
+        return data.success === true && items !== null && !items.some(photo => String(photo.id) === String(item.id));
+      } finally { clearTimeout(timer); }
+    }
+
     function moveEditAlbumMedia(index, delta) {
       collectEditAlbumMedia(); const target = index + delta; if (target < 0 || target >= editingAlbumItems.length) return;
       [editingAlbumItems[index], editingAlbumItems[target]] = [editingAlbumItems[target], editingAlbumItems[index]]; renderEditAlbumMedia();
@@ -2839,6 +2905,7 @@ File ID: ${rateEscape(item.fileId)}</div>
 
     async function handleSaveEditAlbum(e) {
       e.preventDefault();
+      if (editingAlbumDeleteBusy) return;
       collectEditAlbumMedia();
       const btn = document.getElementById("btnSaveEditAlbum");
       btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
