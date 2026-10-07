@@ -985,7 +985,7 @@
     let statusRequestCount = 0;
     let statusHideTimer = null;
     function showStatusPopup(title, message, type = "loading") {
-      const modal=document.getElementById("systemStatusModal"); if(!modal)return;
+      clearTimeout(statusHideTimer); const modal=document.getElementById("systemStatusModal"); if(!modal)return;
       document.getElementById("systemStatusTitle").innerText=title||"กำลังดำเนินการ...";
       const msg=document.getElementById("systemStatusMessage"); msg.innerText=message||"กรุณารอสักครู่"; msg.className="system-status-message"+(type==="error"?" system-status-error":"");
       document.getElementById("systemStatusIcon").innerHTML=type==="loading"?'<div class="system-status-spinner"></div>':(type==="success"?"✓":"!"); modal.classList.add("active");
@@ -997,21 +997,55 @@
       if (isPost) { try { mutation = JSON.parse(options.body || "{}").action !== "login"; } catch (error) {} }
       if (mutation) { siteWrites++; invalidateSiteSnapshot(); }
       if(!silent){statusRequestCount++;showStatusPopup(isPost?"กำลังบันทึกข้อมูล...":"กำลังโหลดข้อมูล...",isPost?"ระบบกำลังบันทึกข้อมูล กรุณารอสักครู่":"กำลังเชื่อมต่อกับข้อมูลเว็บไซต์","loading");}
-      try{const response=await nativeFetch(url,options);if(!response.ok)throw new Error("HTTP "+response.status);return response;}
+      try{const response=await nativeFetch(url,{cache:"no-store",...options});if(!response.ok)throw new Error("HTTP "+response.status);const data=await response.json();return {ok:true,status:response.status,json:async()=>data};}
       catch(err){if(!silent)showStatusPopup("เชื่อมต่อไม่สำเร็จ","ไม่สามารถเชื่อมต่อกับระบบได้ กรุณาลองใหม่อีกครั้ง","error");throw err;}
       finally{if(mutation){siteWrites=Math.max(0,siteWrites-1);invalidateSiteSnapshot();}if(!silent){statusRequestCount=Math.max(0,statusRequestCount-1);if(statusRequestCount===0)hideStatusPopup(250);}}
     }
     
-    let token = sessionStorage.getItem("adminPassword");
+    let token = "";
+    try { token = sessionStorage.getItem("adminPassword") || ""; } catch (error) {}
 
     // Keep one in-flight data read and a short-lived snapshot of public data only.
-    const SITE_SNAPSHOT_KEY = "portfolio-public-v2:" + API_URL;
+    const SITE_SNAPSHOT_KEY = "portfolio-public-v3:" + API_URL;
     let siteSnapshot = null;
     let siteRead = null;
     let siteReadController = null;
     let siteReadEpoch = 0;
     let siteWrites = 0;
     const renderedSiteParts = Object.create(null);
+
+    function createdStamp(item) {
+      if (Number(item.uploadedAt) > 0) return Number(item.uploadedAt);
+      let text = String(item.createdAt || "").trim();
+      let match = text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})(.*)$/);
+      if (match) { let year = Number(match[3]); if (year > 2400) year -= 543; text = year + "-" + match[2].padStart(2, "0") + "-" + match[1].padStart(2, "0") + match[4]; }
+      if (/^\d{4}-\d{2}-\d{2} \d{2}:/.test(text)) text = text.replace(" ", "T") + "+07:00";
+      const value = Date.parse(text); return Number.isFinite(value) ? value : 0;
+    }
+    function compareNewest(a, b) {
+      return createdStamp(b) - createdStamp(a) || (Number(b.rowOrder) || 0) - (Number(a.rowOrder) || 0);
+    }
+    function newestPortfolio(items) {
+      const groups = new Map();
+      items.forEach((original, index) => {
+        const item = { ...original, rowOrder: Number(original.rowOrder) || index + 1 };
+        const key = item.mediaType + "\u0000" + item.title;
+        if (!groups.has(key)) groups.set(key, { items: [], stamp: 0, manual: 0, order: 9999, row: 0 });
+        const group = groups.get(key); group.items.push(item);
+        group.stamp = Math.max(group.stamp, createdStamp(item)); group.row = Math.max(group.row, item.rowOrder);
+        if (Number(item.albumOrderAt) > group.manual) { group.manual = Number(item.albumOrderAt); group.order = Number(item.displayOrder) || 0; }
+      });
+      return Array.from(groups.values()).sort((a, b) =>
+        Math.max(b.stamp, b.manual) - Math.max(a.stamp, a.manual) ||
+        (a.manual && a.manual === b.manual ? a.order - b.order : 0) || b.row - a.row
+      ).flatMap(group => group.items.sort((a, b) => {
+        const ao = Number(a.itemOrder) || 0, bo = Number(b.itemOrder) || 0;
+        if (ao && bo) return ao - bo;
+        if (ao !== bo) return ao ? 1 : -1;
+        return compareNewest(a, b);
+      }));
+    }
+
     function validSiteData(data) {
       return data && data.success === true && data.profile && typeof data.profile === "object" &&
         ["portfolio", "schedule", "calendar"].every(key => Array.isArray(data[key]));
@@ -1020,7 +1054,7 @@
       if (siteSnapshot) return siteSnapshot;
       try {
         const saved = JSON.parse(sessionStorage.getItem(SITE_SNAPSHOT_KEY) || "null");
-        if (saved && Date.now() - saved.savedAt < 300000 && validSiteData(saved.data)) siteSnapshot = saved.data;
+        if (saved && Date.now() - saved.savedAt < 1800000 && validSiteData(saved.data)) siteSnapshot = saved.data;
       } catch (error) {}
       return siteSnapshot;
     }
@@ -1048,6 +1082,8 @@
           if (!data.success) throw new Error(data.message || "โหลดข้อมูลไม่สำเร็จ");
           if (data.unchanged && siteSnapshot && data.version === siteSnapshot.version) return siteSnapshot;
           if (!validSiteData(data)) throw new Error("ข้อมูลเว็บไซต์ไม่ครบถ้วน กรุณาลองใหม่");
+          data.portfolio = newestPortfolio(data.portfolio);
+          data.schedule = data.schedule.map((item, index) => ({ ...item, rowOrder: item.rowOrder || index + 1 })).sort(compareNewest);
           siteSnapshot = data;
           try { sessionStorage.setItem(SITE_SNAPSHOT_KEY, JSON.stringify({ savedAt: Date.now(), data })); } catch (error) {}
           return data;
@@ -1060,20 +1096,20 @@
     }
     function renderSiteData(data) {
       allData = data;
-      const changed = key => {
-        const signature = JSON.stringify(data[key] || (key === "profile" ? {} : []));
-        if (renderedSiteParts[key] === signature) return false;
-        renderedSiteParts[key] = signature; return true;
+      const update = (key, values, render) => {
+        const signature = JSON.stringify(values);
+        if (renderedSiteParts[key] === signature) return;
+        try { render(); renderedSiteParts[key] = signature; }
+        catch (error) { console.error("แสดงผล " + key + ":", error); }
       };
-      if (changed("profile")) renderProfile();
-      if (changed("rates")) renderRates();
-      if (changed("portfolio")) {
+      update("profile", data.profile, renderProfile);
+      update("rates", data.rates || [], renderRates);
+      update("portfolio", data.portfolio, () => {
         renderAlbumGrid("photoAlbumGrid", data.portfolio.filter(item => item.mediaType === "image"), "image");
         renderAlbumGrid("videoAlbumGrid", data.portfolio.filter(item => item.mediaType === "video"), "video");
-      }
-      const scheduleChanged = changed("schedule");
-      if (changed("calendar") || scheduleChanged) renderCalendar();
-      if (scheduleChanged) renderScheduleVertical();
+      });
+      update("calendar", [data.calendar, data.schedule], renderCalendar);
+      update("schedule", data.schedule, renderScheduleVertical);
     }
     function getThumbnailImageUrl(url, width = 800) {
       const full = getDisplayImageUrl(url);
@@ -1391,8 +1427,8 @@
         <div class="rate-edit-actions"><button type="button" class="btn btn-outline" onclick="addRateRow(${i})">+ เพิ่มเรทในหัวข้อนี้</button><button type="button" class="btn btn-outline" onclick="moveRateGroup(${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑ หัวข้อ</button><button type="button" class="btn btn-outline" onclick="moveRateGroup(${i}, 1)" ${i === rateGroups.length - 1 ? 'disabled' : ''}>↓ หัวข้อ</button><button type="button" class="btn btn-danger" onclick="removeRateGroup(${i})">ลบหัวข้อนี้</button></div>
       </div>`).join('') : '<p class="rates-empty">กดเพิ่มหัวข้อใหญ่เพื่อเริ่มกรอกเรทราคา</p>';
     }
-    function addRateGroup() { collectRateDraft(); rateGroups.push({ heading: "", rates: [{ name: "", price: "", details: "" }] }); renderRateEditor(); document.getElementById("rateHeading" + (rateGroups.length - 1)).focus(); }
-    function addRateRow(i) { collectRateDraft(); rateGroups[i].rates.push({ name: "", price: "", details: "" }); renderRateEditor(); document.getElementById(`rateName${i}_${rateGroups[i].rates.length - 1}`).focus(); }
+    function addRateGroup() { collectRateDraft(); rateGroups.unshift({ heading: "", rates: [{ name: "", price: "", details: "" }] }); renderRateEditor(); document.getElementById("rateHeading" + 0).focus(); }
+    function addRateRow(i) { collectRateDraft(); rateGroups[i].rates.unshift({ name: "", price: "", details: "" }); renderRateEditor(); document.getElementById(`rateName${i}_${0}`).focus(); }
     function removeRateGroup(i) { collectRateDraft(); rateGroups.splice(i, 1); renderRateEditor(); }
     function removeRateRow(i, j) { collectRateDraft(); rateGroups[i].rates.splice(j, 1); renderRateEditor(); }
     function moveRateGroup(i, delta) { collectRateDraft(); const t = i + delta; if (t < 0 || t >= rateGroups.length) return; [rateGroups[i], rateGroups[t]] = [rateGroups[t], rateGroups[i]]; renderRateEditor(); }
@@ -1413,7 +1449,7 @@
 
     let editingAlbumItems = [];
     let editingAlbumDefaults = {};
-    if (token) enterPreviewMode();
+
 
     async function handleLogin(e) {
       e.preventDefault();
@@ -1428,7 +1464,7 @@
         });
         const data = await res.json();
         if (data.success) {
-          sessionStorage.setItem("adminPassword", pwd);
+          try { sessionStorage.setItem("adminPassword", pwd); } catch (error) {}
           token = pwd;
           showNotification("เข้าสู่ระบบสำเร็จ!");
           enterPreviewMode();
@@ -1438,7 +1474,7 @@
     }
 
     function logout() {
-      sessionStorage.removeItem("adminPassword");
+      try { sessionStorage.removeItem("adminPassword"); } catch (error) {}
       location.reload();
     }
 
@@ -1451,12 +1487,18 @@
       startLiveTimers();
     }
 
-    function openDashboard() {
+    async function openDashboard() {
       document.getElementById("previewMode").style.display = "none";
       document.getElementById("dashboardMode").style.display = "grid";
       document.body.style.overflow = "hidden";
       stopLiveTimers();
-      renderAdminPanels();
+      if (validSiteData(allData)) renderAdminPanels();
+      try {
+        const data = await requestSiteData(false, validSiteData(allData));
+        if (data && document.getElementById("dashboardMode").style.display !== "none") { allData = data; renderAdminPanels(); }
+      } catch (error) {
+        showNotification(validSiteData(allData) ? "แสดงข้อมูลที่มีอยู่ แต่ยังตรวจข้อมูลล่าสุดไม่ได้" : "โหลดข้อมูลไม่สำเร็จ กรุณากดเปิดหน้าจัดการอีกครั้ง", true);
+      }
     }
 
     function closeDashboard() {
@@ -1483,11 +1525,13 @@
       document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       if (el) el.classList.add('active');
+      renderAdminTab(tabId);
     }
 
     function switchTabMobile(tabId) {
       document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
+      renderAdminTab(tabId);
     }
 
     function navigate(secId, el) {
@@ -1512,10 +1556,10 @@
         const data = await requestSiteData(false, !showStatus || !!cached);
         if (data && data === siteSnapshot) renderSiteData(data);
       } catch (err) {
-        if (err.name === "AbortError") return;
+        if (err.name === "AbortError" && (cached || siteWrites)) return;
         console.error(err);
         if (showStatus && !cached) {
-          showStatusPopup("โหลดข้อมูลไม่สำเร็จ", err.message || "ไม่สามารถเชื่อมต่อกับระบบได้ กรุณาลองใหม่อีกครั้ง", "error");
+          showStatusPopup("โหลดข้อมูลไม่สำเร็จ", err.name === "AbortError" ? "การโหลดใช้เวลานาน กรุณาลองเปิดหน้าจัดการอีกครั้ง" : err.message || "ไม่สามารถเชื่อมต่อกับระบบได้ กรุณาลองใหม่อีกครั้ง", "error");
           hideStatusPopup(1800);
         }
       }
@@ -1563,7 +1607,7 @@
       
       let extraLinks = [];
       try { extraLinks = JSON.parse(p.socialLinks || "[]"); } catch(e){}
-      extraLinks.forEach(l => {
+      (Array.isArray(extraLinks) ? extraLinks : []).filter(l => l && typeof l.url === "string").forEach(l => {
         const a = document.createElement("a");
         a.className = "contact-card extra-social-card";
         a.target = "_blank";
@@ -1588,10 +1632,13 @@
         return;
       }
 
+      items = newestPortfolio(items);
       const albums = Object.create(null);
+      const albumKeys = [];
       items.forEach(item => {
         const key = item.title;
         if (!albums[key]) {
+          albumKeys.push(key);
           albums[key] = {
             title: item.title,
             category: item.category,
@@ -1607,7 +1654,7 @@
         albums[key].items.push(item);
       });
 
-      container.innerHTML = Object.keys(albums).map(key => {
+      container.innerHTML = albumKeys.map(key => {
         const alb = albums[key];
         const safeTitle = escapeQuotes(alb.title);
         const imgUrl = getThumbnailImageUrl(alb.coverUrl);
@@ -1815,11 +1862,7 @@
       if (!list.length) { const empty = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงาน</p>'; if (container._scheduleHtml !== empty) { container.innerHTML = empty; container._scheduleHtml = empty; } return; }
 
       // คิวงานที่เพิ่มล่าสุดอยู่บนสุด ไม่ว่ากำหนดวันทำงานจะเป็นวันไหน
-      const sorted = [...list].sort((a, b) => {
-        const ac = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bc = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return bc - ac;
-      });
+      const sorted = [...list].sort(compareNewest);
       const scheduleHtml = sorted.map(item => {
         const dates = (item.dates && item.dates.length ? item.dates : [item.date]).filter(Boolean);
         const now = new Date();
@@ -1849,18 +1892,28 @@
     }
 
     function renderAdminPanels() {
-      populateRateEditor();
-      populateProfileForm();
-      renderAdminSchedule();
-      renderAdminFeatured();
-      renderAdminPortfolioGroupList('adminPhotoList', 'image');
-      renderAdminPortfolioGroupList('adminVideoList', 'video');
-      renderAdminCalendar();
-      if (!document.querySelector("#schedDatePickerContainer input[type='date']")) {
-        setScheduleDateInputs([], "schedDatePickerContainer", "schedDateSummary");
-      }
+      renderAdminTab((document.querySelector(".admin-tab.active") || {}).id || "tab-photos");
     }
-
+    function renderAdminTab(tabId) {
+      const tab = document.getElementById(tabId); if (!tab) return;
+      const signature = JSON.stringify(tabId === "tab-profile" || tabId === "tab-featured" ? allData.profile : tabId === "tab-rates" ? allData.rates : tabId === "tab-calendar" || tabId === "tab-schedule" ? [allData.schedule, allData.calendar] : allData.portfolio);
+      if (tab._renderedData === signature) return;
+      if (tabId === "tab-photos") renderAdminPortfolioGroupList("adminPhotoList", "image");
+      else if (tabId === "tab-videos") renderAdminPortfolioGroupList("adminVideoList", "video");
+      else if (tabId === "tab-rates") populateRateEditor();
+      else if (tabId === "tab-profile") populateProfileForm();
+      else if (tabId === "tab-featured") renderAdminFeatured();
+      else if (tabId === "tab-calendar") renderAdminCalendar();
+      else if (tabId === "tab-schedule") {
+        renderAdminSchedule();
+        if (!document.querySelector("#schedDatePickerContainer input[type='date']")) setScheduleDateInputs([], "schedDatePickerContainer", "schedDateSummary");
+      }
+      tab._renderedData = signature;
+    }
+    async function refreshAdminAfterSave() {
+      try { await reloadAdmin(); }
+      catch (error) { showNotification("บันทึกแล้ว แต่โหลดรายการล่าสุดยังไม่สำเร็จ เปิดหน้าจัดการอีกครั้งเพื่ออัปเดต", true); }
+    }
     async function reloadAdmin() {
       const data = await requestSiteData(true, false);
       if (data && data === siteSnapshot) { allData = data; renderAdminPanels(); }
@@ -1975,7 +2028,7 @@
         closeCalModal();
         if (result.success) { 
           showNotification("บันทึกปฏิทินเรียบร้อย!"); 
-          await reloadAdmin(); 
+          await refreshAdminAfterSave(); 
         } else { 
           showNotification(result.message || "บันทึกปฏิทินล้มเหลว", true); 
         }
@@ -1996,7 +2049,7 @@
         });
         const result = await res.json();
         closeCalModal();
-        if (result.success) { showNotification("รีเซ็ตสถานะเรียบร้อย!"); await reloadAdmin(); }
+        if (result.success) { showNotification("รีเซ็ตสถานะเรียบร้อย!"); await refreshAdminAfterSave(); }
       } catch(e) {}
     }
 
@@ -2083,7 +2136,7 @@
         btn.innerText = "บันทึกข้อมูลทั้งหมด"; btn.disabled = false;
         if (result.success) { 
           showNotification("บันทึกสำเร็จ!"); 
-          await reloadAdmin();
+          await refreshAdminAfterSave();
         } else showNotification(result.message, true);
       } catch(err) {
         btn.innerText = "บันทึกข้อมูลทั้งหมด"; btn.disabled = false;
@@ -2182,7 +2235,7 @@
         if (result.success) {
           showNotification("เพิ่มคิวงานสำเร็จ!");
           resetSchedForm();
-          await reloadAdmin();
+          await refreshAdminAfterSave();
         } else showNotification(result.message, true);
       } catch(err) {
         btn.innerText = "บันทึกคิวงาน"; btn.disabled = false;
@@ -2238,7 +2291,7 @@
         if (result.success) {
           closeEditScheduleModal();
           showNotification("แก้ไขคิวงานสำเร็จ!");
-          await reloadAdmin();
+          await refreshAdminAfterSave();
         } else showNotification(result.message,true);
       } catch(err) {
         btn.innerText = "บันทึกการแก้ไข"; btn.disabled = false;
@@ -2255,11 +2308,7 @@
 
     function renderAdminSchedule() {
       const c = document.getElementById("adminScheduleList");
-      const list = [...(allData.schedule || [])].sort((a,b) => {
-        const ac = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bc = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return bc - ac;
-      });
+      const list = [...(allData.schedule || [])].sort(compareNewest);
       if (!list.length) { c.innerHTML = '<p style="color:var(--text-muted);">ไม่มีรายการงาน</p>'; return; }
       c.innerHTML = list.map(i => {
         const dates = (i.dates && i.dates.length ? i.dates : [i.date]).filter(Boolean);
@@ -2309,7 +2358,7 @@
           selectedFeaturedFiles = [];
           document.getElementById("featuredFilesInput").value = "";
           document.getElementById("featuredPreviewContainer").innerHTML = "";
-          await reloadAdmin(); 
+          await refreshAdminAfterSave(); 
         } else showNotification(result.message, true);
       } catch(err) {
         btn.innerText = "อัปโหลดรูปภาพหน้าแรก"; btn.disabled = false;
@@ -2341,7 +2390,7 @@
           body: JSON.stringify(payload)
         });
         const result = await res.json();
-        if (result.success) { showNotification("ลบรูปภาพสำเร็จ!"); reloadAdmin(); }
+        if (result.success) { showNotification("ลบรูปภาพสำเร็จ!"); refreshAdminAfterSave(); }
       } catch(e) {}
     }
 
@@ -2400,7 +2449,7 @@
           document.getElementById('photoLinkContainer').innerHTML = '';
           selectedPhotoFiles = [];
           document.getElementById("pImgPreviewContainer").innerHTML = "";
-          await reloadAdmin();
+          await refreshAdminAfterSave();
         } else {
           showNotification("อัปโหลดล้มเหลว กรุณาลองใหม่อีกครั้ง", true);
         }
@@ -2430,32 +2479,111 @@
       });
     }
 
-    async function videoUploadRequest(payload, timeout = 90000) {
+    function pendingVideoUpload(value) {
+      const key = "pending-video:" + API_URL;
+      try {
+        if (value === null) { sessionStorage.removeItem(key); return null; }
+        if (value) { sessionStorage.setItem(key, JSON.stringify(value)); return value; }
+        return JSON.parse(sessionStorage.getItem(key) || "null");
+      } catch (error) { return null; }
+    }
+    function rememberCurrentData() {
+      const data = { ...allData, success: true, version: "", portfolio: newestPortfolio(allData.portfolio || []) };
+      allData = data; siteSnapshot = data;
+      try { sessionStorage.setItem(SITE_SNAPSHOT_KEY, JSON.stringify({ savedAt: Date.now(), data })); } catch (error) {}
+    }
+    async function videoUploadRequest(payload, timeout = 120000, signal) {
       const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), timeout);
+      const abort = () => controller.abort();
+      if (signal) { if (signal.aborted) abort(); else signal.addEventListener("abort", abort, { once: true }); }
       try {
         const res = await apiFetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), signal: controller.signal }, { silent: true });
-        const result = await res.json(); if (!result.success) throw new Error(result.message || "บันทึกวิดีโอไม่สำเร็จ"); return result;
+        const result = await res.json();
+        if (!result.success) { const error = new Error(result.message || "เซิร์ฟเวอร์ปฏิเสธการบันทึก"); error.serverRejected = true; throw error; }
+        if (payload.isLast && !result.item && result.fileId) {
+          result.completed = true;
+          result.item = { id: payload.uploadId, title: payload.title, category: payload.category, mediaType: "video", fileId: result.fileId, fileUrl: result.fileUrl || "https://drive.google.com/file/d/" + result.fileId + "/preview", details: payload.details || "", extLink: payload.extLink || "", uploadedAt: Date.now(), createdAt: new Date().toISOString(), itemOrder: 0 };
+        }
+        return result;
+      } finally { clearTimeout(timer); if (signal) signal.removeEventListener("abort", abort); }
+    }
+    async function queryVideoUpload(uploadId) {
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
+      try {
+        // This endpoint reads one upload receipt instead of the whole website.
+        const response = await nativeFetch(API_URL + "?action=uploadStatus&uploadId=" + encodeURIComponent(uploadId), { cache: "no-store", signal: controller.signal });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const data = await response.json();
+        const item = data.item || (data.portfolio || []).find(item => item.id === uploadId);
+        return data.success && item ? { success: true, completed: true, item } : null;
       } finally { clearTimeout(timer); }
     }
-    async function recoverVideoUpload(uploadId) {
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
-        try {
-          const response = await apiFetch(API_URL + "?fresh=1", { signal: controller.signal }, { silent: true }); const data = await response.json();
-          const item = data.success && (data.portfolio || []).find(item => item.id === uploadId);
-          if (item) return { success: true, completed: true, item };
-        } catch (err) { console.error(err); }
-        finally { clearTimeout(timer); }
-        if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 3000));
+    async function recoverVideoUpload(uploadId, attempts = 3) {
+      for (let attempt = 0; attempt < attempts; attempt++) {
+        try { const result = await queryVideoUpload(uploadId); if (result) return result; } catch (error) { console.error(error); }
+        if (attempt + 1 < attempts) await new Promise(resolve => setTimeout(resolve, 3000));
       }
       return null;
     }
+    async function finalizeVideoUpload(payload) {
+      let finished = false, directError = null;
+      const controller = new AbortController();
+      const direct = videoUploadRequest(payload, 240000, controller.signal).then(result => {
+        if (!result.completed || !result.item) throw new Error("ยังไม่ได้รับใบยืนยันบันทึกวิดีโอ");
+        return result;
+      }).catch(error => { directError = error; throw error; });
+      const monitor = (async () => {
+        for (let attempt = 0; attempt < 12 && !finished; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, attempt ? 8000 : 12000));
+          if (finished) throw new Error("หยุดตรวจสอบ");
+          try {
+            const result = await queryVideoUpload(payload.uploadId);
+            if (result) return result;
+          } catch (error) { console.error(error); }
+          if (directError && directError.serverRejected && attempt >= 1) throw directError;
+        }
+        throw new Error("ยังยืนยันผลบันทึกไม่ได้");
+      })();
+      try { return await Promise.any([direct, monitor]); }
+      catch (error) {
+        if (directError && directError.serverRejected) throw directError;
+        throw new Error("ส่งไฟล์แล้ว แต่ยังยืนยันผลบันทึกไม่ได้ ระบบจะตรวจรายการเดิมเมื่อเปิดเว็บอีกครั้ง กรุณาอย่าอัปโหลดซ้ำทันที");
+      } finally { finished = true; controller.abort(); await Promise.allSettled([direct]); }
+    }
+    function finishSavedVideo(result, uploadId) {
+      allData.portfolio = (allData.portfolio || []).filter(item => item.id !== result.item.id).concat(result.item);
+      rememberCurrentData(); pendingVideoUpload(null);
+      try {
+        document.getElementById("uploadVideoForm").reset(); document.getElementById("videoLinkContainer").innerHTML = ""; removeSelectedVideoFile();
+        renderAdminPortfolioGroupList("adminVideoList", "video");
+        renderAlbumGrid("videoAlbumGrid", allData.portfolio.filter(item => item.mediaType === "video"), "video");
+      } catch (error) { console.error(error); }
+      showStatusPopup("บันทึกวิดีโอสำเร็จ", "เพิ่มรายการวิดีโอแล้ว", "success"); hideStatusPopup(1500);
+      showNotification("บันทึกสำเร็จและแสดงรายการวิดีโอแล้ว");
+      // Housekeeping is independent of the confirmed save and never blocks the UI.
+      nativeFetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "cleanupVideoChunks", password: token, uploadId }) }).catch(error => console.error(error));
+    }
+    async function recoverPendingVideoOnOpen() {
+      const pending = pendingVideoUpload(); if (!pending || !pending.uploadId) return;
+      const result = await recoverVideoUpload(pending.uploadId, 1);
+      if (result) finishSavedVideo(result, pending.uploadId);
+    }
+
     async function handleUploadVideo(e) {
       e.preventDefault();
       if (!selectedVideoFile || !selectedVideoFile.size) { showNotification("กรุณาเลือกไฟล์วิดีโอที่มีข้อมูล", true); return; }
       const btn = document.getElementById("btnUpVid"), file = selectedVideoFile;
       if (btn.disabled) return;
       btn.disabled = true;
+      const pending = pendingVideoUpload();
+      if (pending && pending.fileName === file.name && pending.fileSize === file.size && Date.now() - pending.startedAt < 360000) {
+        try {
+          const result = await recoverVideoUpload(pending.uploadId, 2);
+          if (result) finishSavedVideo(result, pending.uploadId);
+          else showNotification("กำลังรอยืนยันไฟล์เดิม กรุณาเปิดเว็บตรวจรายการอีกครั้งก่อนอัปโหลดซ้ำ", true);
+        } finally { btn.disabled = false; btn.innerText = "อัปโหลดวิดีโอใหม่"; }
+        return;
+      }
       const chunkSize = 4 * 1024 * 1024, totalChunks = Math.ceil(file.size / chunkSize);
       const uploadId = "VID_" + Date.now() + "_" + Math.random().toString(36).slice(2);
       let completed = null;
@@ -2469,13 +2597,8 @@
           btn.innerText = progress; showStatusPopup("กำลังอัปโหลดวิดีโอ", progress, "loading");
           const payload = { action: "uploadVideoChunk", password: token, uploadId, chunkIndex: i, totalChunks, fileName: file.name, mimeType: file.type || "video/mp4", chunkData: base64.split(',')[1], isLast: last, title: document.getElementById("pVidTitle").value, category: document.getElementById("pVidCat").value, details: document.getElementById("pVidDetails").value, extLink: collectDynamicLinks('videoLinkContainer'), ...(last && coverData ? { coverData } : {}) };
           if (last) {
-            try { completed = await videoUploadRequest(payload); }
-            catch (err) {
-              showStatusPopup("กำลังตรวจสอบผลบันทึก", "ตรวจสอบว่าบันทึกวิดีโอสำเร็จแล้วหรือไม่...", "loading");
-              completed = await recoverVideoUpload(uploadId);
-              if (!completed) throw new Error("ยังยืนยันผลบันทึกไม่ได้ กรุณารีเฟรชรายการเพื่อตรวจสอบก่อนอัปโหลดซ้ำ");
-            }
-            if (!completed.completed || !completed.item) throw new Error("เซิร์ฟเวอร์ยังไม่ยืนยันบันทึกครบ กรุณาอัปเดต Code.gs และ Deployment เป็นเวอร์ชันล่าสุด");
+            pendingVideoUpload({ uploadId, fileName: file.name, fileSize: file.size, startedAt: Date.now() });
+            completed = await finalizeVideoUpload(payload);
           } else {
             let lastError;
             for (let attempt = 0; attempt < 3; attempt++) {
@@ -2485,12 +2608,8 @@
             if (lastError) throw lastError;
           }
         }
-        allData.portfolio = (allData.portfolio || []).filter(item => item.id !== completed.item.id).concat(completed.item);
-        document.getElementById('uploadVideoForm').reset(); document.getElementById('videoLinkContainer').innerHTML = ''; removeSelectedVideoFile();
-        renderAdminPortfolioGroupList('adminVideoList', 'video'); renderAlbumGrid('videoAlbumGrid', allData.portfolio.filter(item => item.mediaType === 'video'), 'video');
-        showStatusPopup("บันทึกวิดีโอสำเร็จ", "เพิ่มผลงานแล้ว Google Drive อาจใช้เวลาเตรียมวิดีโอสำหรับเล่น", "success"); hideStatusPopup(1500);
-        showNotification("บันทึกสำเร็จและแสดงรายการวิดีโอแล้ว");
-      } catch (err) { showStatusPopup("ตรวจสอบการอัปโหลด", err.message || "อัปโหลดไม่สำเร็จ", "error"); hideStatusPopup(3500); showNotification(err.message, true); }
+        finishSavedVideo(completed, uploadId);
+      } catch (err) { if (err.serverRejected) pendingVideoUpload(null); showStatusPopup("ตรวจสอบการอัปโหลด", err.message || "ยังยืนยันผลอัปโหลดไม่ได้", "error"); hideStatusPopup(3500); showNotification(err.message, true); }
       finally { btn.innerText = "อัปโหลดวิดีโอใหม่"; btn.disabled = false; }
     }
 
@@ -2499,15 +2618,16 @@
       const items = (allData.portfolio || []).filter(x => x.mediaType === type);
       if (!items.length) { c.innerHTML = '<p style="color:var(--text-muted);">ไม่มีข้อมูลอัลบั้ม</p>'; return; }
 
-      items.sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || (a.itemOrder ?? 0) - (b.itemOrder ?? 0));
+      items.splice(0, items.length, ...newestPortfolio(items));
 
       const groups = Object.create(null);
+      const groupKeys = [];
       items.forEach(i => {
-        if (!groups[i.title]) groups[i.title] = { title: i.title, category: i.category, details: i.details, extLink: i.extLink, count: 0, mediaType: type, createdAt: i.createdAt || "", coverUrl: i.fileUrl, fileId: i.fileId };
+        if (!groups[i.title]) { groupKeys.push(i.title); groups[i.title] = { title: i.title, category: i.category, details: i.details, extLink: i.extLink, count: 0, mediaType: type, createdAt: i.createdAt || "", coverUrl: i.fileUrl, fileId: i.fileId }; }
         groups[i.title].count++;
       });
 
-      c.innerHTML = Object.keys(groups).map((k, idx) => {
+      c.innerHTML = groupKeys.map((k, idx) => {
         const g = groups[k];
         const safeTitle = rateEscape(g.title);
         return `
@@ -2598,7 +2718,7 @@
         const data = await res.json();
         if (data.success) {
           showNotification("บันทึกลำดับอัลบั้มสำเร็จ!");
-          await reloadAdmin();
+          await refreshAdminAfterSave();
         } else {
           showNotification("เกิดข้อผิดพลาดในการบันทึก", true);
         }
@@ -2738,23 +2858,43 @@ File ID: ${rateEscape(item.fileId)}</div>
       // Changing shared links explicitly applies them to all files.
       if (payload.extLink !== (editingAlbumDefaults.extLink || "[]") && !(payload.extLink === "[]" && !editingAlbumDefaults.extLink)) payload.itemUpdates.forEach(item => item.extLink = payload.extLink);
 
+      let saved = false;
       try {
-        const res = await apiFetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-        const result = await res.json();
-        btn.innerText = "บันทึกการแก้ไข"; btn.disabled = false;
-        if (result.success) {
-          closeEditAlbumModal(); 
-          showNotification("แก้ไขอัลบั้มเรียบร้อย!"); 
-          await reloadAdmin();
-        } else showNotification(result.message, true);
-      } catch(err) {
-        btn.innerText = "บันทึกการแก้ไข"; btn.disabled = false;
-        showNotification("การบันทึกล้มเหลว", true);
+        const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 120000);
+        try {
+          const res = await apiFetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), signal: controller.signal });
+          const result = await res.json();
+          if (!result.success) throw new Error(result.message || "ยังยืนยันผลบันทึกไม่ได้");
+          saved = true;
+        } finally { clearTimeout(timer); }
+      } catch (error) {
+        try { saved = await verifyAlbumEdit(payload); } catch (verifyError) { console.error(verifyError); }
+        if (!saved) showNotification(error.name === "AbortError" ? "ยังยืนยันผลบันทึกไม่ได้ กรุณาเปิดรายการอีกครั้งก่อนบันทึกซ้ำ" : error.message || "ยังยืนยันผลบันทึกไม่ได้", true);
+      } finally { btn.innerText = "บันทึกการแก้ไข"; btn.disabled = false; }
+      if (saved) {
+        const changes = new Map(payload.itemUpdates.map(item => [String(item.id), item]));
+        const positions = new Map(payload.itemIds.map((id, index) => [String(id), index + 1]));
+        allData.portfolio = (allData.portfolio || []).map(item => changes.has(String(item.id)) ? { ...item, ...changes.get(String(item.id)), title: payload.newTitle, category: payload.category, itemOrder: positions.get(String(item.id)) } : item);
+        rememberCurrentData(); closeEditAlbumModal();
+        try { renderAdminPanels(); renderSiteData(allData); } catch (error) { console.error(error); }
+        showNotification("บันทึกการแก้ไขเรียบร้อยแล้ว");
       }
+    }
+    async function verifyAlbumEdit(payload) {
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 25000);
+      try {
+        const url = API_URL + "?action=albumStatus&mediaType=" + encodeURIComponent(payload.mediaType) + "&title=" + encodeURIComponent(payload.newTitle);
+        const res = await nativeFetch(url, { cache: "no-store", signal: controller.signal });
+        if (!res.ok) return false;
+        const data = await res.json();
+        const items = data.items || data.portfolio || [];
+        return data.success && payload.itemIds.length > 0 && payload.itemIds.every((id, index) => {
+          const actual = items.find(item => String(item.id) === String(id));
+          const wanted = payload.itemUpdates.find(item => String(item.id) === String(id));
+          return actual && actual.title === payload.newTitle && actual.category === payload.category && actual.mediaType === payload.mediaType &&
+            actual.details === wanted.details && actual.extLink === wanted.extLink && Number(actual.itemOrder) === index + 1;
+        });
+      } finally { clearTimeout(timer); }
     }
 
     async function deletePortfolioGroup(title, type) {
@@ -2768,7 +2908,7 @@ File ID: ${rateEscape(item.fileId)}</div>
         const result = await res.json();
         if (result.success) { 
           showNotification("ลบอัลบั้มสำเร็จ!"); 
-          await reloadAdmin();
+          await refreshAdminAfterSave();
         }
       } catch(e) {}
     }
@@ -2784,10 +2924,11 @@ File ID: ${rateEscape(item.fileId)}</div>
         const result = await res.json();
         if (result.success) { 
           showNotification("ลบรายการสำเร็จ!"); 
-          await reloadAdmin();
+          await refreshAdminAfterSave();
         }
       } catch(e) {}
     }
+    if (token) { enterPreviewMode(); recoverPendingVideoOnOpen().catch(error => console.error(error)); }
     document.addEventListener("visibilitychange", () => { if (!document.hidden && token && document.getElementById("previewMode").style.display !== "none") loadData(false); });
   </script>
 </body>

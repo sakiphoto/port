@@ -423,7 +423,7 @@
     let statusRequestCount = 0;
     let statusHideTimer = null;
     function showStatusPopup(title, message, type = "loading") {
-      const modal=document.getElementById("systemStatusModal"); if(!modal)return;
+      clearTimeout(statusHideTimer); const modal=document.getElementById("systemStatusModal"); if(!modal)return;
       document.getElementById("systemStatusTitle").innerText=title||"กำลังดำเนินการ...";
       const msg=document.getElementById("systemStatusMessage"); msg.innerText=message||"กรุณารอสักครู่"; msg.className="system-status-message"+(type==="error"?" system-status-error":"");
       document.getElementById("systemStatusIcon").innerHTML=type==="loading"?'<div class="system-status-spinner"></div>':(type==="success"?"✓":"!"); modal.classList.add("active");
@@ -432,20 +432,53 @@
     async function apiFetch(url,options={},statusOptions={}){
       const silent=statusOptions.silent===true;
       if(!silent){statusRequestCount++;showStatusPopup("กำลังโหลดข้อมูล...","กำลังเชื่อมต่อกับข้อมูลเว็บไซต์ กรุณารอสักครู่","loading");}
-      try{const response=await nativeFetch(url,options);if(!response.ok)throw new Error("HTTP "+response.status);return response;}
+      try{const response=await nativeFetch(url,{cache:"no-store",...options});if(!response.ok)throw new Error("HTTP "+response.status);const data=await response.json();return {ok:true,status:response.status,json:async()=>data};}
       catch(err){if(!silent)showStatusPopup("โหลดข้อมูลไม่สำเร็จ","ไม่สามารถเชื่อมต่อกับระบบได้ กรุณาลองใหม่อีกครั้ง","error");throw err;}
       finally{if(!silent){statusRequestCount=Math.max(0,statusRequestCount-1);if(statusRequestCount===0)hideStatusPopup(250);}}
     }
     
 
     // Keep one in-flight data read and a short-lived snapshot of public data only.
-    const SITE_SNAPSHOT_KEY = "portfolio-public-v2:" + API_URL;
+    const SITE_SNAPSHOT_KEY = "portfolio-public-v3:" + API_URL;
     let siteSnapshot = null;
     let siteRead = null;
     let siteReadController = null;
     let siteReadEpoch = 0;
     let siteWrites = 0;
     const renderedSiteParts = Object.create(null);
+
+    function createdStamp(item) {
+      if (Number(item.uploadedAt) > 0) return Number(item.uploadedAt);
+      let text = String(item.createdAt || "").trim();
+      let match = text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})(.*)$/);
+      if (match) { let year = Number(match[3]); if (year > 2400) year -= 543; text = year + "-" + match[2].padStart(2, "0") + "-" + match[1].padStart(2, "0") + match[4]; }
+      if (/^\d{4}-\d{2}-\d{2} \d{2}:/.test(text)) text = text.replace(" ", "T") + "+07:00";
+      const value = Date.parse(text); return Number.isFinite(value) ? value : 0;
+    }
+    function compareNewest(a, b) {
+      return createdStamp(b) - createdStamp(a) || (Number(b.rowOrder) || 0) - (Number(a.rowOrder) || 0);
+    }
+    function newestPortfolio(items) {
+      const groups = new Map();
+      items.forEach((original, index) => {
+        const item = { ...original, rowOrder: Number(original.rowOrder) || index + 1 };
+        const key = item.mediaType + "\u0000" + item.title;
+        if (!groups.has(key)) groups.set(key, { items: [], stamp: 0, manual: 0, order: 9999, row: 0 });
+        const group = groups.get(key); group.items.push(item);
+        group.stamp = Math.max(group.stamp, createdStamp(item)); group.row = Math.max(group.row, item.rowOrder);
+        if (Number(item.albumOrderAt) > group.manual) { group.manual = Number(item.albumOrderAt); group.order = Number(item.displayOrder) || 0; }
+      });
+      return Array.from(groups.values()).sort((a, b) =>
+        Math.max(b.stamp, b.manual) - Math.max(a.stamp, a.manual) ||
+        (a.manual && a.manual === b.manual ? a.order - b.order : 0) || b.row - a.row
+      ).flatMap(group => group.items.sort((a, b) => {
+        const ao = Number(a.itemOrder) || 0, bo = Number(b.itemOrder) || 0;
+        if (ao && bo) return ao - bo;
+        if (ao !== bo) return ao ? 1 : -1;
+        return compareNewest(a, b);
+      }));
+    }
+
     function validSiteData(data) {
       return data && data.success === true && data.profile && typeof data.profile === "object" &&
         ["portfolio", "schedule", "calendar"].every(key => Array.isArray(data[key]));
@@ -454,7 +487,7 @@
       if (siteSnapshot) return siteSnapshot;
       try {
         const saved = JSON.parse(sessionStorage.getItem(SITE_SNAPSHOT_KEY) || "null");
-        if (saved && Date.now() - saved.savedAt < 300000 && validSiteData(saved.data)) siteSnapshot = saved.data;
+        if (saved && Date.now() - saved.savedAt < 1800000 && validSiteData(saved.data)) siteSnapshot = saved.data;
       } catch (error) {}
       return siteSnapshot;
     }
@@ -482,6 +515,8 @@
           if (!data.success) throw new Error(data.message || "โหลดข้อมูลไม่สำเร็จ");
           if (data.unchanged && siteSnapshot && data.version === siteSnapshot.version) return siteSnapshot;
           if (!validSiteData(data)) throw new Error("ข้อมูลเว็บไซต์ไม่ครบถ้วน กรุณาลองใหม่");
+          data.portfolio = newestPortfolio(data.portfolio);
+          data.schedule = data.schedule.map((item, index) => ({ ...item, rowOrder: item.rowOrder || index + 1 })).sort(compareNewest);
           siteSnapshot = data;
           try { sessionStorage.setItem(SITE_SNAPSHOT_KEY, JSON.stringify({ savedAt: Date.now(), data })); } catch (error) {}
           return data;
@@ -494,20 +529,20 @@
     }
     function renderSiteData(data) {
       allData = data;
-      const changed = key => {
-        const signature = JSON.stringify(data[key] || (key === "profile" ? {} : []));
-        if (renderedSiteParts[key] === signature) return false;
-        renderedSiteParts[key] = signature; return true;
+      const update = (key, values, render) => {
+        const signature = JSON.stringify(values);
+        if (renderedSiteParts[key] === signature) return;
+        try { render(); renderedSiteParts[key] = signature; }
+        catch (error) { console.error("แสดงผล " + key + ":", error); }
       };
-      if (changed("profile")) renderProfile();
-      if (changed("rates")) renderRates();
-      if (changed("portfolio")) {
+      update("profile", data.profile, renderProfile);
+      update("rates", data.rates || [], renderRates);
+      update("portfolio", data.portfolio, () => {
         renderAlbumGrid("photoAlbumGrid", data.portfolio.filter(item => item.mediaType === "image"), "image");
         renderAlbumGrid("videoAlbumGrid", data.portfolio.filter(item => item.mediaType === "video"), "video");
-      }
-      const scheduleChanged = changed("schedule");
-      if (changed("calendar") || scheduleChanged) renderCalendar();
-      if (scheduleChanged) renderScheduleVertical();
+      });
+      update("calendar", [data.calendar, data.schedule], renderCalendar);
+      update("schedule", data.schedule, renderScheduleVertical);
     }
     function getThumbnailImageUrl(url, width = 800) {
       const full = getDisplayImageUrl(url);
@@ -601,10 +636,10 @@
         const data = await requestSiteData(false, !showStatus || !!cached);
         if (data && data === siteSnapshot) renderSiteData(data);
       } catch (err) {
-        if (err.name === "AbortError") return;
+        if (err.name === "AbortError" && (cached || siteWrites)) return;
         console.error(err);
         if (showStatus && !cached) {
-          showStatusPopup("โหลดข้อมูลไม่สำเร็จ", err.message || "ไม่สามารถเชื่อมต่อกับระบบได้ กรุณาลองใหม่อีกครั้ง", "error");
+          showStatusPopup("โหลดข้อมูลไม่สำเร็จ", err.name === "AbortError" ? "การโหลดใช้เวลานาน กรุณาลองเปิดหน้าจัดการอีกครั้ง" : err.message || "ไม่สามารถเชื่อมต่อกับระบบได้ กรุณาลองใหม่อีกครั้ง", "error");
           hideStatusPopup(1800);
         }
       }
@@ -652,7 +687,7 @@
       
       let extraLinks = [];
       try { extraLinks = JSON.parse(p.socialLinks || "[]"); } catch(e){}
-      extraLinks.forEach(l => {
+      (Array.isArray(extraLinks) ? extraLinks : []).filter(l => l && typeof l.url === "string").forEach(l => {
         const a = document.createElement("a");
         a.className = "contact-card extra-social-card";
         a.target = "_blank";
@@ -677,12 +712,14 @@
         return;
       }
 
-      items = [...items].sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || (a.itemOrder ?? 0) - (b.itemOrder ?? 0));
+      items = newestPortfolio(items);
 
       const albums = Object.create(null);
+      const albumKeys = [];
       items.forEach(item => {
         const key = item.title;
         if (!albums[key]) {
+          albumKeys.push(key);
           albums[key] = {
             title: item.title,
             category: item.category,
@@ -698,7 +735,7 @@
         albums[key].items.push(item);
       });
 
-      container.innerHTML = Object.keys(albums).map(key => {
+      container.innerHTML = albumKeys.map(key => {
         const alb = albums[key];
         const safeTitle = alb.title.replace(/'/g, "\\'");
         const imgUrl = getThumbnailImageUrl(alb.coverUrl);
@@ -907,11 +944,7 @@
       if (!list.length) { const empty = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงาน</p>'; if (container._scheduleHtml !== empty) { container.innerHTML = empty; container._scheduleHtml = empty; } return; }
 
       // คิวงานที่เพิ่มล่าสุดอยู่บนสุด ไม่ว่ากำหนดวันทำงานจะเป็นวันไหน
-      const sorted = [...list].sort((a,b) => {
-        const ac = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bc = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return bc - ac;
-      });
+      const sorted = [...list].sort(compareNewest);
 
       const scheduleHtml = sorted.map(item => {
         const dates = (item.dates && item.dates.length ? item.dates : [item.date]).filter(Boolean);
