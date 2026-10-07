@@ -391,9 +391,22 @@
     .rates-empty { color: var(--text-muted); padding: 1rem; }
     .rate-edit-card { border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin: 1rem 0; }
     .rate-edit-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+    #calendarDayModal { z-index: 1600; }
+    .cal-day-cell[data-calendar-date] { cursor: pointer; }
+    .cal-day-cell[data-calendar-date]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   </style>
 </head>
 <body>
+  <div class="modal-overlay" id="calendarDayModal" role="dialog" aria-modal="true" aria-labelledby="calendarDayTitle" onclick="if(event.target===this) closeCalendarDay()" onkeydown="calendarDialogKeydown(event)">
+    <div class="album-modal-card" style="max-width:720px;">
+      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:center;margin-bottom:1rem;">
+        <h3 id="calendarDayTitle">รายละเอียดคิวงาน</h3>
+        <button type="button" id="calendarDayClose" class="toggle-btn" onclick="closeCalendarDay()" aria-label="ปิดรายละเอียดคิวงาน">× ปิด</button>
+      </div>
+      <div id="calendarDayContent"></div>
+    </div>
+  </div>
+
 
   <div id="customToast">🔔 <span id="toastMsg">แจ้งเตือนจากระบบ</span></div>
   <div id="systemStatusModal" aria-live="polite" aria-busy="true">
@@ -428,6 +441,7 @@
         <button style="background:transparent; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;" onclick="closeCalModal()">&times;</button>
       </div>
       <form onsubmit="handleSetCalendarModal(event)">
+        <div id="adminDayJobDetails" style="margin-bottom:1.25rem;"></div>
         <input type="hidden" id="modalCalDate">
         <div class="form-group">
           <label>วันที่เลือก (วัน/เดือน/ปี พ.ศ.)</label>
@@ -503,13 +517,19 @@
       <form id="editScheduleForm" onsubmit="handleSaveEditSchedule(event)">
         <input type="hidden" id="editSchedId">
         <div class="form-group">
-          <label>วันที่ปฏิบัติงาน (เลือกได้หลายวัน)</label>
-          <div id="editSchedDatePickerContainer"></div>
-          <button type="button" class="btn btn-outline" style="margin-top:0.5rem;" onclick="addScheduleDateInput('editSchedDatePickerContainer')">＋ เพิ่มวันที่ทำงาน</button>
+          <label>วันที่ปฏิบัติงาน</label>
+          <label for="editSchedDateMode">รูปแบบวันที่</label>
+              <select id="editSchedDateMode" onchange="toggleScheduleDateMode('editSched')"><option value="range">ช่วงวันที่เริ่มต้น–สิ้นสุด</option><option value="individual">เลือกวันที่แยกวัน</option></select>
+              <div id="editSchedRangeFields" class="form-grid-2" style="margin-top:.75rem;">
+                <div class="form-group"><label for="editSchedStartDate">วันที่เริ่มต้น</label><input type="date" id="editSchedStartDate" onchange="updateScheduleDateSummary('editSchedDatePickerContainer','editSchedDateSummary')" required></div>
+                <div class="form-group"><label for="editSchedEndDate">วันที่สิ้นสุด (รวมวันนี้ด้วย)</label><input type="date" id="editSchedEndDate" onchange="updateScheduleDateSummary('editSchedDatePickerContainer','editSchedDateSummary')" required></div>
+              </div>
+              <div id="editSchedIndividualFields" style="display:none;"><div id="editSchedDatePickerContainer"></div>
+          <button type="button" class="btn btn-outline" style="margin-top:0.5rem;" onclick="addScheduleDateInput('editSchedDatePickerContainer')">＋ เพิ่มวันที่ทำงาน</button></div>
           <div id="editSchedDateSummary" style="margin-top:0.6rem;color:var(--accent);font-size:0.82rem;"></div>
         </div>
         <div class="form-grid-2">
-          <div class="form-group"><label>ช่วงเวลา</label><input type="text" id="editSchedTime" required></div>
+          <div class="form-group"><label style="display:flex;gap:.5rem;align-items:center;"><input type="checkbox" id="editSchedAllDay" style="width:auto;" onchange="toggleScheduleAllDay('editSched')"> ทั้งวัน — ปิดรับงานในวันที่เลือก</label><label>ช่วงเวลา</label><input type="text" id="editSchedTime" required></div>
           <div class="form-group"><label>ชื่องาน / ลูกค้า</label><input type="text" id="editSchedTitle" required></div>
         </div>
         <div class="form-grid-2">
@@ -826,14 +846,20 @@
             <input type="hidden" id="schedId">
 
             <div class="form-group">
-              <label>วันที่ปฏิบัติงาน (เลือกได้หลายวัน)</label>
-              <div id="schedDatePickerContainer"></div>
-              <button type="button" class="btn btn-outline" style="margin-top:0.5rem;" onclick="addScheduleDateInput()">＋ เพิ่มวันที่ทำงาน</button>
+              <label>วันที่ปฏิบัติงาน</label>
+              <label for="schedDateMode">รูปแบบวันที่</label>
+              <select id="schedDateMode" onchange="toggleScheduleDateMode('sched')"><option value="range">ช่วงวันที่เริ่มต้น–สิ้นสุด</option><option value="individual">เลือกวันที่แยกวัน</option></select>
+              <div id="schedRangeFields" class="form-grid-2" style="margin-top:.75rem;">
+                <div class="form-group"><label for="schedStartDate">วันที่เริ่มต้น</label><input type="date" id="schedStartDate" onchange="updateScheduleDateSummary('schedDatePickerContainer','schedDateSummary')" required></div>
+                <div class="form-group"><label for="schedEndDate">วันที่สิ้นสุด (รวมวันนี้ด้วย)</label><input type="date" id="schedEndDate" onchange="updateScheduleDateSummary('schedDatePickerContainer','schedDateSummary')" required></div>
+              </div>
+              <div id="schedIndividualFields" style="display:none;"><div id="schedDatePickerContainer"></div>
+              <button type="button" class="btn btn-outline" style="margin-top:0.5rem;" onclick="addScheduleDateInput()">＋ เพิ่มวันที่ทำงาน</button></div>
               <div id="schedDateSummary" style="margin-top:0.6rem; color:var(--accent); font-size:0.82rem;"></div>
             </div>
 
             <div class="form-grid-2">
-              <div class="form-group"><label>ช่วงเวลา (เช่น 09:00 - 16:00)</label><input type="text" id="schedTime" placeholder="09:00 - 16:00" required></div>
+              <div class="form-group"><label style="display:flex;gap:.5rem;align-items:center;"><input type="checkbox" id="schedAllDay" style="width:auto;" onchange="toggleScheduleAllDay('sched')"> ทั้งวัน — ปิดรับงานในวันที่เลือก</label><label>ช่วงเวลา (เช่น 09:00 - 16:00)</label><input type="text" id="schedTime" placeholder="09:00 - 16:00" required></div>
               <div class="form-group"><label>ชื่องาน / ลูกค้า</label><input type="text" id="schedTitle" placeholder="เช่น ถ่ายภาพงานแต่งคุณแนน" required></div>
             </div>
             <div class="form-grid-2">
@@ -1534,6 +1560,51 @@
       renderCalendar();
     }
 
+    function calendarBookings(dateStr) {
+      return (allData.schedule || []).filter(job => (job.dates && job.dates.length ? job.dates : [job.date]).includes(dateStr));
+    }
+    function calendarDetailsHtml(dateStr) {
+      const jobs = calendarBookings(dateStr);
+      const setting = (allData.calendar || []).find(day => day.date === dateStr);
+      const full = jobs.some(job => job.allDay === true || String(job.time || "").trim() === "ทั้งวัน");
+      const status = full ? "🔴 ปิดรับงาน (ทั้งวัน)" : jobs.length ? "📌 มีคิวงานตามเวลาที่ระบุ" : setting && setting.statusType === "busy" ? "🔴 ไม่รับงาน (ตั้งค่าในปฏิทิน)" : setting && setting.statusType === "custom" ? "🟢 ว่าง: " + (setting.availableSlots || "-") : "🟢 ว่างทั้งวัน";
+      let html = '<p style="color:var(--accent);margin-bottom:1rem;">' + rateEscape(status) + '</p>';
+      if (!jobs.length) html += '<p style="color:var(--text-muted);">ไม่มีคิวงานในวันนี้</p>';
+      jobs.forEach(job => {
+        const dates = (job.dates && job.dates.length ? job.dates : [job.date]).filter(Boolean).sort();
+        const dateLabel = dates.length > 1 ? dates.map(formatThaiDateFull).join(' • ') : formatThaiDateFull(dates[0]);
+        let link = ''; const url = formatUrl(job.extLink || '');
+        if (/^https?:\/\//i.test(url)) link = '<a class="album-link-chip" href="' + rateEscape(url) + '" target="_blank" rel="noopener noreferrer">🔗 เปิดลิงก์งาน</a>';
+        html += '<div class="rate-edit-card" style="white-space:normal;">' +
+          '<h4 style="margin-bottom:.6rem;overflow-wrap:anywhere;">' + rateEscape(job.title || '-') + '</h4>' +
+          '<p style="white-space:pre-wrap;overflow-wrap:anywhere;">⏰ ' + rateEscape(job.allDay === true || String(job.time || '').trim() === 'ทั้งวัน' ? 'ทั้งวัน — ปิดรับงาน' : job.time || '-') + '</p>' +
+          '<p style="margin-top:.4rem;overflow-wrap:anywhere;">📅 ' + rateEscape(dateLabel) + '</p>' +
+          '<p style="margin-top:.4rem;white-space:pre-wrap;overflow-wrap:anywhere;">📍 ' + rateEscape(job.location || '-') + '</p>' +
+          '<p style="margin:.75rem 0;color:var(--text-muted);white-space:pre-wrap;overflow-wrap:anywhere;">' + rateEscape(job.details || 'ไม่มีรายละเอียดเพิ่มเติม') + '</p>' + link + '</div>';
+      });
+      if (setting && setting.note) html += '<p style="white-space:pre-wrap;overflow-wrap:anywhere;">หมายเหตุ: ' + rateEscape(setting.note) + '</p>';
+      return html;
+    }
+    function openCalendarDay(dateStr) {
+      const modal = document.getElementById('calendarDayModal'); modal.dataset.date = dateStr;
+      document.getElementById('calendarDayTitle').innerText = formatThaiDateFull(dateStr);
+      document.getElementById('calendarDayContent').innerHTML = calendarDetailsHtml(dateStr);
+      modal.classList.add('active'); document.getElementById('calendarDayClose').focus();
+    }
+    function closeCalendarDay() {
+      const modal = document.getElementById('calendarDayModal'); modal.classList.remove('active');
+      const cell = document.querySelector('[data-calendar-date="' + modal.dataset.date + '"]'); if (cell) cell.focus();
+    }
+    function calendarDialogKeydown(event) {
+      if (event.key === 'Escape') { event.preventDefault(); closeCalendarDay(); }
+      if (event.key === 'Tab') {
+        const items = Array.from(document.getElementById('calendarDayModal').querySelectorAll('button, a[href]'));
+        const first = items[0], last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    }
+
     function renderCalendar() {
       const yearBE = currentCalDate.getFullYear() + 543;
       const month = currentCalDate.getMonth();
@@ -1557,9 +1628,13 @@
 
         let statusPills = "";
 
-        if (dayBookings.length > 0) {
+        const closedAllDay = dayBookings.some(b => b.allDay === true || String(b.time || "").trim() === "ทั้งวัน");
+        if (closedAllDay) {
+          statusPills = `<div class="status-pill pill-busy">🔴 ปิดรับงาน (ทั้งวัน)</div>`;
+          dayBookings.forEach(b => { statusPills += `<div class="status-pill pill-booking">📌 มีคิวงาน ${rateEscape(b.time)}: ${rateEscape(b.title)}</div>`; });
+        } else if (dayBookings.length > 0) {
           dayBookings.forEach(b => {
-            statusPills += `<div class="status-pill pill-booking">📌 ${b.time}: ${b.title}</div>`;
+            statusPills += `<div class="status-pill pill-booking">📌 มีคิวงาน ${rateEscape(b.time)}: ${rateEscape(b.title)}</div>`;
           });
           if (calSetting && calSetting.availableSlots) {
             statusPills += `<div class="status-pill pill-avail">🟢 ว่าง: ${calSetting.availableSlots}</div>`;
@@ -1577,7 +1652,7 @@
         }
 
         grid.innerHTML += `
-          <div class="cal-day-cell">
+          <div class="cal-day-cell" data-calendar-date="${dateStr}" role="button" tabindex="0" aria-label="${rateEscape(formatThaiDateFull(dateStr))} ดูรายละเอียดคิวงาน" onclick="openCalendarDay('${dateStr}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCalendarDay('${dateStr}')}">
             <span class="cal-day-num">${day}</span>
             ${statusPills}
           </div>
@@ -1687,17 +1762,21 @@
       for (let day = 1; day <= totalDays; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const calSetting = (allData.calendar || []).find(c => c.date === dateStr);
-        const dayBookings = (allData.schedule || []).filter(s => s.date === dateStr);
+        const dayBookings = (allData.schedule || []).filter(s => (s.dates && s.dates.length ? s.dates : [s.date]).includes(dateStr));
 
         let statusPills = "";
 
         if (dayBookings.length > 0) {
           dayBookings.forEach(b => {
-            statusPills += `<div class="admin-pill admin-pill-job">📌 งาน: ${b.title}</div>`;
+            statusPills += `<div class="admin-pill admin-pill-job">📌 มีคิวงาน ${rateEscape(b.time)}: ${rateEscape(b.title)}</div>`;
           });
         }
 
-        if (calSetting) {
+        if (dayBookings.some(b => b.allDay === true || String(b.time || "").trim() === "ทั้งวัน")) {
+          statusPills += `<div class="admin-pill admin-pill-busy">🔴 ปิดรับงาน (ทั้งวัน)</div>`;
+        } else if (dayBookings.length && (!calSetting || calSetting.statusType === "full_available")) {
+          // A timed booking must not label this day as available all day.
+        } else if (calSetting) {
           if (calSetting.statusType === "busy") {
             statusPills += `<div class="admin-pill admin-pill-busy">🔴 ไม่รับงาน</div>`;
           } else if (calSetting.statusType === "custom") {
@@ -1719,6 +1798,7 @@
     }
 
     function openCalModal(dateStr) {
+      document.getElementById("adminDayJobDetails").innerHTML = calendarDetailsHtml(dateStr);
       document.getElementById("modalCalDate").value = dateStr;
       document.getElementById("modalDisplayDate").value = formatThaiDateFull(dateStr);
       
@@ -1884,16 +1964,46 @@
       }
     }
 
-    function getScheduleDateInputs(containerId = "schedDatePickerContainer") {
-      return Array.from(document.querySelectorAll(`#${containerId} input[type="date"]`))
-        .map(x => x.value).filter(Boolean);
+    function expandScheduleDates(startDate, endDate) {
+      if (!startDate || !endDate) return [];
+      const start = new Date(startDate + 'T00:00:00Z'), end = new Date(endDate + 'T00:00:00Z');
+      if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || start.toISOString().slice(0,10) !== startDate || end.toISOString().slice(0,10) !== endDate) throw new Error("วันที่ไม่ถูกต้อง");
+      const count = Math.round((end - start) / 86400000) + 1;
+      if (count < 1) throw new Error("วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น");
+      if (count > 3660) throw new Error("ช่วงวันที่ยาวเกินไป (สูงสุด 3660 วัน)");
+      return Array.from({length:count}, (_, i) => new Date(start.getTime() + i * 86400000).toISOString().slice(0,10));
     }
-
+    function schedulePrefix(containerId) { return containerId === 'editSchedDatePickerContainer' ? 'editSched' : 'sched'; }
+    function getScheduleDateInputs(containerId = "schedDatePickerContainer") {
+      const prefix = schedulePrefix(containerId);
+      if (document.getElementById(prefix + 'DateMode').value === 'range') return expandScheduleDates(document.getElementById(prefix + 'StartDate').value, document.getElementById(prefix + 'EndDate').value);
+      return Array.from(document.querySelectorAll(`#${containerId} input[type="date"]`)).map(x => x.value).filter(Boolean);
+    }
     function updateScheduleDateSummary(containerId = "schedDatePickerContainer", summaryId = "schedDateSummary") {
-      const dates = [...new Set(getScheduleDateInputs(containerId))].sort();
       const summary = document.getElementById(summaryId);
-      if (summary) summary.innerText = dates.length ? `📅 เลือกแล้ว ${dates.length} วัน: ${dates.map(formatThaiDateFull).join(" • ")}` : "";
-      return dates;
+      try {
+        const dates = [...new Set(getScheduleDateInputs(containerId))].sort();
+        if (summary) summary.innerText = dates.length ? `📅 ${formatThaiDateFull(dates[0])} ถึง ${formatThaiDateFull(dates[dates.length - 1])} (${dates.length} วัน)` + (document.getElementById(schedulePrefix(containerId) + 'AllDay').checked ? ' — ทั้งวัน / ปิดรับงานทุกวันที่เลือก' : '') : '';
+        return dates;
+      } catch(err) { if (summary) summary.innerText = err.message; return []; }
+    }
+    function toggleScheduleDateMode(prefix = 'sched') {
+      const range = document.getElementById(prefix + 'DateMode').value === 'range';
+      document.getElementById(prefix + 'RangeFields').style.display = range ? '' : 'none';
+      document.getElementById(prefix + 'IndividualFields').style.display = range ? 'none' : '';
+      document.getElementById(prefix + 'StartDate').required = range; document.getElementById(prefix + 'EndDate').required = range;
+      const containerId = prefix === 'sched' ? 'schedDatePickerContainer' : 'editSchedDatePickerContainer';
+      document.querySelectorAll(`#${containerId} input[type="date"]`).forEach(input => input.required = !range);
+      updateScheduleDateSummary(containerId, prefix === 'sched' ? 'schedDateSummary' : 'editSchedDateSummary');
+    }
+    function toggleScheduleAllDay(prefix = 'sched') {
+      const allDay = document.getElementById(prefix + 'AllDay').checked, time = document.getElementById(prefix + 'Time');
+      time.disabled = allDay; time.required = !allDay;
+      updateScheduleDateSummary(prefix === 'sched' ? 'schedDatePickerContainer' : 'editSchedDatePickerContainer', prefix === 'sched' ? 'schedDateSummary' : 'editSchedDateSummary');
+    }
+    function scheduleRangePayload(prefix) {
+      const range = document.getElementById(prefix + 'DateMode').value === 'range';
+      return { dateMode: range ? 'range' : 'individual', ...(range ? { startDate: document.getElementById(prefix + 'StartDate').value, endDate: document.getElementById(prefix + 'EndDate').value } : {}), allDay: document.getElementById(prefix + 'AllDay').checked };
     }
 
     function addScheduleDateInput(containerId = "schedDatePickerContainer", value = "") {
@@ -1929,7 +2039,8 @@
       const payload = {
         action: "addSchedule", password: token,
         dates: dates,
-        time: document.getElementById("schedTime").value,
+        ...scheduleRangePayload("sched"),
+        time: document.getElementById("schedAllDay").checked ? "ทั้งวัน" : document.getElementById("schedTime").value,
         title: document.getElementById("schedTitle").value,
         location: document.getElementById("schedLocation").value,
         status: "booked",
@@ -1957,7 +2068,14 @@
       if (!item) return;
       document.getElementById("editSchedId").value = item.id;
       setScheduleDateInputs(item.dates && item.dates.length ? item.dates : [item.date], "editSchedDatePickerContainer", "editSchedDateSummary");
-      document.getElementById("editSchedTime").value = item.time || "";
+      const dates = (item.dates && item.dates.length ? item.dates : [item.date]).filter(Boolean).sort();
+      const contiguous = dates.length && expandScheduleDates(dates[0], dates[dates.length - 1]).length === dates.length;
+      document.getElementById("editSchedDateMode").value = contiguous ? "range" : "individual";
+      document.getElementById("editSchedStartDate").value = dates[0] || "";
+      document.getElementById("editSchedEndDate").value = dates[dates.length - 1] || "";
+      document.getElementById("editSchedTime").value = item.time === "ทั้งวัน" ? "" : item.time || "";
+      document.getElementById("editSchedAllDay").checked = item.allDay === true || String(item.time || "").trim() === "ทั้งวัน";
+      toggleScheduleDateMode("editSched"); toggleScheduleAllDay("editSched");
       document.getElementById("editSchedTitle").value = item.title || "";
       document.getElementById("editSchedLocation").value = item.location || "";
       document.getElementById("editSchedExtLink").value = item.extLink || "";
@@ -1980,7 +2098,7 @@
       btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
       const payload = {
         action:"addSchedule", password:token, id:document.getElementById("editSchedId").value,
-        dates, time:document.getElementById("editSchedTime").value,
+        dates, ...scheduleRangePayload("editSched"), time:document.getElementById("editSchedAllDay").checked ? "ทั้งวัน" : document.getElementById("editSchedTime").value,
         title:document.getElementById("editSchedTitle").value,
         location:document.getElementById("editSchedLocation").value,
         status:"booked", extLink:formatUrl(document.getElementById("editSchedExtLink").value),
@@ -2005,6 +2123,7 @@
       document.getElementById("addScheduleForm").reset();
       document.getElementById("schedId").value = "";
       setScheduleDateInputs([], "schedDatePickerContainer", "schedDateSummary");
+      toggleScheduleDateMode("sched"); toggleScheduleAllDay("sched");
     }
 
     function renderAdminSchedule() {

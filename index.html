@@ -242,9 +242,22 @@
     .rates-empty { color: var(--text-muted); padding: 1rem; }
     .rate-edit-card { border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin: 1rem 0; }
     .rate-edit-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+    #calendarDayModal { z-index: 1600; }
+    .cal-day-cell[data-calendar-date] { cursor: pointer; }
+    .cal-day-cell[data-calendar-date]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   </style>
 </head>
 <body>
+  <div class="modal-overlay" id="calendarDayModal" role="dialog" aria-modal="true" aria-labelledby="calendarDayTitle" onclick="if(event.target===this) closeCalendarDay()" onkeydown="calendarDialogKeydown(event)">
+    <div class="album-modal-card" style="max-width:720px;">
+      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:center;margin-bottom:1rem;">
+        <h3 id="calendarDayTitle">รายละเอียดคิวงาน</h3>
+        <button type="button" id="calendarDayClose" class="toggle-btn" onclick="closeCalendarDay()" aria-label="ปิดรายละเอียดคิวงาน">× ปิด</button>
+      </div>
+      <div id="calendarDayContent"></div>
+    </div>
+  </div>
+
   <div id="systemStatusModal" aria-live="polite" aria-busy="true">
     <div class="system-status-card">
       <div class="system-status-icon" id="systemStatusIcon"><div class="system-status-spinner"></div></div>
@@ -660,6 +673,51 @@
       renderCalendar();
     }
 
+    function calendarBookings(dateStr) {
+      return (allData.schedule || []).filter(job => (job.dates && job.dates.length ? job.dates : [job.date]).includes(dateStr));
+    }
+    function calendarDetailsHtml(dateStr) {
+      const jobs = calendarBookings(dateStr);
+      const setting = (allData.calendar || []).find(day => day.date === dateStr);
+      const full = jobs.some(job => job.allDay === true || String(job.time || "").trim() === "ทั้งวัน");
+      const status = full ? "🔴 ปิดรับงาน (ทั้งวัน)" : jobs.length ? "📌 มีคิวงานตามเวลาที่ระบุ" : setting && setting.statusType === "busy" ? "🔴 ไม่รับงาน (ตั้งค่าในปฏิทิน)" : setting && setting.statusType === "custom" ? "🟢 ว่าง: " + (setting.availableSlots || "-") : "🟢 ว่างทั้งวัน";
+      let html = '<p style="color:var(--accent);margin-bottom:1rem;">' + rateEscape(status) + '</p>';
+      if (!jobs.length) html += '<p style="color:var(--text-muted);">ไม่มีคิวงานในวันนี้</p>';
+      jobs.forEach(job => {
+        const dates = (job.dates && job.dates.length ? job.dates : [job.date]).filter(Boolean).sort();
+        const dateLabel = dates.length > 1 ? dates.map(formatThaiDateFull).join(' • ') : formatThaiDateFull(dates[0]);
+        let link = ''; const url = formatUrl(job.extLink || '');
+        if (/^https?:\/\//i.test(url)) link = '<a class="album-link-chip" href="' + rateEscape(url) + '" target="_blank" rel="noopener noreferrer">🔗 เปิดลิงก์งาน</a>';
+        html += '<div class="rate-edit-card" style="white-space:normal;">' +
+          '<h4 style="margin-bottom:.6rem;overflow-wrap:anywhere;">' + rateEscape(job.title || '-') + '</h4>' +
+          '<p style="white-space:pre-wrap;overflow-wrap:anywhere;">⏰ ' + rateEscape(job.allDay === true || String(job.time || '').trim() === 'ทั้งวัน' ? 'ทั้งวัน — ปิดรับงาน' : job.time || '-') + '</p>' +
+          '<p style="margin-top:.4rem;overflow-wrap:anywhere;">📅 ' + rateEscape(dateLabel) + '</p>' +
+          '<p style="margin-top:.4rem;white-space:pre-wrap;overflow-wrap:anywhere;">📍 ' + rateEscape(job.location || '-') + '</p>' +
+          '<p style="margin:.75rem 0;color:var(--text-muted);white-space:pre-wrap;overflow-wrap:anywhere;">' + rateEscape(job.details || 'ไม่มีรายละเอียดเพิ่มเติม') + '</p>' + link + '</div>';
+      });
+      if (setting && setting.note) html += '<p style="white-space:pre-wrap;overflow-wrap:anywhere;">หมายเหตุ: ' + rateEscape(setting.note) + '</p>';
+      return html;
+    }
+    function openCalendarDay(dateStr) {
+      const modal = document.getElementById('calendarDayModal'); modal.dataset.date = dateStr;
+      document.getElementById('calendarDayTitle').innerText = formatThaiDateFull(dateStr);
+      document.getElementById('calendarDayContent').innerHTML = calendarDetailsHtml(dateStr);
+      modal.classList.add('active'); document.getElementById('calendarDayClose').focus();
+    }
+    function closeCalendarDay() {
+      const modal = document.getElementById('calendarDayModal'); modal.classList.remove('active');
+      const cell = document.querySelector('[data-calendar-date="' + modal.dataset.date + '"]'); if (cell) cell.focus();
+    }
+    function calendarDialogKeydown(event) {
+      if (event.key === 'Escape') { event.preventDefault(); closeCalendarDay(); }
+      if (event.key === 'Tab') {
+        const items = Array.from(document.getElementById('calendarDayModal').querySelectorAll('button, a[href]'));
+        const first = items[0], last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    }
+
     function renderCalendar() {
       const yearBE = currentCalDate.getFullYear() + 543;
       const month = currentCalDate.getMonth();
@@ -683,9 +741,13 @@
 
         let statusPills = "";
 
-        if (dayBookings.length > 0) {
+        const closedAllDay = dayBookings.some(b => b.allDay === true || String(b.time || "").trim() === "ทั้งวัน");
+        if (closedAllDay) {
+          statusPills = `<div class="status-pill pill-busy">🔴 ปิดรับงาน (ทั้งวัน)</div>`;
+          dayBookings.forEach(b => { statusPills += `<div class="status-pill pill-booking">📌 มีคิวงาน ${rateEscape(b.time)}: ${rateEscape(b.title)}</div>`; });
+        } else if (dayBookings.length > 0) {
           dayBookings.forEach(b => {
-            statusPills += `<div class="status-pill pill-booking">📌 ${b.time}: ${b.title}</div>`;
+            statusPills += `<div class="status-pill pill-booking">📌 มีคิวงาน ${rateEscape(b.time)}: ${rateEscape(b.title)}</div>`;
           });
           if (calSetting && calSetting.availableSlots) {
             statusPills += `<div class="status-pill pill-avail">🟢 ว่าง: ${calSetting.availableSlots}</div>`;
@@ -703,7 +765,7 @@
         }
 
         grid.innerHTML += `
-          <div class="cal-day-cell">
+          <div class="cal-day-cell" data-calendar-date="${dateStr}" role="button" tabindex="0" aria-label="${rateEscape(formatThaiDateFull(dateStr))} ดูรายละเอียดคิวงาน" onclick="openCalendarDay('${dateStr}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCalendarDay('${dateStr}')}">
             <span class="cal-day-num">${day}</span>
             ${statusPills}
           </div>
