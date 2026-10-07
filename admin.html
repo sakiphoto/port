@@ -1,6 +1,3 @@
-<!-- ============================================================
-     ส่วนที่ 3: Admin.html — หน้า Admin / ระบบจัดการและอัปโหลด
-     ============================================================ -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -423,6 +420,21 @@
     }
     .lightbox-frame .lightbox-download:hover { color: var(--accent); background: rgba(10,12,16,.95); }
     .lightbox-frame .lightbox-download svg { width: 20px; height: 20px; }
+  
+    #editAlbumMediaList.photo-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; align-items:start; }
+    #editAlbumMediaList.photo-grid .edit-media-card { padding:0; margin:0; overflow:hidden; border-radius:9px; }
+    .edit-photo-thumb { position:relative; aspect-ratio:1; cursor:grab; touch-action:pan-y; }
+    .edit-photo-thumb img { display:block; width:100%; height:100%; object-fit:cover; border-radius:0; }
+    .edit-photo-number,.edit-photo-cover { position:absolute; top:5px; padding:2px 5px; border-radius:5px; font-size:11px; background:rgba(0,0,0,.75); color:white; pointer-events:none; }
+    .edit-photo-number { left:5px; } .edit-photo-cover { right:5px; background:var(--accent); color:#111; }
+    .edit-photo-thumb.drag-over { outline:3px solid var(--accent); outline-offset:-3px; }
+    .edit-photo-thumb.dragging { opacity:.4; }
+    .edit-photo-info { padding:5px; font-size:11px; }
+    .edit-photo-info summary { cursor:pointer; }
+    .edit-photo-info textarea,.edit-photo-info input { min-width:0; width:100%; }
+    #editAlbumMediaList.photo-grid .edit-media-card:has(details[open]) { grid-column:span 6; }
+    @media(max-width:600px) { #editAlbumMediaList.photo-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; } #editAlbumMediaList.photo-grid .edit-media-card:has(details[open]) { grid-column:span 3; } }
+
   </style>
 </head>
 <body>
@@ -529,7 +541,7 @@
         </div>
         <div id="editAlbumLinkContainer"></div>
         <h4 style="margin:1.5rem 0 .75rem;">ไฟล์ทั้งหมดในอัลบั้ม</h4>
-        <p style="color:var(--text-muted);margin-bottom:.75rem;">รูปภาพและวิดีโอแสดงพร้อมข้อมูลเดิม กด ↑ / ↓ เพื่อเรียงลำดับ ไฟล์แรกจะเป็นหน้าปกอัลบั้ม แล้วกดบันทึกการแก้ไข</p>
+        <p style="color:var(--text-muted);margin-bottom:.75rem;">ลากรูปภาพเพื่อเรียงลำดับจากซ้ายไปขวา ไฟล์แรกเป็นหน้าปกอัลบั้ม คลิกรูปเพื่อดูภาพใหญ่ แล้วกดบันทึกการแก้ไข</p>
         <div id="editAlbumMediaList"></div>
 
         <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.5rem;">
@@ -2555,6 +2567,7 @@
     }
     function renderEditAlbumMedia() {
       const container = document.getElementById("editAlbumMediaList"); container.innerHTML = "";
+      container.classList.toggle("photo-grid", editingAlbumItems.every(item => item.mediaType === "image"));
       editingAlbumItems.forEach((item, i) => {
         const card = document.createElement("div"); card.className = "rate-edit-card edit-media-card";
         const url = item.mediaType === "video" ? (item.fileId && !String(item.fileId).startsWith('http') ? 'https://drive.google.com/file/d/' + item.fileId + '/preview' : item.fileUrl) : getDisplayImageUrl(item.fileUrl);
@@ -2569,12 +2582,47 @@ File ID: ${rateEscape(item.fileId)}</div>
           <div class="form-group"><label>ลิงก์ไฟล์เดิม</label><input type="text" value="${rateEscape(item.fileUrl)}" readonly></div>
           <div id="editMediaLinks${i}"></div><button type="button" class="btn btn-outline" onclick="addDynamicLinkRow('editMediaLinks${i}')">+ เพิ่มลิงก์ของไฟล์นี้</button>
           <div class="rate-edit-actions"><button type="button" class="btn btn-outline" onclick="moveEditAlbumMedia(${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑ ขึ้น</button><button type="button" class="btn btn-outline" onclick="moveEditAlbumMedia(${i}, 1)" ${i === editingAlbumItems.length - 1 ? 'disabled' : ''}>↓ ลง</button></div>`;
-        container.appendChild(card);
         if (item.mediaType === "image") {
-          const preview = card.querySelector("img");
-          preview.style.cursor = "zoom-in";
-          preview.onclick = () => openLightbox(url, item.fileId);
+          const image = card.querySelector("img");
+          image.removeAttribute("style"); image.draggable = false;
+          const thumb = document.createElement("div"); thumb.className = "edit-photo-thumb"; thumb.draggable = true;
+          thumb.appendChild(image);
+          thumb.insertAdjacentHTML("beforeend", `<span class="edit-photo-number">${i + 1}</span>${i === 0 ? '<span class="edit-photo-cover">หน้าปก</span>' : ''}`);
+          card.querySelector("strong").remove();
+          card.querySelector(".rate-edit-actions").remove();
+          card.querySelector("div").remove();
+          const info = document.createElement("details"); info.className = "edit-photo-info";
+          const summary = document.createElement("summary"); summary.textContent = "แก้ไขข้อมูล"; info.appendChild(summary);
+          while (card.firstChild) info.appendChild(card.firstChild);
+          card.appendChild(thumb); card.appendChild(info);
+          let moved = false;
+          thumb.onclick = () => { if (!moved) openLightbox(url, item.fileId); };
+          thumb.addEventListener("dragstart", e => {
+            collectEditAlbumMedia(); moved = true;
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", String(i));
+            container.dataset.photoDragIndex = String(i); thumb.classList.add("dragging");
+          });
+          thumb.addEventListener("dragover", e => {
+            if (container.dataset.photoDragIndex === undefined) return;
+            e.preventDefault(); e.dataTransfer.dropEffect = "move"; thumb.classList.add("drag-over");
+          });
+          thumb.addEventListener("dragleave", () => thumb.classList.remove("drag-over"));
+          thumb.addEventListener("drop", e => {
+            e.preventDefault(); e.stopPropagation();
+            const source = Number(container.dataset.photoDragIndex);
+            if (container.dataset.photoDragIndex === undefined || !Number.isInteger(source) || source < 0 || source >= editingAlbumItems.length) return;
+            collectEditAlbumMedia(); delete container.dataset.photoDragIndex;
+            if (source !== i) { const movedItem = editingAlbumItems.splice(source, 1)[0]; editingAlbumItems.splice(i, 0, movedItem); }
+            renderEditAlbumMedia();
+          });
+          thumb.addEventListener("dragend", () => {
+            delete container.dataset.photoDragIndex;
+            container.querySelectorAll(".edit-photo-thumb").forEach(el => el.classList.remove("dragging", "drag-over"));
+            setTimeout(() => { moved = false; }, 0);
+          });
         }
+        container.appendChild(card);
         let links = []; try { const parsed = JSON.parse(item.extLink || '[]'); links = Array.isArray(parsed) ? parsed : [{ label: 'ลิงก์เดิม', url: item.extLink }]; } catch { links = item.extLink ? [{ label: 'ลิงก์เดิม', url: item.extLink }] : []; }
         links.forEach(link => addDynamicLinkRow('editMediaLinks' + i, link.label, link.url));
       });
