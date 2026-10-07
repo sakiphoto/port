@@ -993,13 +993,99 @@
     function hideStatusPopup(delay=0){ clearTimeout(statusHideTimer); const close=()=>{const m=document.getElementById("systemStatusModal");if(m)m.classList.remove("active")}; if(delay)statusHideTimer=setTimeout(close,delay);else close(); }
     async function apiFetch(url,options={},statusOptions={}){
       const isPost=String(options.method||"GET").toUpperCase()==="POST", silent=statusOptions.silent===true;
+      let mutation = isPost;
+      if (isPost) { try { mutation = JSON.parse(options.body || "{}").action !== "login"; } catch (error) {} }
+      if (mutation) { siteWrites++; invalidateSiteSnapshot(); }
       if(!silent){statusRequestCount++;showStatusPopup(isPost?"กำลังบันทึกข้อมูล...":"กำลังโหลดข้อมูล...",isPost?"ระบบกำลังบันทึกข้อมูล กรุณารอสักครู่":"กำลังเชื่อมต่อกับข้อมูลเว็บไซต์","loading");}
       try{const response=await nativeFetch(url,options);if(!response.ok)throw new Error("HTTP "+response.status);return response;}
       catch(err){if(!silent)showStatusPopup("เชื่อมต่อไม่สำเร็จ","ไม่สามารถเชื่อมต่อกับระบบได้ กรุณาลองใหม่อีกครั้ง","error");throw err;}
-      finally{if(!silent){statusRequestCount=Math.max(0,statusRequestCount-1);if(statusRequestCount===0)hideStatusPopup(250);}}
+      finally{if(mutation){siteWrites=Math.max(0,siteWrites-1);invalidateSiteSnapshot();}if(!silent){statusRequestCount=Math.max(0,statusRequestCount-1);if(statusRequestCount===0)hideStatusPopup(250);}}
     }
     
     let token = sessionStorage.getItem("adminPassword");
+
+    // Keep one in-flight data read and a short-lived snapshot of public data only.
+    const SITE_SNAPSHOT_KEY = "portfolio-public-v2:" + API_URL;
+    let siteSnapshot = null;
+    let siteRead = null;
+    let siteReadController = null;
+    let siteReadEpoch = 0;
+    let siteWrites = 0;
+    const renderedSiteParts = Object.create(null);
+    function validSiteData(data) {
+      return data && data.success === true && data.profile && typeof data.profile === "object" &&
+        ["portfolio", "schedule", "calendar"].every(key => Array.isArray(data[key]));
+    }
+    function restoreSiteSnapshot() {
+      if (siteSnapshot) return siteSnapshot;
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(SITE_SNAPSHOT_KEY) || "null");
+        if (saved && Date.now() - saved.savedAt < 300000 && validSiteData(saved.data)) siteSnapshot = saved.data;
+      } catch (error) {}
+      return siteSnapshot;
+    }
+    function invalidateSiteSnapshot() {
+      siteReadEpoch++;
+      if (siteReadController) siteReadController.abort();
+      siteReadController = null; siteRead = null; siteSnapshot = null;
+      try { sessionStorage.removeItem(SITE_SNAPSHOT_KEY); } catch (error) {}
+    }
+    function requestSiteData(force = false, silent = true) {
+      if (siteWrites) return Promise.resolve(null);
+      if (force) invalidateSiteSnapshot();
+      if (siteRead) return siteRead;
+      const epoch = siteReadEpoch;
+      const controller = new AbortController(); siteReadController = controller;
+      const url = new URL(API_URL);
+      if (force) url.searchParams.set("fresh", "1");
+      else if (siteSnapshot && siteSnapshot.version) url.searchParams.set("ifVersion", siteSnapshot.version);
+      const timer = setTimeout(() => controller.abort(), 45000);
+      siteRead = (async () => {
+        try {
+          const res = await apiFetch(url.toString(), { signal: controller.signal }, { silent });
+          let data = await res.json();
+          if (epoch !== siteReadEpoch) return null;
+          if (!data.success) throw new Error(data.message || "โหลดข้อมูลไม่สำเร็จ");
+          if (data.unchanged && siteSnapshot && data.version === siteSnapshot.version) return siteSnapshot;
+          if (!validSiteData(data)) throw new Error("ข้อมูลเว็บไซต์ไม่ครบถ้วน กรุณาลองใหม่");
+          siteSnapshot = data;
+          try { sessionStorage.setItem(SITE_SNAPSHOT_KEY, JSON.stringify({ savedAt: Date.now(), data })); } catch (error) {}
+          return data;
+        } finally {
+          clearTimeout(timer);
+          if (epoch === siteReadEpoch) { siteRead = null; siteReadController = null; }
+        }
+      })();
+      return siteRead;
+    }
+    function renderSiteData(data) {
+      allData = data;
+      const changed = key => {
+        const signature = JSON.stringify(data[key] || (key === "profile" ? {} : []));
+        if (renderedSiteParts[key] === signature) return false;
+        renderedSiteParts[key] = signature; return true;
+      };
+      if (changed("profile")) renderProfile();
+      if (changed("rates")) renderRates();
+      if (changed("portfolio")) {
+        renderAlbumGrid("photoAlbumGrid", data.portfolio.filter(item => item.mediaType === "image"), "image");
+        renderAlbumGrid("videoAlbumGrid", data.portfolio.filter(item => item.mediaType === "video"), "video");
+      }
+      const scheduleChanged = changed("schedule");
+      if (changed("calendar") || scheduleChanged) renderCalendar();
+      if (scheduleChanged) renderScheduleVertical();
+    }
+    function getThumbnailImageUrl(url, width = 800) {
+      const full = getDisplayImageUrl(url);
+      const match = full.match(/^https:\/\/lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/);
+      return match ? "https://drive.google.com/thumbnail?id=" + encodeURIComponent(match[1]) + "&sz=w" + width : full;
+    }
+    function thumbnailFallback(img) {
+      const original = img.dataset.original;
+      img.onerror = null;
+      if (original) img.src = original;
+    }
+
     let allData = { profile: {}, portfolio: [], schedule: [], calendar: [] };
     let liveTimers = [];
     let adminCalDate = new Date();
@@ -1385,7 +1471,7 @@
     function startLiveTimers() {
       stopLiveTimers();
       liveTimers.push(setInterval(() => loadData(false), 15000));
-      liveTimers.push(setInterval(() => renderScheduleVertical(), 3000));
+      liveTimers.push(setInterval(() => { if (!document.hidden) renderScheduleVertical(); }, 3000));
     }
     function stopLiveTimers() {
       liveTimers.forEach(t => clearInterval(t));
@@ -1418,27 +1504,20 @@
       document.getElementById('viewList').style.display = view === 'list' ? 'block' : 'none';
     }
 
-    async function loadData(fullRender = false) {
+    async function loadData(showStatus = true) {
+      if (!showStatus && (document.hidden || siteWrites)) return;
+      const cached = restoreSiteSnapshot();
+      if (showStatus && cached) renderSiteData(cached);
       try {
-        const res = await apiFetch(API_URL, {}, { silent: !fullRender });
-        const data = await res.json();
-        if (data.success) {
-          allData = data;
-          renderRates();
-          if (fullRender) {
-            renderProfile();
-            renderAlbumGrid('photoAlbumGrid', data.portfolio.filter(x => x.mediaType === 'image'), 'image');
-            renderAlbumGrid('videoAlbumGrid', data.portfolio.filter(x => x.mediaType === 'video'), 'video');
-          }
-          renderCalendar();
-          renderScheduleVertical();
-        } else if (fullRender) {
-          showStatusPopup("โหลดข้อมูลไม่สำเร็จ", data.message || "ระบบไม่สามารถส่งข้อมูลกลับมาได้", "error");
+        const data = await requestSiteData(false, !showStatus || !!cached);
+        if (data && data === siteSnapshot) renderSiteData(data);
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        console.error(err);
+        if (showStatus && !cached) {
+          showStatusPopup("โหลดข้อมูลไม่สำเร็จ", err.message || "ไม่สามารถเชื่อมต่อกับระบบได้ กรุณาลองใหม่อีกครั้ง", "error");
           hideStatusPopup(1800);
         }
-      } catch (err) {
-        console.error(err);
-        if (fullRender) hideStatusPopup(1800);
       }
     }
 
@@ -1531,7 +1610,7 @@
       container.innerHTML = Object.keys(albums).map(key => {
         const alb = albums[key];
         const safeTitle = escapeQuotes(alb.title);
-        const imgUrl = getDisplayImageUrl(alb.coverUrl);
+        const imgUrl = getThumbnailImageUrl(alb.coverUrl);
         const videoEmbedUrl = alb.fileId ? `https://drive.google.com/file/d/${alb.fileId}/preview` : alb.coverUrl;
 
         return `
@@ -1539,7 +1618,7 @@
             <div class="album-cover">
               ${alb.mediaType === 'video' 
                 ? `<img src="${rateEscape(alb.thumbUrl || (alb.fileId ? 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(alb.fileId) + '&sz=w1000' : ''))}" alt="${rateEscape(alb.title)}" loading="lazy" onerror="this.style.display='none'"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"><span style="display:flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:50%;background:rgba(0,0,0,.55);color:white;font-size:1.6rem;">▶</span></span>` 
-                : `<img src="${imgUrl}" loading="lazy" alt="${safeTitle}" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
+                : `<img src="${imgUrl}" decoding="async" data-original="${rateEscape(getDisplayImageUrl(alb.coverUrl))}" loading="lazy" alt="${safeTitle}" onerror="thumbnailFallback(this)">`
               }
               <div class="album-count-badge">${alb.items.length} ${alb.mediaType === 'video' ? 'วิดีโอ' : 'รูปภาพ'}</div>
             </div>
@@ -1733,7 +1812,7 @@
       const container = document.getElementById("scheduleListVertical");
       if (!container) return;
       const list = allData.schedule || [];
-      if (!list.length) { container.innerHTML = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงาน</p>'; return; }
+      if (!list.length) { const empty = '<p style="color:var(--text-muted);">ยังไม่มีรายการตารางงาน</p>'; if (container._scheduleHtml !== empty) { container.innerHTML = empty; container._scheduleHtml = empty; } return; }
 
       // คิวงานที่เพิ่มล่าสุดอยู่บนสุด ไม่ว่ากำหนดวันทำงานจะเป็นวันไหน
       const sorted = [...list].sort((a, b) => {
@@ -1741,7 +1820,7 @@
         const bc = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return bc - ac;
       });
-      container.innerHTML = sorted.map(item => {
+      const scheduleHtml = sorted.map(item => {
         const dates = (item.dates && item.dates.length ? item.dates : [item.date]).filter(Boolean);
         const now = new Date();
         const activeDate = dates.find(d => {
@@ -1766,6 +1845,7 @@
           </div>
         `;
       }).join('');
+      if (container._scheduleHtml !== scheduleHtml) { container.innerHTML = scheduleHtml; container._scheduleHtml = scheduleHtml; }
     }
 
     function renderAdminPanels() {
@@ -1782,9 +1862,8 @@
     }
 
     async function reloadAdmin() {
-      const res = await apiFetch(API_URL);
-      const data = await res.json();
-      if (data.success) { allData = data; renderAdminPanels(); }
+      const data = await requestSiteData(true, false);
+      if (data && data === siteSnapshot) { allData = data; renderAdminPanels(); }
     }
 
     function changeAdminMonth(delta) {
@@ -2362,7 +2441,7 @@
       for (let attempt = 0; attempt < 3; attempt++) {
         const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
         try {
-          const response = await apiFetch(API_URL, { signal: controller.signal }, { silent: true }); const data = await response.json();
+          const response = await apiFetch(API_URL + "?fresh=1", { signal: controller.signal }, { silent: true }); const data = await response.json();
           const item = data.success && (data.portfolio || []).find(item => item.id === uploadId);
           if (item) return { success: true, completed: true, item };
         } catch (err) { console.error(err); }
@@ -2435,7 +2514,7 @@
           <div class="item-list-row drag-item" draggable="true" data-title="${safeTitle}" data-mediatype="${type}">
             <div style="display:flex; align-items:center;">
               <span class="drag-handle">☰</span>
-              ${type === 'image' ? `<img src="${rateEscape(getDisplayImageUrl(g.coverUrl))}" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:6px;margin-right:.75rem;">` : '<span style="margin-right:.75rem;">🎬</span>'}
+              ${type === 'image' ? `<img src="${rateEscape(getThumbnailImageUrl(g.coverUrl, 160))}" data-original="${rateEscape(getDisplayImageUrl(g.coverUrl))}" onerror="thumbnailFallback(this)" loading="lazy" decoding="async" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:6px;margin-right:.75rem;">` : '<span style="margin-right:.75rem;">🎬</span>'}
               <div>
                 <strong>${idx + 1}. ${rateEscape(g.title)}</strong> (${rateEscape(g.category)}) — <span style="color:var(--accent);">${g.count} รายการ</span>
                 ${g.details ? `<div style="font-size:0.8rem; color:var(--text-muted);">${rateEscape(g.details)}</div>` : ''}
@@ -2585,6 +2664,8 @@ File ID: ${rateEscape(item.fileId)}</div>
         if (item.mediaType === "image") {
           const image = card.querySelector("img");
           image.removeAttribute("style"); image.draggable = false;
+          image.src = getThumbnailImageUrl(item.fileUrl, 320); image.loading = "lazy"; image.decoding = "async";
+          image.dataset.original = url; image.onerror = () => thumbnailFallback(image);
           const thumb = document.createElement("div"); thumb.className = "edit-photo-thumb"; thumb.draggable = true;
           thumb.appendChild(image);
           thumb.insertAdjacentHTML("beforeend", `<span class="edit-photo-number">${i + 1}</span>${i === 0 ? '<span class="edit-photo-cover">หน้าปก</span>' : ''}`);
@@ -2707,6 +2788,7 @@ File ID: ${rateEscape(item.fileId)}</div>
         }
       } catch(e) {}
     }
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && token && document.getElementById("previewMode").style.display !== "none") loadData(false); });
   </script>
 </body>
 </html>
