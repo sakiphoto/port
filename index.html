@@ -272,8 +272,10 @@
     .lightbox-frame .lightbox-download:hover { color: var(--accent); background: rgba(10,12,16,.95); }
     .lightbox-frame .lightbox-download svg { width: 20px; height: 20px; }
 
-    .image-download-count { color:var(--text-muted); font-size:.8rem; line-height:1.5; margin-top:.45rem; }
-    .lightbox-frame .lightbox-count { position:absolute; bottom:10px; left:10px; right:10px; width:fit-content; max-width:calc(100% - 20px); margin:0; padding:6px 10px; border-radius:8px; color:#fff; background:rgba(10,12,16,.8); pointer-events:none; overflow-wrap:anywhere; }
+    .lightbox-frame .lightbox-actions { position:absolute; top:10px; right:10px; z-index:2; display:flex; align-items:center; gap:8px; line-height:normal; }
+    .lightbox-frame .lightbox-actions .lightbox-download { position:static; flex:0 0 40px; }
+    .lightbox-frame .lightbox-count { display:inline-flex; align-items:center; justify-content:center; min-height:40px; box-sizing:border-box; padding:0 10px; border-radius:10px; color:#fff; background:rgba(10,12,16,.8); border:1px solid rgba(255,255,255,.25); font-size:.85rem; font-variant-numeric:tabular-nums; }
+    .lightbox-frame .lightbox-count:empty { display:none; }
   </style>
 </head>
 <body>
@@ -301,8 +303,10 @@
     <button class="lightbox-close" onclick="closeLightbox(event)" aria-label="ปิดรูปภาพ">&times;</button>
     <div class="lightbox-frame" onclick="event.stopPropagation()">
       <img src="" id="lightboxImg" class="lightbox-img" alt="Enlarged Image">
+      <div class="lightbox-actions">
       <a id="lightboxDownload" class="lightbox-download" href="#" download target="_blank" rel="noopener" aria-label="ดาวน์โหลดรูปภาพ" onclick="recordImageDownload(event, this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg></a>
-      <div id="lightboxDownloadCount" class="image-download-count lightbox-count" aria-live="polite"></div>
+      <span id="lightboxDownloadCount" class="lightbox-count" aria-live="polite" title="จำนวนครั้งที่กดดาวน์โหลด"></span>
+      </div>
     </div>
   </div>
 
@@ -583,17 +587,15 @@
     }
     function imageDownloadCountLabel(key) {
       const count = imageDownloadCounts[key];
-      if (count === undefined && !imageDownloadCountsLoaded) return 'กำลังโหลดยอดดาวน์โหลด...';
-      return 'ดาวน์โหลดแล้ว ' + Number(count || 0).toLocaleString('th-TH') + ' ครั้ง';
-    }
-    function imageDownloadBadge(url, fileId) {
-      const key = imageDownloadKey(url, fileId);
-      return key ? '<div class="image-download-count" data-download-key="' + rateEscape(key) + '">' + imageDownloadCountLabel(key) + '</div>' : '';
+      if (count === undefined && !imageDownloadCountsLoaded) return '';
+      return Number(count || 0).toLocaleString('th-TH');
     }
     function updateImageDownloadLabels() {
       document.querySelectorAll('[data-download-key]').forEach(el => {
         const key = el.dataset.downloadKey;
-        el.textContent = imageDownloadCountLabel(key) + (failedImageDownloadCounts.has(key) ? ' · ยอดยังไม่อัปเดต' : pendingImageDownloadCounts[key] ? ' · กำลังบันทึก...' : '');
+        el.textContent = imageDownloadCountLabel(key);
+        el.title = failedImageDownloadCounts.has(key) ? 'ยอดดาวน์โหลดยังไม่อัปเดต' : 'จำนวนครั้งที่กดดาวน์โหลด';
+        el.ariaLabel = el.textContent ? 'ดาวน์โหลด ' + el.textContent + ' ครั้ง' : 'กำลังโหลดยอดดาวน์โหลด';
       });
     }
     function refreshImageDownloadCounts() {
@@ -613,7 +615,7 @@
           updateImageDownloadLabels();
         } catch (error) {
           document.querySelectorAll('[data-download-key]').forEach(el => {
-            if (!imageDownloadCountsLoaded && imageDownloadCounts[el.dataset.downloadKey] === undefined) el.textContent = 'ยังโหลดยอดดาวน์โหลดไม่ได้';
+            if (!imageDownloadCountsLoaded && imageDownloadCounts[el.dataset.downloadKey] === undefined) { el.textContent = ''; el.title = 'ยังโหลดยอดดาวน์โหลดไม่ได้'; }
           });
         } finally { clearTimeout(timer); imageDownloadRead = null; }
       })();
@@ -891,7 +893,6 @@
                 : `<img src="${displayImgUrl}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
               }
             </div>
-            ${item.mediaType === 'image' ? imageDownloadBadge(item.fileUrl, item.fileId) : ''}
             ${item.details ? `<div style="color:var(--text-muted);font-size:.85rem;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:.5rem;">${rateEscape(item.details)}</div>` : ''}
           </div>
         `;
