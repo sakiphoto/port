@@ -440,6 +440,9 @@
     #editAlbumMediaList.photo-grid .edit-media-card:has(details[open]) { grid-column:span 6; }
     @media(max-width:600px) { #editAlbumMediaList.photo-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; } #editAlbumMediaList.photo-grid .edit-media-card:has(details[open]) { grid-column:span 3; } }
 
+
+    .image-download-count { color:var(--text-muted); font-size:.8rem; line-height:1.5; margin-top:.45rem; }
+    .lightbox-frame .lightbox-count { position:absolute; bottom:10px; left:10px; right:10px; width:fit-content; max-width:calc(100% - 20px); margin:0; padding:6px 10px; border-radius:8px; color:#fff; background:rgba(10,12,16,.8); pointer-events:none; overflow-wrap:anywhere; }
   </style>
 </head>
 <body>
@@ -479,7 +482,8 @@
     <button class="lightbox-close" onclick="closeLightbox(event)" aria-label="ปิดรูปภาพ">&times;</button>
     <div class="lightbox-frame" onclick="event.stopPropagation()">
       <img src="" id="lightboxImg" class="lightbox-img" alt="Enlarged Image">
-      <a id="lightboxDownload" class="lightbox-download" href="#" download target="_blank" rel="noopener" aria-label="ดาวน์โหลดรูปภาพ" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg></a>
+      <a id="lightboxDownload" class="lightbox-download" href="#" download target="_blank" rel="noopener" aria-label="ดาวน์โหลดรูปภาพ" onclick="recordImageDownload(event, this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg></a>
+      <div id="lightboxDownloadCount" class="image-download-count lightbox-count" aria-live="polite"></div>
     </div>
   </div>
 
@@ -1241,6 +1245,90 @@
       renderFeaturedPreviewGrid();
     }
 
+
+    // Shared persistent totals; use a separate endpoint to preserve the site cache.
+    const imageDownloadCounts = Object.create(null);
+    const pendingImageDownloadCounts = Object.create(null);
+    const failedImageDownloadCounts = new Set();
+    let imageDownloadCountsLoaded = false;
+    let imageDownloadRead = null;
+    function imageDownloadKey(url, fileId) {
+      const id = String(fileId || '').trim();
+      if (/^[a-zA-Z0-9_-]+$/.test(id)) return 'drive:' + id;
+      const value = String(url || '').trim().split('#')[0];
+      if (/^https:\/\/(?:drive\.google\.com|lh3\.googleusercontent\.com|[^/]+\.googleusercontent\.com)\//i.test(value)) {
+        const match = value.match(/(?:[?&]id=|\/d\/)([a-zA-Z0-9_-]+)/);
+        if (match) return 'drive:' + match[1];
+      }
+      return /^https?:\/\//i.test(value) ? 'url:' + value : '';
+    }
+    function imageDownloadCountLabel(key) {
+      const count = imageDownloadCounts[key];
+      if (count === undefined && !imageDownloadCountsLoaded) return 'กำลังโหลดยอดดาวน์โหลด...';
+      return 'ดาวน์โหลดแล้ว ' + Number(count || 0).toLocaleString('th-TH') + ' ครั้ง';
+    }
+    function imageDownloadBadge(url, fileId) {
+      const key = imageDownloadKey(url, fileId);
+      return key ? '<div class="image-download-count" data-download-key="' + rateEscape(key) + '">' + imageDownloadCountLabel(key) + '</div>' : '';
+    }
+    function updateImageDownloadLabels() {
+      document.querySelectorAll('[data-download-key]').forEach(el => {
+        const key = el.dataset.downloadKey;
+        el.textContent = imageDownloadCountLabel(key) + (failedImageDownloadCounts.has(key) ? ' · ยอดยังไม่อัปเดต' : pendingImageDownloadCounts[key] ? ' · กำลังบันทึก...' : '');
+      });
+    }
+    function refreshImageDownloadCounts() {
+      if (imageDownloadRead) return imageDownloadRead;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000);
+      const url = new URL(API_URL); url.searchParams.set('action', 'downloadCounts');
+      imageDownloadRead = (async () => {
+        try {
+          const response = await nativeFetch(url.toString(), { cache: 'no-store', signal: controller.signal });
+          const data = await response.json();
+          if (!response.ok || !data.success || !data.downloadCounts) throw new Error('ยอดดาวน์โหลดไม่พร้อมใช้งาน');
+          Object.entries(data.downloadCounts).forEach(([key, count]) => {
+            imageDownloadCounts[key] = Math.max(imageDownloadCounts[key] || 0, Math.floor(Number(count) || 0));
+          });
+          imageDownloadCountsLoaded = true;
+          updateImageDownloadLabels();
+        } catch (error) {
+          document.querySelectorAll('[data-download-key]').forEach(el => {
+            if (!imageDownloadCountsLoaded && imageDownloadCounts[el.dataset.downloadKey] === undefined) el.textContent = 'ยังโหลดยอดดาวน์โหลดไม่ได้';
+          });
+        } finally { clearTimeout(timer); imageDownloadRead = null; }
+      })();
+      return imageDownloadRead;
+    }
+    function recordImageDownload(event, link) {
+      event.stopPropagation();
+      // Keep the native link action synchronous so browsers can open the file.
+      // Count actual activations of Download only; viewing a photo never counts.
+      const key = link.dataset.imageKey;
+      if (!key) return;
+      pendingImageDownloadCounts[key] = (pendingImageDownloadCounts[key] || 0) + 1;
+      failedImageDownloadCounts.delete(key);
+      updateImageDownloadLabels();
+      nativeFetch(API_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'recordDownload', imageKey: key }),
+        keepalive: true, cache: 'no-store'
+      }).then(async response => {
+        const data = await response.json();
+        if (!response.ok || !data.success || data.imageKey !== key) throw new Error('ยังบันทึกยอดไม่ได้');
+        imageDownloadCounts[key] = Math.max(imageDownloadCounts[key] || 0, Number(data.downloadCount) || 0);
+      }).catch(() => {
+        // No automatic POST retry: an uncertain response may already be counted.
+        failedImageDownloadCounts.add(key);
+      }).finally(() => {
+        pendingImageDownloadCounts[key] = Math.max(0, pendingImageDownloadCounts[key] - 1);
+        updateImageDownloadLabels();
+      });
+    }
+    setInterval(() => {
+      if (!document.hidden && (document.getElementById('lightboxModal').classList.contains('active') || document.getElementById('albumDetailModal').classList.contains('active'))) refreshImageDownloadCounts();
+    }, 15000);
+
     function getDownloadImageUrl(url, fileId) {
       let id = fileId && !/^https?:/i.test(String(fileId)) ? String(fileId) : "";
       if (!id && /drive\.google\.com|googleusercontent\.com/.test(String(url || ""))) {
@@ -1268,10 +1356,15 @@
     function openLightbox(imageUrl, fileId) {
       if (!imageUrl) return;
       const modal = document.getElementById("lightboxModal");
-      const img = document.getElementById("lightboxImg");
-      img.src = imageUrl;
-      document.getElementById("lightboxDownload").href = getDownloadImageUrl(imageUrl, fileId);
+      const download = document.getElementById("lightboxDownload");
+      const counter = document.getElementById("lightboxDownloadCount");
+      document.getElementById("lightboxImg").src = imageUrl;
+      download.href = getDownloadImageUrl(imageUrl, fileId);
+      download.dataset.imageKey = imageDownloadKey(imageUrl, fileId);
+      counter.dataset.downloadKey = download.dataset.imageKey;
+      updateImageDownloadLabels();
       modal.classList.add("active");
+      refreshImageDownloadCounts();
     }
 
     function closeLightbox(e) {
@@ -1724,11 +1817,13 @@
                 : `<img src="${displayImgUrl}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x400?text=Image+Error'">`
               }
             </div>
+            ${item.mediaType === 'image' ? imageDownloadBadge(item.fileUrl, item.fileId) : ''}
           </div>
         `;
       }).join('');
 
       document.getElementById("albumDetailModal").classList.add("active");
+      refreshImageDownloadCounts();
     }
 
     function closeAlbumModal() {
