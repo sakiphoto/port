@@ -1513,6 +1513,7 @@
       `;
       container.appendChild(div);
       initializeLinkPickers(div);
+      initializeLinkLabelPickers(div);
     }
 
     function collectDynamicLinks(containerId) {
@@ -2389,6 +2390,47 @@
 
     function initializeLinkPickers(root = document) {
       root.querySelectorAll('#schedExtLink,#editSchedExtLink,#editProfIG,#editProfFB,#editProfTikTok,.dyn-url,.soc-url').forEach(enhanceLinkPicker);
+    }
+
+    // ช่องชื่อปุ่มลิงก์: พิมพ์เองได้ หรือเลือกข้อความสำเร็จรูปได้เพียง 2 รายการ
+    function enhanceLinkLabelPicker(input) {
+      if (!input || input.dataset.linkLabelPickerReady === "1") return;
+      input.dataset.linkLabelPickerReady = "1";
+      const oldWidth = input.style.width;
+      const wrap = document.createElement("div");
+      wrap.className = "link-picker";
+      wrap.style.width = oldWidth || "100%";
+      input.style.width = "100%";
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "link-picker-toggle";
+      toggle.setAttribute("aria-label", "แสดงตัวเลือกข้อความลิงก์");
+      toggle.textContent = "▾";
+      wrap.appendChild(toggle);
+      const menu = document.createElement("div");
+      menu.className = "link-picker-menu";
+      menu.innerHTML = `
+        <button type="button" class="link-picker-option" data-value="ภาพเพิ่มเติม">ภาพเพิ่มเติม</button>
+        <button type="button" class="link-picker-option" data-value="เพจ">เพจ</button>
+      `;
+      wrap.appendChild(menu);
+      toggle.addEventListener("click", (event) => {
+        event.preventDefault(); event.stopPropagation();
+        document.querySelectorAll(".link-picker.open").forEach(el => { if (el !== wrap) el.classList.remove("open"); });
+        wrap.classList.toggle("open");
+      });
+      menu.querySelectorAll("[data-value]").forEach(option => option.addEventListener("click", () => {
+        input.value = option.dataset.value;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        wrap.classList.remove("open"); input.focus();
+      }));
+    }
+
+    function initializeLinkLabelPickers(root = document) {
+      root.querySelectorAll(".dyn-label").forEach(enhanceLinkLabelPicker);
     }
 
     document.addEventListener("click", (event) => {
