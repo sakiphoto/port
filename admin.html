@@ -591,7 +591,16 @@
         </div>
         <div class="form-grid-2">
           <div class="form-group"><label>สถานที่</label><input type="text" id="editSchedLocation"></div>
-          <div class="form-group"><label>ลิงก์ภายนอก</label><input type="text" id="editSchedExtLink"></div>
+          <div class="form-group">
+            <label for="editSchedLinkMode">ลิงก์งาน / สถานะผลงาน</label>
+            <select id="editSchedLinkMode" onchange="toggleScheduleLinkMode('editSched')">
+              <option value="none">ไม่ใส่ลิงก์</option>
+              <option value="404">งานยังไม่เริ่มถ่ายทำ (404)</option>
+              <option value="wait">ถ่ายทำแล้ว แต่ยังไม่โพสต์ (wait)</option>
+              <option value="custom">กรอกลิงก์เอง</option>
+            </select>
+            <input type="text" id="editSchedExtLink" placeholder="วาง URL เช่น Google Maps / Facebook / Drive" style="display:none;margin-top:.6rem;">
+          </div>
         </div>
         <div class="form-group"><label>รายละเอียดเพิ่มเติม</label><textarea id="editSchedDetails" rows="3"></textarea></div>
         <div style="display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.2rem;">
@@ -921,7 +930,16 @@
             </div>
             <div class="form-grid-2">
               <div class="form-group"><label>สถานที่</label><input type="text" id="schedLocation" placeholder="เช่น โรงแรมสยาม กทม."></div>
-              <div class="form-group"><label>ลิงก์ภายนอก (Google Maps / Live / Drive)</label><input type="text" id="schedExtLink" placeholder="maps.app.goo.gl/..."></div>
+              <div class="form-group">
+                <label for="schedLinkMode">ลิงก์งาน / สถานะผลงาน</label>
+                <select id="schedLinkMode" onchange="toggleScheduleLinkMode('sched')">
+                  <option value="none">ไม่ใส่ลิงก์</option>
+                  <option value="404">งานยังไม่เริ่มถ่ายทำ (404)</option>
+                  <option value="wait">ถ่ายทำแล้ว แต่ยังไม่โพสต์ (wait)</option>
+                  <option value="custom">กรอกลิงก์เอง</option>
+                </select>
+                <input type="text" id="schedExtLink" placeholder="วาง URL เช่น Google Maps / Facebook / Drive" style="display:none;margin-top:.6rem;">
+              </div>
             </div>
             <div class="form-group"><label>รายละเอียดเพิ่มเติม</label><textarea id="schedDetails" rows="2" placeholder="เช่น เตรียมชุดไฟและเลนส์เทเล"></textarea></div>
 
@@ -2308,6 +2326,43 @@
       updateScheduleDateSummary(containerId, summaryId);
     }
 
+    function toggleScheduleLinkMode(prefix) {
+      const mode = document.getElementById(prefix + "LinkMode");
+      const input = document.getElementById(prefix + "ExtLink");
+      if (!mode || !input) return;
+      const custom = mode.value === "custom";
+      input.style.display = custom ? "block" : "none";
+      input.required = custom;
+      if (!custom) input.value = "";
+    }
+
+    function getScheduleLinkValue(prefix) {
+      const mode = document.getElementById(prefix + "LinkMode");
+      const input = document.getElementById(prefix + "ExtLink");
+      if (!mode) return "";
+      if (mode.value === "404") return new URL("404.html", window.location.href).href;
+      if (mode.value === "wait") return new URL("wait.html", window.location.href).href;
+      if (mode.value === "custom") return formatUrl(input ? input.value : "");
+      return "";
+    }
+
+    function setScheduleLinkValue(prefix, value) {
+      const mode = document.getElementById(prefix + "LinkMode");
+      const input = document.getElementById(prefix + "ExtLink");
+      if (!mode || !input) return;
+      const raw = String(value || "").trim();
+      const normalize = candidate => {
+        try { return new URL(candidate, window.location.href).pathname.toLowerCase(); }
+        catch (error) { return ""; }
+      };
+      if (!raw) mode.value = "none";
+      else if (normalize(raw).endsWith("/404.html") || /[?&]status=(404|not-started)(?:&|$)/i.test(raw)) mode.value = "404";
+      else if (normalize(raw).endsWith("/wait.html") || /[?&]status=(wait|unpublished)(?:&|$)/i.test(raw)) mode.value = "wait";
+      else { mode.value = "custom"; input.value = raw; }
+      toggleScheduleLinkMode(prefix);
+      if (mode.value === "custom") input.value = raw;
+    }
+
     async function handleAddSchedule(e) {
       e.preventDefault();
       const dates = updateScheduleDateSummary();
@@ -2326,7 +2381,7 @@
         title: document.getElementById("schedTitle").value,
         location: document.getElementById("schedLocation").value,
         status: "booked",
-        extLink: formatUrl(document.getElementById("schedExtLink").value),
+        extLink: getScheduleLinkValue("sched"),
         details: document.getElementById("schedDetails").value
       };
 
@@ -2360,7 +2415,7 @@
       toggleScheduleDateMode("editSched"); toggleScheduleAllDay("editSched");
       document.getElementById("editSchedTitle").value = item.title || "";
       document.getElementById("editSchedLocation").value = item.location || "";
-      document.getElementById("editSchedExtLink").value = item.extLink || "";
+      setScheduleLinkValue("editSched", item.extLink || "");
       document.getElementById("editSchedDetails").value = item.details || "";
       document.getElementById("editScheduleModal").classList.add("active");
     }
@@ -2383,7 +2438,7 @@
         dates, ...scheduleRangePayload("editSched"), time:document.getElementById("editSchedAllDay").checked ? "ทั้งวัน" : document.getElementById("editSchedTime").value,
         title:document.getElementById("editSchedTitle").value,
         location:document.getElementById("editSchedLocation").value,
-        status:"booked", extLink:formatUrl(document.getElementById("editSchedExtLink").value),
+        status:"booked", extLink:getScheduleLinkValue("editSched"),
         details:document.getElementById("editSchedDetails").value
       };
       try {
@@ -2406,6 +2461,7 @@
       document.getElementById("schedId").value = "";
       setScheduleDateInputs([], "schedDatePickerContainer", "schedDateSummary");
       toggleScheduleDateMode("sched"); toggleScheduleAllDay("sched");
+      setScheduleLinkValue("sched", "");
     }
 
     function renderAdminSchedule() {
