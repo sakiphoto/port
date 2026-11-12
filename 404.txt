@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>งานยังไม่เริ่ม / ผลงานยังไม่เผยแพร่</title>
+    <style>
+        :root {
+            --bg-grad-1: #e0f2fe;
+            --bg-grad-2: #f8fafc;
+            --primary: #0284c7;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2));
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        /* Ambient Glow Objects */
+        .ambient-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            animation: float 8s ease-in-out infinite alternate;
+        }
+        .glow-1 {
+            width: 350px;
+            height: 350px;
+            background: rgba(56, 189, 248, 0.4);
+            top: 10%;
+            left: 15%;
+        }
+        .glow-2 {
+            width: 450px;
+            height: 450px;
+            background: rgba(186, 230, 253, 0.6);
+            bottom: 5%;
+            right: 10%;
+            animation-delay: -4s;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-30px) scale(1.08); }
+        }
+
+        /* Interactive Container */
+        .card {
+            position: relative;
+            z-index: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            padding: 50px 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(2, 132, 199, 0.08),
+                        0 1px 3px rgba(0, 0, 0, 0.05);
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            transform-style: preserve-3d;
+            transition: transform 0.15s ease-out;
+        }
+
+        /* Feature Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(2, 132, 199, 0.1);
+            color: var(--primary);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1.2;
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            color: var(--text-sub);
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <div class="card" id="card">
+        <div class="badge">
+            <span class="badge-dot"></span>
+            Coming Soon
+        </div>
+        <h1>งานยังไม่เริ่มถ่ายทำ</h1>
+        <p>ผลงานชิ้นนี้ยังอยู่ในขั้นตอนรอการถ่ายทำและยังไม่พร้อมสำหรับการรับชมในขณะนี้</p>
+        <p>โปรดติดตามและกลับมารับชมใหม่อีกครั้ง</p>
+    </div>
+
+    <script>
+        // 3D Parallax Effect On Mouse Move
+        const card = document.getElementById('card');
+
+        document.addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+            card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+
+        // Reset Card Position when Mouse Leaves
+        document.addEventListener('mouseleave', () => {
+            card.style.transform = `rotateY(0deg) rotateX(0deg)`;
+        });
+    </script>
+</body>
+</html>
