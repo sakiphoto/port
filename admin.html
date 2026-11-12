@@ -2381,7 +2381,8 @@
         wrap.classList.toggle("open");
       });
       menu.querySelectorAll("[data-value]").forEach(option => option.addEventListener("click", () => {
-        input.value = option.dataset.value;
+        // แปลงหน้า 404 / wait ให้เป็น URL เต็ม โดยอ้างอิงโฟลเดอร์เดียวกับหน้าเว็บที่เปิดอยู่
+        input.value = new URL(option.dataset.value, window.location.href).href;
         input.dispatchEvent(new Event("input", { bubbles: true }));
         input.dispatchEvent(new Event("change", { bubbles: true }));
         wrap.classList.remove("open"); input.focus();
